@@ -193,12 +193,15 @@ writes and a fast removed peer answering before an honest peer's removal.
 
 The real transport, not the stream simulator, separately bounds 256 handshakes
 (5 seconds each) and 32 authenticated inbound sync connections (two per member).
-Address validation via QUIC Retry precedes the handshake budget; only a completed,
+Once half the handshake budget is in use, address validation via QUIC Retry
+precedes the rest (not before: a handshake iroh races over several paths would
+fail its Retry token on all but one); only a completed,
 membership-admitted handshake may claim a sync slot. Pairing transfers to its own
 bounds. Idle waits for the first or next stream expire after 60 seconds by default,
 independently of the session timeout, closing the connection and releasing its
-slots. Real-connection net tests stall TLS after Retry, verify member sync still
-works, and exercise idle closure followed by a new successful sync. Background sync
-rounds dial fresh connections; callers reusing `SyncConnection` must
+slots. Real-connection net tests stall TLS at the server's Initial, race a handshake
+over two paths, verify member sync still works, and exercise idle closure followed
+by a new successful sync. Background sync rounds dial fresh connections; callers
+reusing `SyncConnection` must
 redial after closure. The caps do not guarantee availability under handshake or
 network saturation, nor prevent a member from continually reconnecting.

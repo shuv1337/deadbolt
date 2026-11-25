@@ -387,15 +387,15 @@ async fn inbound_connections_in_total_are_bounded() {
     }
 }
 
-/// Forward Retry but drop the subsequent server Initial, holding a real TLS
-/// handshake open after address validation, before the server learns membership.
+/// Forward any Retry but drop the server's Initial and everything after it,
+/// holding a real TLS handshake open (address-validated when the server asked
+/// for it) before the server learns membership.
 async fn stall_handshake(
     server: std::net::SocketAddr,
     stalled: tokio::sync::oneshot::Sender<()>,
     socket: tokio::net::UdpSocket,
 ) {
     let mut client = None;
-    let mut retried = false;
     let mut stalled = Some(stalled);
     let mut buf = [0; 65536];
     loop {
@@ -403,17 +403,12 @@ async fn stall_handshake(
         let packet = &buf[..len];
         if from == server {
             let quic_v1 = len >= 5 && packet[0] & 0xc0 == 0xc0 && packet[1..5] == [0, 0, 0, 1];
-            if retried {
-                if quic_v1
-                    && packet[0] & 0x30 == 0
-                    && let Some(tx) = stalled.take()
-                {
-                    tx.send(()).unwrap();
-                }
+            if stalled.is_none() {
                 continue;
             }
-            if quic_v1 && packet[0] & 0x30 == 0x30 {
-                retried = true;
+            if quic_v1 && packet[0] & 0x30 == 0 {
+                stalled.take().unwrap().send(()).unwrap();
+                continue;
             }
             socket.send_to(packet, client.unwrap()).await.unwrap();
         } else {
@@ -421,6 +416,54 @@ async fn stall_handshake(
             socket.send_to(packet, server).await.unwrap();
         }
     }
+}
+
+/// Send every client packet to the server from two source addresses, as iroh
+/// does when it races a handshake over several paths (LAN, VPN, relay), and
+/// pass every reply back.
+async fn race_two_paths(server: std::net::SocketAddr, front: tokio::net::UdpSocket) {
+    let paths = [
+        tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap(),
+        tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap(),
+    ];
+    let mut client = None;
+    let (mut buf, mut a, mut b) = ([0; 65536], [0; 65536], [0; 65536]);
+    loop {
+        tokio::select! {
+            got = front.recv_from(&mut buf) => {
+                let (len, from) = got.unwrap();
+                client = Some(from);
+                for path in &paths {
+                    path.send_to(&buf[..len], server).await.unwrap();
+                }
+            }
+            got = paths[0].recv_from(&mut a) => {
+                let (len, _) = got.unwrap();
+                front.send_to(&a[..len], client.unwrap()).await.unwrap();
+            }
+            got = paths[1].recv_from(&mut b) => {
+                let (len, _) = got.unwrap();
+                front.send_to(&b[..len], client.unwrap()).await.unwrap();
+            }
+        }
+    }
+}
+
+/// A handshake raced over two paths connects: address validation would bind
+/// each path's Retry token to its own address and refuse the other copy.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_handshake_raced_over_two_paths_connects() {
+    let (a, b) = pair_of_members(&["a1"], &["b1"]).await;
+    let front = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+    let mut addr = a.node.addr();
+    let target = addr.direct_addrs[0];
+    addr.direct_addrs = vec![front.local_addr().unwrap()];
+    let proxy = tokio::spawn(race_two_paths(target, front));
+    for _ in 0..20 {
+        within(b.node.sync(addr.clone())).await.unwrap();
+    }
+    assert_eq!(b.store.sorted(), ["a1", "b1"]);
+    proxy.abort();
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -447,8 +490,8 @@ async fn stalled_nonmember_handshakes_leave_member_sync_slots_free() {
         waits.push(rx);
         attackers.push(attacker);
     }
-    // Every proxy observed Retry and a subsequent server Initial. These are
-    // live, address-validated transport handshakes, not held synthetic permits.
+    // Every proxy observed a server Initial. These are live transport
+    // handshakes, not held synthetic permits.
     for wait in waits {
         within(wait).await.unwrap();
     }

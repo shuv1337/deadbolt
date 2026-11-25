@@ -52,7 +52,7 @@ Enforced crash rules:
 Local state commits use alternating `local-<m>.sealed` files guarded by a two-phase rollback anchor.
 
 ## Sync: direct iroh & blind HTTP remote (`deadbolt-remote`)
-- **Direct iroh sync (`crates/net`):** devices exchange heads and stream missing `DBF2` frames (membership before data) over authenticated QUIC connections with bounded handshakes (256, 5 s timeout, QUIC Retry), bounded authenticated sync slots (32 total, 2 per member, 60 s idle close), and one-frame sender scratch.
+- **Direct iroh sync (`crates/net`):** devices exchange heads and stream missing `DBF2` frames (membership before data) over authenticated QUIC connections with bounded handshakes (256, 5 s timeout, QUIC Retry once half the handshake slots are in use — not unconditionally, because iroh races one Initial over every path it knows and a Retry token bound to one path's address is refused with `INVALID_TOKEN` on another), bounded authenticated sync slots (32 total, 2 per member, 60 s idle close), and one-frame sender scratch.
 - **Blind HTTP remote sync (`crates/remote`):** optional four-verb `ObjStore` (create-only `PUT`, ranged `GET`, sorted `LIST`, idempotent `DELETE`) over S3/R2 (SigV4) or WebDAV. The remote sees only signed/sealed `DBF2` frames and immutable `gen-<n>.pack` checkpoints — never plaintext items, field names, or keys. `deadbolt-remote` includes a push/pull planner, rollback/withholding/self-rollback detection, and store-backed Deadbolt Send.
 - **Checkpoints & GC (`crates/core/src/v2/{checkpoint,gc}`):** once WAL bytes or frame counts pass compaction thresholds, devices emit signed `Checkpoint` frames pointing to immutable `gen-<n>.pack` snapshots and reclaim superseded logs after a grace window.
 

@@ -48,6 +48,18 @@ const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(5);
 /// Separate from authenticated sync slots: an unidentified peer cannot consume those.
 const MAX_INBOUND_HANDSHAKES: usize = 256;
 
+/// Address validation (QUIC Retry) starts once this many handshake slots are
+/// in use. It can't be the default: iroh races one Initial over every path it
+/// knows (LAN, VPN, relay), each copy draws a Retry whose token is bound to that
+/// path's address, and a retried Initial landing on another path is refused
+/// (`INVALID_TOKEN`), so peers sharing several paths could never connect.
+const RETRY_ABOVE_HANDSHAKES: usize = MAX_INBOUND_HANDSHAKES / 2;
+
+/// Whether to answer an Initial with Retry instead of starting its handshake.
+fn should_retry(validated: bool, free_handshakes: usize) -> bool {
+    !validated && MAX_INBOUND_HANDSHAKES - free_handshakes >= RETRY_ABOVE_HANDSHAKES
+}
+
 /// Which relay servers the node uses.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Relays {
@@ -447,11 +459,11 @@ async fn accept_loop(
         tokio::select! {
             incoming = endpoint.accept() => {
                 let Some(incoming) = incoming else { break };
-                // Make the sender prove it receives at its source address (QUIC Retry)
-                // before it can hold a permit, so spoofed Initials can't fill them.
-                // Over a relay the relay already vouches for the sender; there it only
-                // costs a round trip.
-                if !incoming.remote_addr_validated() {
+                // Under handshake pressure, make the sender prove it receives at its
+                // source address (QUIC Retry) before it can hold a permit, so spoofed
+                // Initials can't fill the rest. Over a relay the relay already vouches
+                // for the sender; there it only costs a round trip.
+                if should_retry(incoming.remote_addr_validated(), handshakes.available_permits()) {
                     if let Err(err) = incoming.retry() {
                         err.into_incoming().refuse();
                     }
@@ -805,6 +817,16 @@ impl EndpointHooks for GateHook {
 pub(crate) mod tests {
     use super::*;
     use crate::{HandlerError, SyncHandler};
+
+    #[test]
+    fn retry_only_unvalidated_initials_under_handshake_pressure() {
+        let free_at = |in_use: usize| MAX_INBOUND_HANDSHAKES - in_use;
+        assert!(!should_retry(false, free_at(0)));
+        assert!(!should_retry(false, free_at(RETRY_ABOVE_HANDSHAKES - 1)));
+        assert!(should_retry(false, free_at(RETRY_ABOVE_HANDSHAKES)));
+        assert!(should_retry(false, free_at(MAX_INBOUND_HANDSHAKES)));
+        assert!(!should_retry(true, free_at(MAX_INBOUND_HANDSHAKES)));
+    }
 
     pub(crate) struct Nothing;
 
