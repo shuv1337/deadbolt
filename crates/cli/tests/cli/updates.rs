@@ -235,13 +235,16 @@ fn update_runs_bun_for_a_bun_install_pinned_to_what_npm_serves() {
     let (link, exe) = bun_install(&root, "0.0.0-dev-9999", true);
     let empty = a.path("empty");
     std::fs::create_dir_all(&empty).unwrap();
-    let update = |args: &[&str]| {
+    let with_manager = |args: &[&str], stand_in: Option<&Path>| {
         let mut cmd = a.cmd_of(&link, args);
         cmd.env("DEADBOLT_RELEASE_URL", &base)
             .env("DEADBOLT_NPM_REGISTRY_URL", &base)
             .env("PATH", &empty)
             .env("HOME", &root)
             .env_remove("BUN_INSTALL");
+        if let Some(stand_in) = stand_in {
+            cmd.env("DEADBOLT_FIXTURE_MANAGER", stand_in);
+        }
         let out = cmd.output().unwrap();
         eprintln!(
             "$ {args:?}\n{}{}",
@@ -250,6 +253,8 @@ fn update_runs_bun_for_a_bun_install_pinned_to_what_npm_serves() {
         );
         out
     };
+    let fixture = root.join("bun/bin/bun");
+    let update = |args: &[&str]| with_manager(args, Some(&fixture));
     let log = || std::fs::read_to_string(root.join("bun.log")).unwrap_or_default();
 
     // npm still serves the old build: nothing bun could install yet.
@@ -298,8 +303,20 @@ fn update_runs_bun_for_a_bun_install_pinned_to_what_npm_serves() {
     );
     assert!(!log().contains("install --global"));
 
+    let apply = ["update", "--channel", "dev", "--yes"];
+    for (stand_in, refusal) in [(None, "requires"), (Some(Path::new(BIN)), "refused")] {
+        let out = with_manager(&apply, stand_in);
+        assert_eq!(out.status.code(), Some(1));
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        assert!(
+            stderr.contains(refusal) && stderr.contains("DEADBOLT_FIXTURE_MANAGER"),
+            "{stderr}"
+        );
+        assert!(!log().contains("install --global"));
+    }
+
     // bun fails: its output's end, the command, and what to do.
-    let out = update(&["update", "--channel", "dev", "--yes"]);
+    let out = update(&apply);
     assert!(!out.status.success());
     let stderr = String::from_utf8_lossy(&out.stderr);
     assert!(

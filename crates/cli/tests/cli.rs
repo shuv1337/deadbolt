@@ -56,6 +56,7 @@ impl Device {
             .env_remove("DEADBOLT_NO_UPDATE_CHECK")
             .env_remove("DEADBOLT_NPM_REGISTRY_URL")
             .env_remove("DEADBOLT_RELEASE_URL")
+            .env_remove("DEADBOLT_FIXTURE_MANAGER")
             .env_remove("RUST_LOG")
             .stdin(Stdio::null());
         cmd
@@ -3815,4 +3816,36 @@ fn updates_are_disabled_without_network_or_state() {
     }
     assert!(matches!(listener.accept(), Err(e) if e.kind() == std::io::ErrorKind::WouldBlock));
     assert_eq!(std::fs::read_dir(d.dir.path()).unwrap().count(), 0);
+}
+
+#[cfg(not(feature = "upstream-update-fixtures"))]
+#[test]
+fn browser_install_with_extension_dir_leaves_config_alone() {
+    let d = Device::new();
+    let config = d.path("config/deadbolt/config.toml");
+    let extension = d.path("extension");
+    let run = || {
+        let out = d.output(
+            d.cmd(&[
+                "browser",
+                "install",
+                "--browser",
+                "chrome",
+                "--extension-dir",
+            ])
+            .arg(&extension)
+            .env("HOME", d.path("user")),
+        );
+        assert_eq!(out.status.code(), Some(1));
+        assert!(String::from_utf8_lossy(&out.stderr).contains("without --extension-dir"));
+        assert!(!extension.exists());
+    };
+    run();
+    assert!(!d.path("config").exists());
+    assert!(!d.path("user").exists());
+    std::fs::create_dir_all(config.parent().unwrap()).unwrap();
+    let original = b"# Keep the existing configuration.\n";
+    std::fs::write(&config, original).unwrap();
+    run();
+    assert_eq!(std::fs::read(&config).unwrap(), original);
 }

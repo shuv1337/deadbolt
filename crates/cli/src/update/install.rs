@@ -622,13 +622,23 @@ async fn update_package(
     quiet: bool,
 ) -> Result<()> {
     let who = manager.name();
-    let Some(program) = find_program(upgrade.program, exe) else {
-        bail!(
-            "{who} installed deadbolt, but `{}` isn't on PATH; run it yourself: {}",
-            upgrade.program,
-            upgrade.shown
-        );
-    };
+    // Opt in to the exact stand-in, not whichever real manager happens to
+    // be installed on this test host.
+    const FIXTURE_MANAGER: &str = "DEADBOLT_FIXTURE_MANAGER";
+    let fixture = crate::config::test_env(FIXTURE_MANAGER)
+        .filter(|path| Path::new(path).is_absolute())
+        .with_context(|| format!("managed fixture apply requires {FIXTURE_MANAGER} to name the absolute stand-in executable"))?;
+    let fixture =
+        std::fs::canonicalize(&fixture).with_context(|| format!("resolving {FIXTURE_MANAGER}"))?;
+    let program = find_program(upgrade.program, exe)
+        .and_then(|path| path.canonicalize().ok())
+        .filter(|path| *path == fixture)
+        .with_context(|| {
+            format!(
+                "managed fixture apply refused: {} does not resolve to {FIXTURE_MANAGER}",
+                upgrade.program
+            )
+        })?;
     let wrapper = package_of(exe);
     let link = user_link(manager, exe, wrapper.as_deref());
     let ours = daemon_runs(paths, |p| p == exe).await;

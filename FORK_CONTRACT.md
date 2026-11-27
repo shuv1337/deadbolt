@@ -26,15 +26,18 @@ The fork preserves vault bytes and wire identities; switching is not a vault
 conversion. Do not move or copy vault files just to rename the product. No
 production vault is used for fork validation.
 
-On macOS and Linux, quit upstream UI/AutoFill clients and run
-`deadbolt debug daemon stop` **with the upstream binary** before starting
+On macOS and Linux, close browsers and quit upstream UI/AutoFill clients.
+Run `deadbolt debug daemon stop` **with the upstream binary** before starting
 `shuvbolt`. The socket path is intentionally shared, not a way to run two
-daemons on one vault. On Linux update launcher entries and re-run
-`shuvbolt browser install` so the shared native-host manifest points to the
-fork executable. On macOS upstream and fork code-signing identities differ:
-use a consistently signed fork app, CLI and AutoFill build. App Group/Touch ID
-enrollment is signing-identity dependent and may need re-enrollment; keep the
-vault passphrase and recovery kit available. There is no automatic signing or
+daemons on one vault. Run `shuvbolt browser install` before reopening browsers
+on either platform: the shared `anomaly.deadbolt.browser` manifest contains
+an absolute executable path and must point to the fork. On Linux also update
+launcher entries.
+
+On macOS upstream and fork code-signing identities differ: use a consistently
+signed fork app, CLI and AutoFill build. App Group/Touch ID enrollment is
+signing-identity dependent and may need re-enrollment; keep the vault
+passphrase and recovery kit available. There is no automatic signing or
 launcher migration.
 
 The extension shares the upstream Chromium ID and cannot sit alongside it in
@@ -48,4 +51,6 @@ Build from source at the reviewed fork revision. `shuvbolt update` exits 1,
 does not check the network or write update state, and never delegates to an
 upstream package manager. The debug-only, non-default
 `upstream-update-fixtures` feature is for loopback test servers, not distribution.
+Managed apply in fixture builds additionally requires `DEADBOLT_FIXTURE_MANAGER`
+to name the exact stand-in executable by absolute path.
 There is no fork release signing identity configured for automated replacement.
