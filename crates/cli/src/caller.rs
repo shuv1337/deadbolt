@@ -1,5 +1,5 @@
-//! Who this CLI is to the daemon (`deadbolt debug whoami`), what callers did
-//! (`deadbolt activity`), and the check every command starts with: that the
+//! Who this CLI is to the daemon (`shuvbolt debug whoami`), what callers did
+//! (`shuvbolt activity`), and the check every command starts with: that the
 //! daemon is this binary before a passphrase goes to it.
 
 use std::path::PathBuf;
@@ -107,7 +107,7 @@ fn kebab(value: &impl serde::Serialize) -> String {
         .unwrap_or_default()
 }
 
-/// `deadbolt activity` lists this many entries unless told otherwise.
+/// `shuvbolt activity` lists this many entries unless told otherwise.
 const DEFAULT_LIMIT: u32 = 500;
 /// The most the daemon sends in one `ActivityList`.
 const PAGE: u32 = 1_000;

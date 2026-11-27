@@ -511,7 +511,7 @@ pub(super) mod tests {
         assert!(error.contains("unavailable"), "{error}");
         let good = loaded.create_vault("healthy").unwrap();
         let error = loaded.resolve(None).unwrap_err().to_string();
-        assert!(error.contains("`deadbolt vault default <name>`"), "{error}");
+        assert!(error.contains("`shuvbolt vault default <name>`"), "{error}");
         let prefix = loaded.resolve(Some(&bad.to_string()[..8])).unwrap_err();
         assert!(prefix.to_string().contains("unavailable"));
         assert!(loaded.held(&bad).is_none());

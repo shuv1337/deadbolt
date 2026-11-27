@@ -378,6 +378,6 @@ export function usable(reply: FormsReply, kind: FormKind, needs: string[]): Arra
  */
 export function formsError(err: unknown, verify = false): string {
   if (err instanceof HostError && (err.code === "cancelled" || (verify && err.code === "failed"))) return "Touch ID didn't confirm it's you. Nothing was filled."
-  if (err instanceof HostError && err.code === "not_found") return "That isn't in Deadbolt anymore."
+  if (err instanceof HostError && err.code === "not_found") return "That isn't in Shuvbolt anymore."
   return fillError(err)
 }

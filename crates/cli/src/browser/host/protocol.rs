@@ -168,7 +168,7 @@ impl From<anyhow::Error> for Refusal {
             {
                 return Self {
                     code: Code::Locked,
-                    message: "Deadbolt isn't running: unlock it".into(),
+                    message: "Shuvbolt isn't running: unlock it".into(),
                 };
             }
             None => Code::Failed,

@@ -1,5 +1,5 @@
 //! The quick panel's global shortcut, headless and offline: a conflict at
-//! launch shows a calm notice and keeps ⇧⌘Space working inside Deadbolt,
+//! launch shows a calm notice and keeps ⇧⌘Space working inside Shuvbolt,
 //! Settings' recorder changes, saves and resets it, and headless scripts reach
 //! the panel through it and through the menus' "Open Quick Panel".
 
@@ -84,7 +84,7 @@ fn a_conflict_at_launch_shows_a_notice_that_leads_to_settings() {
         &rt,
         "Another app is using it, so the quick panel can't open from anywhere."
     ));
-    assert!(rt.state.shortcut_fallback, "it still works inside Deadbolt");
+    assert!(rt.state.shortcut_fallback, "it still works inside Shuvbolt");
 
     press(&mut rt, "choose");
     assert!(rt.state.settings_open(), "Choose another… opens Settings");

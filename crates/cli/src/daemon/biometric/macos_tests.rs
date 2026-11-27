@@ -22,7 +22,7 @@ fn staged_production_helper_matches_pinned_sha256() {
 #[test]
 fn adhoc_helper_refuses_app_group_without_touching_containermanager() {
     assert_eq!(
-        group_container("5NZ4Q7NXJ4.anomaly.deadbolt").unwrap(),
+        group_container("TESTTEAM00.dev.shuv.shuvbolt").unwrap(),
         None
     );
     assert!(group_container("not-a-team-group").is_err());
@@ -50,7 +50,7 @@ fn helper_sha256_verification_rejects_tampered_binary() {
     assert!(macos::verify_helper_at(&fake_helper, "").is_err());
 }
 
-/// Without its helper, Deadbolt names the file it's missing rather than
+/// Without its helper, Shuvbolt names the file it's missing rather than
 /// going on unchecked.
 #[test]
 fn a_missing_helper_is_named() {

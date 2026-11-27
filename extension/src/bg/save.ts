@@ -313,9 +313,9 @@ const UPDATED: Record<SaveWhat, string> = { card: "Card updated", address: "Addr
 const expired = (): ChooseReply => ({ ok: false, message: "This offer has expired.", gone: true })
 /** Why a save the host turned down for now says, by the host's error code. */
 const SAVE_FAILED = new Map<string, string>([
-  ["locked", "Deadbolt is locked. Unlock it, then save again."],
-  ["cancelled", "Deadbolt didn't get your passphrase. Nothing was saved."],
-  ["rate_limited", "Deadbolt is busy. Try again in a moment."],
+  ["locked", "Shuvbolt is locked. Unlock it, then save again."],
+  ["cancelled", "Shuvbolt didn't get your passphrase. Nothing was saved."],
+  ["rate_limited", "Shuvbolt is busy. Try again in a moment."],
 ])
 /** The most of a brand a card's label shows. */
 const MAX_BRAND = 20
@@ -1158,7 +1158,7 @@ export class Saver {
     try {
       const reply = await (asNew ? o.fallback!.save() : o.save())
       this.dropOffer(tabId, id)
-      return { ok: true, message: reply.created ? "Saved to Deadbolt" : o.offer.what ? UPDATED[o.offer.what] : "Password updated" }
+      return { ok: true, message: reply.created ? "Saved to Shuvbolt" : o.offer.what ? UPDATED[o.offer.what] : "Password updated" }
     } catch (err) {
       o.saving = false
       const said = err instanceof HostError ? SAVE_FAILED.get(err.code) : undefined

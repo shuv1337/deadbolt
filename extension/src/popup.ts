@@ -102,7 +102,7 @@ function openApp() {
     h(
       "section",
       { class: "open-help", id: "open-help" },
-      para("Open ", h("strong", {}, "Deadbolt"), " from Applications or Spotlight. From a terminal, ", code("deadbolt unlock"), " unlocks it too."),
+      para("Open ", h("strong", {}, "Shuvbolt"), " from Applications or Spotlight. From a terminal, ", code("shuvbolt unlock"), " unlocks it too."),
     ),
   )
 }
@@ -134,31 +134,31 @@ function para(...parts: Array<Node | string>): HTMLElement {
 function statusBody(status: Status): HTMLElement | null {
   switch (status.state) {
     case "connecting":
-      return state(icon("keyhole"), "Connecting to Deadbolt…")
+      return state(icon("keyhole"), "Connecting to Shuvbolt…")
     case "not-installed":
       return state(
         icon("plug"),
-        "Connect Deadbolt to this browser",
-        para("Deadbolt's browser helper isn't installed. Run this in a terminal, then open this menu again:"),
-        commandBlock("deadbolt browser install"),
+        "Connect Shuvbolt to this browser",
+        para("Shuvbolt's browser helper isn't installed. Run this in a terminal, then open this menu again:"),
+        commandBlock("shuvbolt browser install"),
       )
     case "disconnected":
       return state(
         icon("plug"),
-        "Can't reach Deadbolt",
+        "Can't reach Shuvbolt",
         para(status.message),
-        para("If you moved or updated Deadbolt, install the browser helper again:"),
-        commandBlock("deadbolt browser install"),
+        para("If you moved or updated Shuvbolt, install the browser helper again:"),
+        commandBlock("shuvbolt browser install"),
       )
     case "unavailable":
-      return state(icon("plug"), "Deadbolt couldn't start", para(status.detail || "The daemon didn't answer."))
+      return state(icon("plug"), "Shuvbolt couldn't start", para(status.detail || "The daemon didn't answer."))
     case "not-set-up":
-      return state(icon("keyhole"), "Set up Deadbolt first", para("Create your vault in the Deadbolt app, or run ", code("deadbolt init"), "."), openButton(true))
+      return state(icon("keyhole"), "Set up Shuvbolt first", para("Create your vault in the Shuvbolt app, or run ", code("shuvbolt init"), "."), openButton(true))
     case "locked": {
       return state(
         icon("lock"),
-        "Unlock Deadbolt",
-        para("Unlock it in the app, or run ", code("deadbolt unlock"), ". The browser never asks for your passphrase."),
+        "Unlock Shuvbolt",
+        para("Unlock it in the app, or run ", code("shuvbolt unlock"), ". The browser never asks for your passphrase."),
         openButton(true),
       )
     }
@@ -168,7 +168,7 @@ function statusBody(status: Status): HTMLElement | null {
 }
 
 function openButton(primary: boolean): HTMLElement {
-  const b = h("button", { class: `btn${primary ? " primary" : ""}`, type: "button" }, "Open Deadbolt")
+  const b = h("button", { class: `btn${primary ? " primary" : ""}`, type: "button" }, "Open Shuvbolt")
   b.addEventListener("click", openApp)
   return b
 }
@@ -228,7 +228,7 @@ function showError(message: string) {
 function siteBody(reply: PopupReply): HTMLElement {
   if (reply.unfillable === "scheme") return state(icon("keyhole"), "Nothing to fill here", para("Open a website to see its logins."))
   if (reply.unfillable === "insecure")
-    return state(icon("lock"), "Not a secure page", para(`Deadbolt fills only on https pages and local dev hosts. ${reply.host ?? "This page"} uses plain http.`))
+    return state(icon("lock"), "Not a secure page", para(`Shuvbolt fills only on https pages and local dev hosts. ${reply.host ?? "This page"} uses plain http.`))
   const error = h("p", { class: "error", id: "error", role: "status" })
   error.hidden = !reply.error
   if (reply.error) error.textContent = reply.error
@@ -238,7 +238,7 @@ function siteBody(reply: PopupReply): HTMLElement {
       "section",
       { class: "site" },
       h("div", { class: "section-head" }, h("span", { class: "label" }, "Logins"), h("span", { class: "mono muted" }, site)),
-      h("div", { class: "empty" }, `No logins saved for ${site}. Sign in and Deadbolt offers to save it.`),
+      h("div", { class: "empty" }, `No logins saved for ${site}. Sign in and Shuvbolt offers to save it.`),
       error,
     )
   return h(
@@ -247,7 +247,7 @@ function siteBody(reply: PopupReply): HTMLElement {
     h("div", { class: "section-head" }, h("span", { class: "label" }, "Logins"), h("span", { class: "mono muted" }, site)),
     h("div", { class: "list" }, ...reply.accounts.map((a, i) => accountRow(a, i === 0 && !reply.offer, i))),
     error,
-    h("p", { class: "note" }, icon("lock"), h("span", {}, "Deadbolt never copies passwords: any app can read the clipboard. Fill puts them straight into the page.")),
+    h("p", { class: "note" }, icon("lock"), h("span", {}, "Shuvbolt never copies passwords: any app can read the clipboard. Fill puts them straight into the page.")),
   )
 }
 
@@ -282,7 +282,7 @@ function paint(reply: PopupReply | null, changed: boolean) {
 
   // Locked and not set up already have an Open Deadbolt button.
   const hasOpen = status.state === "locked" || status.state === "not-set-up"
-  const open = hasOpen ? null : h("button", { class: "link", type: "button" }, "Open Deadbolt", icon("arrow"))
+  const open = hasOpen ? null : h("button", { class: "link", type: "button" }, "Open Shuvbolt", icon("arrow"))
   open?.addEventListener("click", openApp)
   const oldBody = root.querySelector<HTMLElement>(".body")
   const oldTop = oldBody?.offsetTop ?? 0
@@ -303,7 +303,7 @@ function paint(reply: PopupReply | null, changed: boolean) {
           ]),
   )
   root.replaceChildren(
-    h("header", { class: "top" }, h("span", { class: "logo" }, svg(ICONS.deadbolt)), h("h1", { class: "brand" }, "Deadbolt"), record.button, pill(status)),
+    h("header", { class: "top" }, h("span", { class: "logo" }, svg(ICONS.deadbolt)), h("h1", { class: "brand" }, "Shuvbolt"), record.button, pill(status)),
     record.bar,
     body2,
     h("footer", { class: "bottom" }, open ?? h("span"), h("span", { class: "bottom-end" }, status.state === "ready" ? h("span", { class: "mono faint" }, status.version.split("+")[0]) : null, settingsButton())),

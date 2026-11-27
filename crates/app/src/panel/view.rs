@@ -45,15 +45,15 @@ fn card(s: &App, k: &Kit) -> El {
     let (header, body) = match &s.screen {
         Screen::Vault => (search(s, k), vault(s, k)),
         // DELETABLE(v1-migrate): the kits an upgrade makes show only in
-        // Deadbolt's window, so the first unlock happens there.
+        // Shuvbolt's window, so the first unlock happens there.
         Screen::Locked if s.upgrade_waits() => (
-            title(k, "upgrade", k.glyph.lock, "Open Deadbolt to upgrade to v2"),
+            title(k, "upgrade", k.glyph.lock, "Open Shuvbolt to upgrade to v2"),
             message(
                 k,
                 "upgrade",
-                "Unlock in Deadbolt's window once to move your vaults to v2. It shows each one's new recovery kit.",
+                "Unlock in Shuvbolt's window once to move your vaults to v2. It shows each one's new recovery kit.",
                 Some(
-                    Button::new("Open Deadbolt")
+                    Button::new("Open Shuvbolt")
                         .variant(ButtonVariant::Contrast)
                         .control_size(ControlSize::Large)
                         .on_press_tx(|s: &mut App, tx| s.open_main(tx))
@@ -62,17 +62,17 @@ fn card(s: &App, k: &Kit) -> El {
             ),
         ),
         Screen::Locked => (
-            title(k, "locked", k.glyph.lock, "Unlock Deadbolt"),
+            title(k, "locked", k.glyph.lock, "Unlock Shuvbolt"),
             locked(s, k),
         ),
         Screen::Onboarding => (
-            title(k, "setup", k.glyph.lock, "Set up Deadbolt"),
+            title(k, "setup", k.glyph.lock, "Set up Shuvbolt"),
             message(
                 k,
                 "setup",
-                "This device has no vault yet. Create one, or join one from your other device, in Deadbolt's window.",
+                "This device has no vault yet. Create one, or join one from your other device, in Shuvbolt's window.",
                 Some(
-                    Button::new("Open Deadbolt")
+                    Button::new("Open Shuvbolt")
                         .variant(ButtonVariant::Contrast)
                         .control_size(ControlSize::Large)
                         .on_press_tx(|s: &mut App, tx| s.open_main(tx))
@@ -81,7 +81,7 @@ fn card(s: &App, k: &Kit) -> El {
             ),
         ),
         Screen::Failed(error) => (
-            title(k, "failed", k.glyph.lock, "Can't reach Deadbolt"),
+            title(k, "failed", k.glyph.lock, "Can't reach Shuvbolt"),
             message(
                 k,
                 "failed",
@@ -96,8 +96,8 @@ fn card(s: &App, k: &Kit) -> El {
             ),
         ),
         Screen::Connecting => (
-            title(k, "connecting", k.glyph.lock, "Deadbolt"),
-            message(k, "connecting", "Starting Deadbolt…", None),
+            title(k, "connecting", k.glyph.lock, "Shuvbolt"),
+            message(k, "connecting", "Starting Shuvbolt…", None),
         ),
     };
     let close = Spring::new(CLOSE as f32, 0.0);
@@ -306,7 +306,7 @@ fn enter_does(s: &App) -> &'static str {
         Screen::Vault => s.enter_hint().unwrap_or_default(),
         Screen::Locked if s.touch_id_ready() && s.passphrase.text.is_empty() => "Touch ID",
         Screen::Locked => "Unlock",
-        Screen::Onboarding => "Open Deadbolt",
+        Screen::Onboarding => "Open Shuvbolt",
         Screen::Failed(_) => "Try again",
         Screen::Connecting => "",
     }

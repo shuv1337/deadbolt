@@ -1,4 +1,4 @@
-//! The recovery kit as `deadbolt init` shows it.
+//! The recovery kit as `shuvbolt init` shows it.
 
 use zeroize::Zeroizing;
 
@@ -25,7 +25,7 @@ pub fn kit_text(vault: &str, words: &str) -> Zeroizing<String> {
     out
 }
 
-/// The new vault and its kit as one JSON object, for `deadbolt init --json`.
+/// The new vault and its kit as one JSON object, for `shuvbolt init --json`.
 /// Built in wiped memory, like the text.
 pub fn kit_json(
     vault: &str,

@@ -332,7 +332,7 @@ pub fn refresh_status() -> BiometricStatus {
     status
 }
 
-/// Resolves the shared macOS App Group container directory (`<TEAM_ID>.anomaly.deadbolt`)
+/// Resolves the shared macOS App Group container directory (`<TEAM_ID>.dev.shuv.shuvbolt`)
 /// through `deadbolt-enclave group-container`. Returns `Ok(None)` when the
 /// running daemon or helper is not signed with that App Group entitlement (e.g.
 /// local ad-hoc builds) or off macOS.
@@ -596,7 +596,7 @@ mod macos {
     /// SHA-256 digest before execution.
     ///
     /// In production builds (`cfg(not(test))`), only `deadbolt-enclave` next to
-    /// the running `deadbolt` executable (`Deadbolt.app/Contents/Helpers/`) is
+    /// the running `shuvbolt` executable (`Shuvbolt.app/Contents/Helpers/`) is
     /// accepted; build-machine paths are never consulted.
     pub(super) fn verified_helper_path() -> Result<PathBuf> {
         #[cfg(not(test))]

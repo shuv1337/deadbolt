@@ -1,6 +1,6 @@
-//! `deadbolt broker`: one `deadbolt run`'s reverse proxy (docs/broker.md).
+//! `shuvbolt broker`: one `shuvbolt run`'s reverse proxy (docs/broker.md).
 //!
-//! `deadbolt run --broker` starts it with an empty environment (no
+//! `shuvbolt run --broker` starts it with an empty environment (no
 //! `LD_PRELOAD`, no `DYLD_*`, nothing of the caller's), in its own process
 //! group, and writes its config, real secrets included, to its stdin
 //! (`--fd 0`). The broker hardens itself before reading a byte (no core
@@ -43,7 +43,7 @@ use zeroize::Zeroizing;
 use config::BrokerConfig;
 use proxy::Broker;
 
-/// `deadbolt broker`, which `main` hands over before anything else runs.
+/// `shuvbolt broker`, which `main` hands over before anything else runs.
 pub const COMMAND: &str = "broker";
 /// The largest config frame read.
 const MAX_FRAME: u64 = 1 << 20;
@@ -128,19 +128,19 @@ impl Lineage {
     }
 }
 
-/// `deadbolt broker [--fd N]`.
+/// `shuvbolt broker [--fd N]`.
 pub fn run(args: &[OsString]) -> ExitCode {
     // First, before a secret is in memory.
     let hardening = harden_process(HardeningOptions {
         deny_debugger: !cfg!(any(debug_assertions, test)),
     });
     for (protection, outcome) in hardening.failures() {
-        eprintln!("deadbolt broker: {protection}: {outcome}");
+        eprintln!("shuvbolt broker: {protection}: {outcome}");
     }
     match start(args) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
-            eprintln!("deadbolt broker: {error:#}");
+            eprintln!("shuvbolt broker: {error:#}");
             ExitCode::FAILURE
         }
     }
@@ -155,7 +155,7 @@ fn fd_arg(args: &[OsString]) -> Result<u32> {
         [] => "0",
         ["--fd", fd] => fd,
         [one] if one.starts_with("--fd=") => &one[5..],
-        _ => bail!("usage: deadbolt broker [--fd N]"),
+        _ => bail!("usage: shuvbolt broker [--fd N]"),
     };
     fd.parse().context("--fd takes a file descriptor number")
 }

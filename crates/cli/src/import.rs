@@ -82,7 +82,7 @@ pub struct MirrorVersion {
     /// which are the item's own.
     pub fields: BTreeSet<String>,
     /// For an item taken over, the case-folded tags 1Password last wrote:
-    /// a later sync removes those 1Password deleted and leaves Deadbolt-only
+    /// a later sync removes those 1Password deleted and leaves Shuvbolt-only
     /// tags untouched.
     pub tags: BTreeSet<String>,
 }

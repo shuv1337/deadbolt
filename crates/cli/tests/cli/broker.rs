@@ -1,4 +1,4 @@
-//! `deadbolt run --broker`: the command's environment holds placeholders
+//! `shuvbolt run --broker`: the command's environment holds placeholders
 //! and the broker's URL, never a value; requests from the command reach the
 //! upstream with the real token or a real SigV4 signature; the same
 //! placeholder from a process outside the run is refused.

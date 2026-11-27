@@ -1,5 +1,5 @@
 #[cfg(not(unix))]
-compile_error!("deadbolt currently supports Unix platforms only");
+compile_error!("shuvbolt currently supports Unix platforms only");
 
 mod app;
 mod broker;
@@ -50,13 +50,13 @@ static ALLOC: procwatch::alloc::Counting = procwatch::alloc::Counting::system();
 
 #[derive(Parser)]
 #[command(
-    name = "deadbolt",
+    name = "shuvbolt",
     version,
     long_version = env!("DEADBOLT_LONG_VERSION"),
     about = "A decentralized password manager",
     long_about = "A decentralized password manager.\n\nEverything can be driven with \
 flags, env and stdin. The passphrase comes from DEADBOLT_PASSPHRASE or \
---passphrase-stdin. Only when stdin and stderr are terminals does deadbolt ask for \
+--passphrase-stdin. Only when stdin and stderr are terminals does shuvbolt ask for \
 what is missing; otherwise it fails, with exit code 3 if the store is locked and 4 \
 if the daemon refused the request."
 )]
@@ -92,7 +92,7 @@ enum Commands {
         json: bool,
     },
     /// Join a vault from one of your other devices: shows a code, then
-    /// waits until `deadbolt approve <code>` runs on a device with the vault.
+    /// waits until `shuvbolt approve <code>` runs on a device with the vault.
     ///
     /// Codes work once, for 5 minutes. On a device that isn't set up yet,
     /// the passphrase for this device is asked once it has joined (or taken
@@ -103,7 +103,7 @@ enum Commands {
         #[arg(long)]
         device_name: Option<String>,
     },
-    /// Approve the device showing a code from `deadbolt join`: adds it to a
+    /// Approve the device showing a code from `shuvbolt join`: adds it to a
     /// vault (the default vault, or --vault).
     Approve {
         /// The code, such as violin-garden-tiger-lamp-zoo.
@@ -117,7 +117,7 @@ enum Commands {
     Vault(VaultCommand),
     /// Unlock the store.
     Unlock {
-        /// Lock again after this long without a deadbolt command (30s, 15m,
+        /// Lock again after this long without a shuvbolt command (30s, 15m,
         /// 8h, 1d, never). Default: `unlock_timeout` in config.toml, else never.
         #[arg(long)]
         timeout: Option<String>,
@@ -152,7 +152,7 @@ enum Commands {
     Recovery(remote::RecoveryCommand),
     /// Sync now with every device (or only the devices in --vault).
     Sync,
-    /// List what callers asked Deadbolt for, and what the app showed or
+    /// List what callers asked Shuvbolt for, and what the app showed or
     /// copied, newest first. Names items and fields, never values.
     Activity {
         /// Only entries this recent (30m, 1h, 7d).
@@ -165,7 +165,7 @@ enum Commands {
         #[arg(long)]
         json: bool,
     },
-    /// Run Deadbolt's background daemon in the foreground. Clients start it.
+    /// Run Shuvbolt's background daemon in the foreground. Clients start it.
     #[command(hide = true)]
     Daemon,
     /// The daemon under its old name, as an update from an older build
@@ -183,8 +183,8 @@ enum Commands {
     /// Run a command with secrets in its environment, concealed in its
     /// output.
     ///
-    ///   deadbolt run --env GH_TOKEN=deadbolt://personal/GitHub/token -- gh release create v1
-    ///   deadbolt run --env-file .env.tpl -- bun run dev
+    ///   shuvbolt run --env GH_TOKEN=deadbolt://personal/GitHub/token -- gh release create v1
+    ///   shuvbolt run --env-file .env.tpl -- bun run dev
     ///
     /// A reference is deadbolt://[vault/]item/field: the item by its title
     /// or short id (exactly one must match), the vault optional (default:
@@ -201,14 +201,14 @@ enum Commands {
     Run(secrets::RunArgs),
     /// Fill a template's {{ deadbolt://… }} references and write it 0600.
     ///
-    ///   deadbolt inject -i config.tpl -o config.json
+    ///   shuvbolt inject -i config.tpl -o config.json
     ///
-    /// Replaces an existing output file only if `deadbolt inject` wrote it
+    /// Replaces an existing output file only if `shuvbolt inject` wrote it
     /// and it hasn't changed since, or with --force.
     #[command(verbatim_doc_comment)]
     Inject(secrets::InjectArgs),
     /// Print the value a reference names (deadbolt://[vault/]item/field).
-    /// Prefer `deadbolt run` or `inject`, which keep values out of your
+    /// Prefer `shuvbolt run` or `inject`, which keep values out of your
     /// terminal and scrollback.
     Read(secrets::ReadArgs),
     /// Import logins, cards, secure notes, SSH keys, identities, API
@@ -244,19 +244,19 @@ enum Commands {
         dry_run: bool,
     },
     /// Send files, a secret or vault items through a one-time link: open it
-    /// with `deadbolt receive <link>` or in any browser (deadbolt.pw/r, no
-    /// Deadbolt needed).
+    /// with `shuvbolt receive <link>` or in any browser (deadbolt.pw/r, no
+    /// Shuvbolt needed).
     ///
     /// The link is the key: whoever opens it first gets the contents,
     /// decrypted on their computer. Nothing is uploaded anywhere; the
-    /// Deadbolt daemon on this computer serves the link live until it is
+    /// Shuvbolt daemon on this computer serves the link live until it is
     /// opened, expires (default 1h) or is revoked, and only while it runs.
     ///
-    ///   deadbolt send ./report.pdf ./keys/          files and folders
-    ///   deadbolt send                               asks for a secret (hidden)
-    ///   cat key.pem | deadbolt send -               stdin
-    ///   deadbolt send --item "Stripe"               a vault item's fields
-    ///   deadbolt send --item Stripe --field secret  one field
+    ///   shuvbolt send ./report.pdf ./keys/          files and folders
+    ///   shuvbolt send                               asks for a secret (hidden)
+    ///   cat key.pem | shuvbolt send -               stdin
+    ///   shuvbolt send --item "Stripe"               a vault item's fields
+    ///   shuvbolt send --item Stripe --field secret  one field
     ///
     /// Arguments are files or folders and must exist; vault items are only
     /// ever sent with --item, by exact name or ID. Each --field applies to
@@ -264,19 +264,19 @@ enum Commands {
     /// first; scripts pass --yes (--json and no terminal require it).
     /// Prints the link.
     ///
-    ///   deadbolt send ls                            what was sent
-    ///   deadbolt send show <id>                     one send and its opens
-    ///   deadbolt send revoke <id>                   stop a link working
+    ///   shuvbolt send ls                            what was sent
+    ///   shuvbolt send show <id>                     one send and its opens
+    ///   shuvbolt send revoke <id>                   stop a link working
     ///
     /// A first argument of ls, show or revoke is the subcommand, never a
     /// path: send a file named ls as ./ls.
     #[command(verbatim_doc_comment)]
     Send(send::SendArgs),
-    /// Open a Deadbolt Send link: a secret or an item's fields go to stdout,
+    /// Open a Shuvbolt Send link: a secret or an item's fields go to stdout,
     /// files to --output.
     ///
-    ///   deadbolt receive 'https://deadbolt.pw/r#…'
-    ///   deadbolt receive '…#…' --output ./downloads
+    ///   shuvbolt receive 'https://deadbolt.pw/r#…'
+    ///   shuvbolt receive '…#…' --output ./downloads
     ///
     /// Takes the whole link or only the part after `#`, so it can be shared
     /// terminal to terminal. Connects straight to the sender's computer over
@@ -298,18 +298,18 @@ enum Commands {
     /// sites supporting authenticator codes or passkeys.
     Health(health::HealthArgs),
     /// Open the desktop app, or bring the running one forward (bare
-    /// `deadbolt` does too when started from an app launcher rather than a
+    /// `shuvbolt` does too when started from an app launcher rather than a
     /// terminal; DEADBOLT_NO_UI=1 stops that). On Linux its first opening
-    /// adds Deadbolt to the app launcher.
+    /// adds Shuvbolt to the app launcher.
     App,
-    /// Add Deadbolt to the Linux app launcher, opening `deadbolt app`, or
+    /// Add Shuvbolt to the Linux app launcher, opening `shuvbolt app`, or
     /// take it out.
     #[command(subcommand)]
     Desktop(DesktopCommand),
-    /// Connect Deadbolt's browser extension to this computer's Deadbolt.
+    /// Connect Shuvbolt's browser extension to this computer's Shuvbolt.
     #[command(subcommand)]
     Browser(BrowserCommand),
-    /// Update this Deadbolt from its release channel: Deadbolt.app when
+    /// Update this Shuvbolt from its release channel: Shuvbolt.app when
     /// this is its `deadbolt`, else this standalone `deadbolt`, plus an
     /// unpacked extension registered with `browser install --extension-dir`.
     ///
@@ -319,10 +319,10 @@ enum Commands {
     /// restarts on the new build, locked. Works while the vault is locked.
     Update(update::UpdateArgs),
     /// Serve AI coding agents over MCP (stdin/stdout): vault and item
-    /// metadata, status, a health summary and `deadbolt run --broker`
+    /// metadata, status, a health summary and `shuvbolt run --broker`
     /// commands, never a secret value.
     ///
-    /// Add it to an agent as a stdio server running `deadbolt mcp`. It
+    /// Add it to an agent as a stdio server running `shuvbolt mcp`. It
     /// neither starts the daemon nor unlocks the store: while locked its
     /// tools say so.
     #[command(verbatim_doc_comment)]
@@ -332,7 +332,7 @@ enum Commands {
     #[command(subcommand)]
     Debug(DebugCommand),
     /// Serve the browser extension at ORIGIN over stdin/stdout. Browsers
-    /// run this; `deadbolt browser install` sets it up.
+    /// run this; `shuvbolt browser install` sets it up.
     #[command(hide = true)]
     BrowserHost { origin: String },
 }
@@ -366,21 +366,21 @@ enum DesktopCommand {
 
 #[derive(Subcommand)]
 enum BrowserCommand {
-    /// Let the extension reach Deadbolt in Chrome, Brave, Arc, Edge,
+    /// Let the extension reach Shuvbolt in Chrome, Brave, Arc, Edge,
     /// Chromium or Helium (default: those installed here).
     Install {
         #[arg(long, value_enum)]
         browser: Vec<browser::Browser>,
         /// Also keep an unpacked copy of the extension in DIR current with
-        /// `deadbolt update` (a new or empty directory; update owns it).
+        /// `shuvbolt update` (a new or empty directory; update owns it).
         #[arg(long, value_name = "DIR")]
         extension_dir: Option<PathBuf>,
     },
-    /// Stop the extension reaching Deadbolt (default: in every browser).
+    /// Stop the extension reaching Shuvbolt (default: in every browser).
     Uninstall {
         #[arg(long, value_enum, conflicts_with = "extension_dir")]
         browser: Vec<browser::Browser>,
-        /// Only stop `deadbolt update` keeping DIR current, leaving its
+        /// Only stop `shuvbolt update` keeping DIR current, leaving its
         /// files and the browsers' registration alone.
         #[arg(long, value_name = "DIR")]
         extension_dir: Option<PathBuf>,
@@ -456,7 +456,7 @@ fn main() -> ExitCode {
 fn run_main() -> ExitCode {
     // Traces to a local OpenTelemetry collector, only when asked for.
     telemetry::start(
-        "deadbolt",
+        "shuvbolt",
         &client::version(),
         config::env("OTEL_EXPORTER_OTLP_ENDPOINT")
             .ok()
@@ -464,7 +464,7 @@ fn run_main() -> ExitCode {
             .and_then(telemetry::endpoint),
     );
     let mut args: Vec<std::ffi::OsString> = std::env::args_os().collect();
-    // `deadbolt ui [flags]` is `deadbolt-ui [flags]`, the app's own program.
+    // `shuvbolt ui [flags]` is `shuvbolt-ui [flags]`, the app's own program.
     if args.get(1).is_some_and(|a| a == app::UI) {
         return app::run_ui(&args[2..]);
     }
@@ -477,7 +477,7 @@ fn run_main() -> ExitCode {
     {
         args.insert(1, "browser-host".into());
     }
-    // Bare `deadbolt` from an app launcher opens the app; from a terminal,
+    // Bare `shuvbolt` from an app launcher opens the app; from a terminal,
     // or when the app can't be opened, it prints usage as before.
     if args.len() == 1
         && app::bare_opens_app(app::from_terminal(), cfg!(target_os = "macos"), |name| {
@@ -501,7 +501,7 @@ fn run_main() -> ExitCode {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| if daemon { "warn,deadbolt=info" } else { "warn" }.into()),
+                .unwrap_or_else(|_| if daemon { "warn,shuvbolt=info" } else { "warn" }.into()),
         )
         .with_writer(std::io::stderr)
         .with_ansi(std::io::stderr().is_terminal())
@@ -551,7 +551,7 @@ fn notices_updates(command: &Commands) -> bool {
     )
 }
 
-/// Bare `deadbolt`'s `deadbolt app`, before the CLI's runtime exists.
+/// Bare `shuvbolt`'s `shuvbolt app`, before the CLI's runtime exists.
 fn open_app() -> bool {
     tokio::runtime::Builder::new_current_thread()
         .enable_all()
@@ -682,7 +682,7 @@ async fn run(cli: Cli) -> Result<ExitCode> {
             match command.unwrap_or(TouchIdCommand::Status) {
                 TouchIdCommand::On => {
                     if !status.initialized {
-                        bail!("this device is not set up; run `deadbolt init` or `deadbolt join`");
+                        bail!("this device is not set up; run `shuvbolt init` or `shuvbolt join`");
                     }
                     let Reply::Done =
                         request(&paths, Command::TouchIdSet { enabled: true }, from_stdin).await?
@@ -875,7 +875,7 @@ async fn run(cli: Cli) -> Result<ExitCode> {
             };
             let status = client::ensure_running(&paths).await?;
             if !status.initialized {
-                bail!("this device is not set up; run `deadbolt init` or `deadbolt join`");
+                bail!("this device is not set up; run `shuvbolt init` or `shuvbolt join`");
             }
             if status.unlocked && timeout_secs.is_none() {
                 println!("unlocked");
@@ -1040,7 +1040,7 @@ async fn join(paths: &Paths, command: Command, from_stdin: bool) -> Result<Reply
         Ok(match event {
             Event::Code { code } => {
                 println!("Code: {code}");
-                eprintln!("On a device with your vault, run: deadbolt approve {code}");
+                eprintln!("On a device with your vault, run: shuvbolt approve {code}");
                 eprintln!("waiting…");
                 None
             }

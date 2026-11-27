@@ -411,7 +411,7 @@ impl App {
     }
 
     /// While the default shortcut couldn't be registered, it still works
-    /// inside Deadbolt (`panel::window::is_shortcut`). The menus show the
+    /// inside Shuvbolt (`panel::window::is_shortcut`). The menus show the
     /// chosen one.
     fn shortcut_changed(&mut self) {
         let h = &self.hotkey;

@@ -1,5 +1,5 @@
-//! The tools `deadbolt mcp` offers: daemon and vault status, vault and item
-//! listings, a credential health summary and `deadbolt run --broker`
+//! The tools `shuvbolt mcp` offers: daemon and vault status, vault and item
+//! listings, a credential health summary and `shuvbolt run --broker`
 //! commands. Each asks the daemon only for what carries no values; [`ask`]
 //! refuses anything else before it is sent.
 
@@ -33,8 +33,8 @@ const VAULT: (&str, &str, &str) = (
 const TOOLS: [Spec; 5] = [
     Spec {
         name: "deadbolt_status",
-        title: "Deadbolt status",
-        description: "Whether Deadbolt's daemon is running and the store locked, its version, \
+        title: "Shuvbolt status",
+        description: "Whether Shuvbolt's daemon is running and the store locked, its version, \
 how many vaults it holds and this device's name. Works while locked. Never returns secret values.",
         arguments: &[],
         required: &[],
@@ -52,7 +52,7 @@ which is the default. Needs the store unlocked. Never returns secret values.",
         title: "List items",
         description: "Items in a vault: id, title, type, tags, the username or other \
 non-secret detail, the names of the item type's fields, and a deadbolt:// reference to \
-its main field for deadbolt run and deadbolt_broker_hint. Field values are never returned. \
+its main field for shuvbolt run and deadbolt_broker_hint. Field values are never returned. \
 Needs the store unlocked.",
         arguments: &[
             VAULT,
@@ -94,9 +94,9 @@ Needs the store unlocked.",
     Spec {
         name: "deadbolt_broker_hint",
         title: "Broker command",
-        description: "A deadbolt run --broker command that lets a program call an HTTP API \
+        description: "A shuvbolt run --broker command that lets a program call an HTTP API \
 with a vault credential it never holds: the program gets a placeholder and a local URL, and \
-Deadbolt's broker adds the real credential on the way out. Give the item and a known service \
+Shuvbolt's broker adds the real credential on the way out. Give the item and a known service \
 (openai, anthropic) or the API's https upstream URL. Ask the person to run the command; never \
 ask them for the credential itself.",
         arguments: &[
@@ -115,7 +115,7 @@ ask them for the credential itself.",
             (
                 "upstream",
                 "string",
-                "The API's base URL, https (for a service Deadbolt doesn't know).",
+                "The API's base URL, https (for a service Shuvbolt doesn't know).",
             ),
             (
                 "env",
@@ -288,7 +288,7 @@ pub(super) async fn ask(paths: &Paths, command: Command) -> Result<Reply, Failur
     if !value_free(&command) {
         return Err(Failure::Daemon {
             code: "forbidden",
-            message: format!("deadbolt mcp never sends {}", command.name()),
+            message: format!("shuvbolt mcp never sends {}", command.name()),
         });
     }
     client::call(paths, command, |event| {
@@ -302,11 +302,11 @@ fn daemon_failure(error: anyhow::Error) -> Failure {
     let (code, message) = match client::code(&error) {
         Some(ErrorCode::Locked) => (
             "locked",
-            "The store is locked. Ask the person to run `deadbolt unlock`, then try again.".into(),
+            "The store is locked. Ask the person to run `shuvbolt unlock`, then try again.".into(),
         ),
         Some(ErrorCode::NotInitialized) => (
             "not-set-up",
-            "Deadbolt isn't set up on this device. Ask the person to run `deadbolt init`.".into(),
+            "Shuvbolt isn't set up on this device. Ask the person to run `shuvbolt init`.".into(),
         ),
         Some(code) => (code.name(), format!("{error:#}")),
         None if error
@@ -315,7 +315,7 @@ fn daemon_failure(error: anyhow::Error) -> Failure {
         {
             (
                 "not-running",
-                "Deadbolt's daemon isn't running. Ask the person to run `deadbolt unlock`, \
+                "Shuvbolt's daemon isn't running. Ask the person to run `shuvbolt unlock`, \
 then try again."
                     .into(),
             )
@@ -340,7 +340,7 @@ async fn status(paths: &Paths) -> Result<Value, Failure> {
             "state": if running.is_some() { "incompatible" } else { "stopped" },
             "version": client::version(),
             "daemon_version": running.map(|d| d.version),
-            "hint": "Ask the person to run `deadbolt unlock`, which starts the daemon.",
+            "hint": "Ask the person to run `shuvbolt unlock`, which starts the daemon.",
         }));
     };
     let state = if !status.initialized {

@@ -46,7 +46,7 @@ pub struct App {
     /// The quick panel's global shortcut (the main window's).
     pub hotkey: crate::shortcut::Hotkey,
     /// The default shortcut isn't registered globally, so ⇧⌘Space inside
-    /// Deadbolt opens and closes the panel (`panel::window::is_shortcut`).
+    /// Shuvbolt opens and closes the panel (`panel::window::is_shortcut`).
     pub shortcut_fallback: bool,
     pub daemon: Daemon,
     /// How long a copied secret stays on the clipboard.
@@ -326,7 +326,7 @@ impl App {
                 self.on_trash_changed();
             }
             Change::Stopping => self.on_daemon_gone(tx),
-            // Another launch (`deadbolt app`): only the main window's watch hears it.
+            // Another launch (`shuvbolt app`): only the main window's watch hears it.
             Change::Activate { token } => {
                 if let Some(windows) = &self.windows {
                     windows.activate_main(token);

@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "@deadbolt/extension",
+      "name": "@shuvbolt/extension",
       "dependencies": {
         "tldts": "7.4.18",
       },

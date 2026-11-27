@@ -100,7 +100,7 @@ pub(super) fn about(n: usize, of: usize) -> String {
         "This vault moved".to_owned()
     };
     format!(
-        "Upgraded to Deadbolt v2. {which} under the same passphrase, with these \
-         24 words as its new recovery kit. Deadbolt won’t show them again."
+        "Upgraded to Shuvbolt v2. {which} under the same passphrase, with these \
+         24 words as its new recovery kit. Shuvbolt won’t show them again."
     )
 }

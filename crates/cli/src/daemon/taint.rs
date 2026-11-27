@@ -1,13 +1,13 @@
-//! Taint: the processes `deadbolt run` started, and everything they start.
+//! Taint: the processes `shuvbolt run` started, and everything they start.
 //!
-//! `deadbolt run` registers itself here after it has resolved its own
+//! `shuvbolt run` registers itself here after it has resolved its own
 //! secrets and before it spawns the command, so the command is a
 //! descendant of a registered process from its first instruction: no
 //! window between spawn and registration. On every control connection
 //! while a run is registered, the daemon walks the caller's ancestry by
 //! `(pid, start time)`; a caller descended from a run is pinned to the
 //! run's capability (none, by default) and gets nothing ambient: no item,
-//! no secret, no unlock, no prompt. `deadbolt run` ends its entry with the
+//! no secret, no unlock, no prompt. `shuvbolt run` ends its entry with the
 //! run id, which never reaches the command (neither its environment nor its
 //! arguments); an entry whose process is gone is dropped as it's found.
 //!
@@ -36,14 +36,14 @@ use super::{Daemon, fail};
 use crate::protocol::{Command, ErrorCode, Reply, Secret};
 
 /// What a process inside a run hears.
-pub const DENIED: &str = "process is running inside deadbolt run and cannot access daemon secrets";
+pub const DENIED: &str = "process is running inside shuvbolt run and cannot access daemon secrets";
 
 /// The most ancestors walked before giving up.
 const MAX_HOPS: usize = 64;
 /// The most runs registered at once.
 const MAX_RUNS: usize = 4096;
 
-/// One `deadbolt run`, by the process that registered.
+/// One `shuvbolt run`, by the process that registered.
 #[derive(Debug)]
 pub struct TaintEntry {
     pub run_id: [u8; 16],

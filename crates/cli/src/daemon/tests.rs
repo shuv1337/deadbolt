@@ -410,7 +410,7 @@ async fn locking_wakes_membership_waiters_with_the_locked_error() {
     );
     let error = error.downcast::<DaemonError>().unwrap();
     assert!(matches!(error.code, ErrorCode::Locked));
-    assert_eq!(error.message, "locked: run `deadbolt unlock`");
+    assert_eq!(error.message, "locked: run `shuvbolt unlock`");
 }
 
 #[test]

@@ -242,7 +242,7 @@ pub(crate) const SCENES: &[Scene] = &[
             }),
         );
     }),
-    // An export of documents only: nothing Deadbolt takes.
+    // An export of documents only: nothing Shuvbolt takes.
     ("import-nothing-to-import", |s| {
         vault(s);
         show_preview(
@@ -273,7 +273,7 @@ pub(crate) const SCENES: &[Scene] = &[
         empty_vault(s);
         s.import.error = Some(Notice::new(
             Severity::Caution,
-            "Passwords.json isn't an export Deadbolt can read",
+            "Passwords.json isn't an export Shuvbolt can read",
             "This is an encrypted export; export as unencrypted .json.",
         ));
     }),

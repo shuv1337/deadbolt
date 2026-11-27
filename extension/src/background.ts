@@ -47,17 +47,17 @@ passkeys.listen()
 function title(status: Status): string {
   switch (status.state) {
     case "ready":
-      return "Deadbolt"
+      return "Shuvbolt"
     case "locked":
-      return "Deadbolt is locked"
+      return "Shuvbolt is locked"
     case "not-set-up":
-      return "Deadbolt isn't set up yet"
+      return "Shuvbolt isn't set up yet"
     case "not-installed":
-      return "Deadbolt: run `deadbolt browser install`"
+      return "Shuvbolt: run `shuvbolt browser install`"
     case "unavailable":
-      return "Deadbolt couldn't start"
+      return "Shuvbolt couldn't start"
     default:
-      return "Deadbolt isn't connected"
+      return "Shuvbolt isn't connected"
   }
 }
 

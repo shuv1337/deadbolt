@@ -179,9 +179,9 @@ private func testUnitAndWire() async throws {
     let tmp = FileManager.default.temporaryDirectory
         .appendingPathComponent("deadbolt-autofill-locate-\(UUID().uuidString)", isDirectory: true)
     defer { try? FileManager.default.removeItem(at: tmp) }
-    let realApp = tmp.appendingPathComponent("Real/Deadbolt.app", isDirectory: true)
+    let realApp = tmp.appendingPathComponent("Real/Shuvbolt.app", isDirectory: true)
     let appex = realApp.appendingPathComponent("Contents/PlugIns/DeadboltAutoFill.appex", isDirectory: true)
-    let helper = realApp.appendingPathComponent("Contents/Helpers/deadbolt", isDirectory: false)
+    let helper = realApp.appendingPathComponent("Contents/Helpers/shuvbolt", isDirectory: false)
     try FileManager.default.createDirectory(at: appex, withIntermediateDirectories: true)
     try FileManager.default.createDirectory(
         at: helper.deletingLastPathComponent(),

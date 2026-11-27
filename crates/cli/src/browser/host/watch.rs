@@ -23,11 +23,11 @@ pub(super) async fn hello(paths: &Paths) -> (Body, bool) {
     let (status, detail) = match client::ensure_running(paths).await {
         Ok(status) if !status.initialized => (
             HostStatus::NotSetUp,
-            Some("Set up Deadbolt to fill passwords: run `deadbolt init`".to_string()),
+            Some("Set up Shuvbolt to fill passwords: run `shuvbolt init`".to_string()),
         ),
         Ok(status) if !status.unlocked => (
             HostStatus::Locked,
-            Some("Unlock Deadbolt to fill passwords".to_string()),
+            Some("Unlock Shuvbolt to fill passwords".to_string()),
         ),
         Ok(_) => (HostStatus::Ready, None),
         Err(error) => (HostStatus::Unavailable, Some(format!("{error:#}"))),

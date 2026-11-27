@@ -116,7 +116,7 @@ pub struct Onboarding {
     /// The pairing code: until it's used or expires, whoever types it first
     /// pairs with this device, so it's wiped when dropped.
     pub code: Option<Zeroizing<String>>,
-    /// The copied `deadbolt approve` command, while it's still on the clipboard.
+    /// The copied `shuvbolt approve` command, while it's still on the clipboard.
     pub copied: Option<SecretCopy>,
     /// The recovery words copied on the save step, and its brief check.
     pub copied_kit: Option<recovery::KitCopy>,
@@ -473,12 +473,12 @@ impl App {
         o.worker.cancel();
     }
 
-    /// Copies `deadbolt approve <code>`, the command to run on the other device.
+    /// Copies `shuvbolt approve <code>`, the command to run on the other device.
     pub fn copy_code(&mut self, tx: &mut Tx) {
         let Some(code) = &self.onboarding.code else {
             return;
         };
-        let command = format!("deadbolt approve {}", code.as_str());
+        let command = format!("shuvbolt approve {}", code.as_str());
         self.onboarding.notice = None;
         self.onboarding.copied = Some(tx.copy_secret(command, CODE_LIFETIME));
     }

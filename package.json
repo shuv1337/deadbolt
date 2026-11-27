@@ -1,10 +1,10 @@
 {
-  "name": "@deadbolt/root",
+  "name": "@shuvbolt/root",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "deadbolt": "cargo run -q -p deadbolt-cli --",
+    "shuvbolt": "cargo run -q -p deadbolt-cli --bin shuvbolt --",
     "test": "cargo test --workspace",
     "gen:proto": "cargo run -q -p deadbolt-proto --bin gen-ts --locked -- extension/src/gen/proto.ts",
     "check:proto": "bun run gen:proto && git diff --exit-code extension/src/gen/proto.ts",

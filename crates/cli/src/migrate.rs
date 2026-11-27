@@ -1,7 +1,7 @@
 //! DELETABLE(v1-migrate): remove once existing v1 users have migrated to v2.
 //!
 //! What the CLI says when an unlock moved a v1 store to v2, and
-//! `deadbolt migrate`, which is that unlock asked for by name.
+//! `shuvbolt migrate`, which is that unlock asked for by name.
 
 use std::io::Write;
 
@@ -17,7 +17,7 @@ use crate::paths::Paths;
 use crate::protocol::Command;
 use crate::protocol::{MigratedVault, Reply};
 
-/// `deadbolt migrate`: unlocks a v1 store, which moves it to v2, and shows
+/// `shuvbolt migrate`: unlocks a v1 store, which moves it to v2, and shows
 /// every moved vault's new recovery kit.
 #[cfg(feature = "v1-migrate")]
 pub async fn run(paths: &Paths, json: bool, from_stdin: bool) -> Result<()> {
@@ -67,13 +67,13 @@ pub fn print(migrated: &[MigratedVault], stderr: bool) {
         n => format!("{n} vaults"),
     };
     text.push_str(&format!(
-        "Upgraded to Deadbolt v2: moved {vaults} from store.redb, under the same passphrase.\n\
+        "Upgraded to Shuvbolt v2: moved {vaults} from store.redb, under the same passphrase.\n\
          The old store is kept beside it as store.redb.v1.bak.\n\
          Every vault has a new recovery kit below.\n\
          \n\
          On your other devices, don't unlock after updating: that would make\n\
          a separate copy of each vault there. Move their store.redb aside\n\
-         (keep it as a backup), then pair with this device: `deadbolt join`.\n"
+         (keep it as a backup), then pair with this device: `shuvbolt join`.\n"
     ));
     for moved in migrated {
         let default = if moved.vault.default {

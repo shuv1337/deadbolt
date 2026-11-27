@@ -127,7 +127,7 @@ enum Mark {
 
 fn step_row(k: &Kit, stage: Stage, mark: Mark, vault: &str) -> El {
     let (label, detail) = match stage {
-        Stage::Starting => ("Starting Deadbolt".to_owned(), None),
+        Stage::Starting => ("Starting Shuvbolt".to_owned(), None),
         Stage::Protecting => (
             "Protecting your passphrase".to_owned(),
             Some("Argon2 makes it slow to guess, so this takes a moment."),
@@ -335,7 +335,7 @@ pub(super) fn code(s: &App, k: &Kit) -> Paged {
         return page("code", None, col());
     };
     let copied = o.copied.is_some();
-    let command = format!("deadbolt approve {}", code.as_str());
+    let command = format!("shuvbolt approve {}", code.as_str());
     let mut panel = col()
         .key("panel")
         .w(PANEL_W)

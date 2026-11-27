@@ -53,17 +53,17 @@ impl Daemon {
         let mut guard = self.session.lock().unwrap_or_else(|e| e.into_inner());
         let Some(session) = guard.as_mut() else {
             return Err(if crate::disk::is_initialized(&self.paths.data) {
-                fail(ErrorCode::Locked, "locked: run `deadbolt unlock`")
+                fail(ErrorCode::Locked, "locked: run `shuvbolt unlock`")
             } else if super::v1_store(&self.paths.data) {
                 // DELETABLE(v1-migrate)
                 fail(
                     ErrorCode::Locked,
-                    "locked: run `deadbolt unlock` to upgrade your v1 vaults to v2",
+                    "locked: run `shuvbolt unlock` to upgrade your v1 vaults to v2",
                 )
             } else {
                 fail(
                     ErrorCode::NotInitialized,
-                    "this device is not set up; run `deadbolt init` or `deadbolt join`",
+                    "this device is not set up; run `shuvbolt init` or `shuvbolt join`",
                 )
             });
         };

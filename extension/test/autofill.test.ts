@@ -1267,7 +1267,7 @@ describe("a sign-in session across steps", () => {
     await waitFor(() => !("session:7" in fake.session))
   })
 
-  test("a session ends when Deadbolt locks, and when its time is up", async () => {
+  test("a session ends when Shuvbolt locks, and when its time is up", async () => {
     await pick()
     host.setStatus({ state: "locked" })
     host.setStatus({ state: "ready", version: "0" })
@@ -1314,7 +1314,7 @@ describe("a sign-in session across steps", () => {
   })
 })
 
-describe("while Deadbolt is locked", () => {
+describe("while Shuvbolt is locked", () => {
   test("a focused field shows the locked row once per site; a click or ↓ always does; locking again starts over", async () => {
     host.setStatus({ state: "locked" })
     const ask = (explicit = false, sender = pageSender()) => autofill.query(sender, ["email", "password"], "email", 1, explicit)

@@ -192,10 +192,10 @@ fn welcome(s: &App, k: &Kit) -> Paged {
 
 /// The name, set in the theme's sans, tight, for the lock and welcome screens.
 pub fn wordmark(k: &Kit, size: f32) -> El {
-    text("Deadbolt")
+    text("Shuvbolt")
         .key("wordmark")
         .role("heading")
-        .label("Deadbolt")
+        .label("Shuvbolt")
         .font(
             TextStyle::new(size, 600.0)
                 .lh((size * 1.15).round())
@@ -520,7 +520,7 @@ fn repeat_field(s: &App, k: &Kit, flow: Flow) -> El {
 // -------------------------------------------------------------------------------------------
 // The empty vault
 
-const ADD: &str = "deadbolt new login url=github.com username=you";
+const ADD: &str = "shuvbolt new login url=github.com username=you";
 
 /// What to do with a vault that has nothing in it yet: import an export
 /// here, or add a login in the CLI for now.
@@ -565,7 +565,7 @@ pub fn empty_vault(s: &App, k: &Kit) -> El {
                 .child(muted(
                     k,
                     "how",
-                    "Open Deadbolt on it, choose Join from another device, and run the command it shows here.",
+                    "Open Shuvbolt on it, choose Join from another device, and run the command it shows here.",
                 )),
         )
 }

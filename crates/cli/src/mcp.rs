@@ -1,4 +1,4 @@
-//! `deadbolt mcp`: a Model Context Protocol server on stdin and stdout for
+//! `shuvbolt mcp`: a Model Context Protocol server on stdin and stdout for
 //! AI coding agents, that never hands out a secret value.
 //!
 //! JSON-RPC 2.0, one message per line (MCP's stdio transport): `initialize`,
@@ -7,7 +7,7 @@
 //! ([`tools`]) ask the daemon only what carries no values (`status`,
 //! `vault-list`, `item-list`, `health`), never `item-get`, `item-code` or
 //! `resolve`, so no value ever reaches this process to leak. An agent that
-//! needs a credential gets a `deadbolt run --broker` command to hand to the
+//! needs a credential gets a `shuvbolt run --broker` command to hand to the
 //! person, which keeps the value out of the agent's process too
 //! (docs/broker.md).
 //!
@@ -36,7 +36,7 @@ const METHOD_NOT_FOUND: i64 = -32601;
 const INVALID_PARAMS: i64 = -32602;
 
 /// What the server tells the agent when it connects.
-const INSTRUCTIONS: &str = "Deadbolt is the person's password manager. These tools show \
+const INSTRUCTIONS: &str = "Shuvbolt is the person's password manager. These tools show \
 vault and item metadata, never values. When a command needs a credential, call \
 deadbolt_broker_hint and ask the person to run the command it gives: deadbolt's broker \
 then supplies the credential to that command without you seeing it. Never ask the \
@@ -167,7 +167,7 @@ fn initialize(params: &Value) -> Value {
         "capabilities": { "tools": { "listChanged": false } },
         "serverInfo": {
             "name": "deadbolt",
-            "title": "Deadbolt",
+            "title": "Shuvbolt",
             "version": crate::client::version(),
         },
         "instructions": INSTRUCTIONS,

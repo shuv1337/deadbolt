@@ -42,7 +42,7 @@ impl Device {
             .env("XDG_RUNTIME_DIR", self.path("run"))
             .env("XDG_STATE_HOME", self.path("state"))
             .env("XDG_CONFIG_HOME", self.path("config"))
-            // `deadbolt app` writes a desktop entry here, never the real one.
+            // `shuvbolt app` writes a desktop entry here, never the real one.
             .env("XDG_DATA_HOME", self.path("data"))
             .env_remove("DEADBOLT_TEST_UI")
             .env("DEADBOLT_NET", "local")
@@ -219,7 +219,7 @@ for chunk in iter(lambda: s.recv(65536), b""):
     sys.stdout.buffer.flush()
 "#;
 
-/// Starts `deadbolt join` on `new`: the process, its stdout lines after the
+/// Starts `shuvbolt join` on `new`: the process, its stdout lines after the
 /// code, and the code.
 fn start_join(new: &Device, device_name: &str) -> (Child, mpsc::Receiver<String>, String) {
     let mut child = new
@@ -260,7 +260,7 @@ fn finish_join(mut child: Child) -> (std::process::ExitStatus, String) {
     (status, err)
 }
 
-/// `new` runs `deadbolt join`, `inviter` runs `deadbolt approve <code>`.
+/// `new` runs `shuvbolt join`, `inviter` runs `shuvbolt approve <code>`.
 fn pair(inviter: &Device, new: &Device, device_name: &str, vault: Option<&str>) {
     let (child, rx, code) = start_join(new, device_name);
     let mut args = vec!["approve", &code];
@@ -275,7 +275,7 @@ fn pair(inviter: &Device, new: &Device, device_name: &str, vault: Option<&str>) 
     let (status, err) = finish_join(child);
     assert!(status.success(), "join failed");
     assert!(
-        err.contains(&format!("run: deadbolt approve {code}")),
+        err.contains(&format!("run: shuvbolt approve {code}")),
         "{err}"
     );
     let joined = rx.recv_timeout(Duration::from_secs(5)).unwrap();
@@ -323,7 +323,7 @@ fn init_vaults_and_locking() {
     assert_eq!(a.state(), "locked");
     let out = a.try_run(&["vault", "ls"]);
     assert_eq!(out.status.code(), Some(3));
-    assert!(String::from_utf8_lossy(&out.stderr).contains("locked: run `deadbolt unlock`"));
+    assert!(String::from_utf8_lossy(&out.stderr).contains("locked: run `shuvbolt unlock`"));
     assert_eq!(a.try_run(&["ls"]).status.code(), Some(3));
     assert_eq!(a.state(), "locked");
     a.run(&["unlock"]);
@@ -631,10 +631,10 @@ fn a_new_device_join_needs_a_passphrase_source() {
     assert!(out.status.success());
 }
 
-/// `deadbolt app` with a stand-in for the app it starts (the `deadbolt-ui`
+/// `shuvbolt app` with a stand-in for the app it starts (the `deadbolt-ui`
 /// beside it) that records each start and the token it was given. The app's
 /// window is a watcher with `app` set. The first opening adds the desktop
-/// entry. `deadbolt ui` runs it in the foreground, arguments and exit status
+/// entry. `shuvbolt ui` runs it in the foreground, arguments and exit status
 /// passed through.
 #[cfg(target_os = "linux")]
 #[test]
@@ -748,7 +748,7 @@ fn app_comes_forward_through_the_daemon_instead_of_starting_again() {
     std::thread::sleep(Duration::from_millis(300));
     assert_eq!(started(), ["app one", "app two"], "nothing started again");
 
-    // `deadbolt ui` is the app in the foreground, whatever is running.
+    // `shuvbolt ui` is the app in the foreground, whatever is running.
     let mut ui = a.cmd_of(&deadbolt, &["ui", "--scene", "vault"]);
     let out = a.output(ui.env_remove("XDG_ACTIVATION_TOKEN"));
     assert_eq!(out.status.code(), Some(7));
@@ -772,7 +772,7 @@ fn daemon_is_single_instance() {
     assert_eq!(a.run(&["debug", "daemon", "stop"]), "not running\n");
 }
 
-/// An older build's `deadbolt update` restarts the daemon as `deadbolt
+/// An older build's `shuvbolt update` restarts the daemon as `deadbolt
 /// agent` and waits for it at `agent.sock`.
 #[test]
 fn the_daemon_answers_under_its_old_name() {
@@ -1090,10 +1090,10 @@ fn leaves_a_daemon_of_a_newer_protocol_running() {
 
     let error = a.fail(&["debug", "whoami"]);
     for part in [
-        "a newer Deadbolt daemon is running",
+        "a newer Shuvbolt daemon is running",
         BIN,
         &format!("pid {pid}"),
-        "deadbolt debug daemon stop",
+        "shuvbolt debug daemon stop",
     ] {
         assert!(error.contains(part), "{error}");
     }
@@ -1718,7 +1718,7 @@ fn watch_prints_changes_as_json_lines() {
 
 const EXTENSION: &str = "chrome-extension://jhocodkhpifjndffenppfmdkmiolngal/";
 
-/// `deadbolt browser-host`, run as a browser runs it: the extension's origin
+/// `shuvbolt browser-host`, run as a browser runs it: the extension's origin
 /// as the only argument, length-prefixed JSON both ways.
 struct Host {
     child: Child,
@@ -2351,7 +2351,7 @@ fn browser_host_frames_and_refusals() {
     }
     host.close();
 
-    // Only the Deadbolt extension may run the host.
+    // Only the Shuvbolt extension may run the host.
     for args in [
         &["chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/"][..],
         &[
@@ -2364,7 +2364,7 @@ fn browser_host_frames_and_refusals() {
         assert!(!output.status.success(), "{args:?}");
         assert!(output.stdout.is_empty(), "{args:?}");
         assert!(
-            String::from_utf8_lossy(&output.stderr).contains("only the Deadbolt extension"),
+            String::from_utf8_lossy(&output.stderr).contains("only the Shuvbolt extension"),
             "{args:?}"
         );
     }
@@ -2396,7 +2396,7 @@ fn browser_host_when_locked_or_not_set_up() {
     a.run(&["lock"]);
     let hello = host.ask(serde_json::json!({"type": "hello"}));
     assert_eq!(hello["status"], "locked", "{hello}");
-    assert_eq!(hello["detail"], "Unlock Deadbolt to fill passwords");
+    assert_eq!(hello["detail"], "Unlock Shuvbolt to fill passwords");
     for request in [
         serde_json::json!({"type": "list", "origin": "https://github.com"}),
         serde_json::json!({"type": "fill", "origin": "https://github.com", "ref": github_ref, "want": ["password"]}),

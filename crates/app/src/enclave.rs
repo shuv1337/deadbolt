@@ -20,8 +20,8 @@ pub fn verify(helper: &Path) -> Result<(), String> {
 fn verify_at(helper: &Path, expected: &str, cpu: u32) -> Result<(), String> {
     if expected.len() != 64 {
         return Err(format!(
-            "this build of Deadbolt has no pinned {}, so it can't check its daemon. \
-             Reinstall Deadbolt",
+            "this build of Shuvbolt has no pinned {}, so it can't check its daemon. \
+             Reinstall Shuvbolt",
             helper.display()
         ));
     }
@@ -33,7 +33,7 @@ fn verify_at(helper: &Path, expected: &str, cpu: u32) -> Result<(), String> {
         Ok(())
     } else {
         Err(format!(
-            "{} isn't the one this Deadbolt was built with. Reinstall Deadbolt",
+            "{} isn't the one this Shuvbolt was built with. Reinstall Shuvbolt",
             helper.display()
         ))
     }
@@ -57,6 +57,6 @@ mod tests {
         assert!(unpinned.contains("no pinned"), "{unpinned}");
         std::fs::write(&helper, b"#!/bin/sh\necho tampered\n").unwrap();
         let tampered = verify_at(&helper, &sha256_hex(b"real"), CPU_TYPE_ARM64).unwrap_err();
-        assert!(tampered.contains("Reinstall Deadbolt"), "{tampered}");
+        assert!(tampered.contains("Reinstall Shuvbolt"), "{tampered}");
     }
 }

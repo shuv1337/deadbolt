@@ -67,9 +67,9 @@ pub async fn serve(paths: Paths, old_name: bool) -> Result<()> {
     let daemon = Daemon::new(paths, local_net, env.kdf);
     // Its own memory and CPU, with a line in the log when either runs away.
     procwatch::watch(if cfg!(debug_assertions) {
-        procwatch::Config::dev("deadbolt daemon")
+        procwatch::Config::dev("shuvbolt daemon")
     } else {
-        procwatch::Config::release("deadbolt daemon")
+        procwatch::Config::release("shuvbolt daemon")
     });
     let mut autofill = macos_autofill::bind_default().await;
     info!(

@@ -216,7 +216,7 @@ pub(super) fn recovery(s: &App, k: &Kit, r: &Recovery) -> Paged {
         // DELETABLE(v1-migrate)
         Some((n, of)) => super::upgrade::about(n, of),
         None => "These 24 words are the only way to recover your vault if you \
-                 lose every device. Deadbolt won’t show them again."
+                 lose every device. Shuvbolt won’t show them again."
             .into(),
     };
     let mut panel = col()

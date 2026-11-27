@@ -108,7 +108,7 @@ fn an_upgrade_shows_each_moved_vaults_kit_then_opens_the_vault() {
 
     assert_eq!(rt.state.screen, Screen::Onboarding);
     assert_eq!(showing(&rt), ("personal".into(), PERSONAL.into()));
-    assert!(shows(&rt, "Upgraded to Deadbolt v2. Vault 1 of 2 moved"));
+    assert!(shows(&rt, "Upgraded to Shuvbolt v2. Vault 1 of 2 moved"));
     assert!(shows(&rt, "Save your recovery kit"));
     assert!(shows(&rt, "abandon"));
 
@@ -183,7 +183,7 @@ fn the_panel_sends_a_v1_upgrade_to_the_window() {
     rt.state.status.as_mut().expect("a status").v1_store = true;
     settle(&mut rt);
     assert_eq!(rt.state.screen, Screen::Locked);
-    assert!(shows(&rt, "Open Deadbolt to upgrade to v2"));
+    assert!(shows(&rt, "Open Shuvbolt to upgrade to v2"));
     assert!(!shows(&rt, "Enter your passphrase"));
 
     // Neither Return nor a passphrase somehow typed sends an unlock.

@@ -2176,12 +2176,12 @@ async function locked(scheme: Scheme) {
       return f && (await f.locator(".notice").count()) > 0 ? f : null
     })
     if (menu) {
-      check(((await menu.locator(".title").textContent()) ?? "").includes("locked"), "menu says Deadbolt is locked")
+      check(((await menu.locator(".title").textContent()) ?? "").includes("locked"), "menu says Shuvbolt is locked")
       await Bun.sleep(400)
       await shotAround(page, `menu-locked-${scheme}`, menu, "#email")
     }
     const p = await popup(run, site, `popup-locked-${scheme}`)
-    check(((await p.locator("h2").textContent()) ?? "") === "Unlock Deadbolt", "popup says Unlock Deadbolt")
+    check(((await p.locator("h2").textContent()) ?? "") === "Unlock Shuvbolt", "popup says Unlock Shuvbolt")
     check(!(await p.locator("input[type=password]").count()), "popup never asks for the passphrase")
   } catch (err) {
     check(false, `locked threw: ${(err as Error).message.split("\n")[0]}`)
@@ -2196,7 +2196,7 @@ async function notInstalled(scheme: Scheme) {
     const page = await run.context.newPage()
     await page.goto(`${site}/login`)
     const p = await popup(run, site, `popup-not-installed-${scheme}`)
-    check(((await p.locator(".command code").textContent()) ?? "") === "deadbolt browser install", "popup shows the install command")
+    check(((await p.locator(".command code").textContent()) ?? "") === "shuvbolt browser install", "popup shows the install command")
   } catch (err) {
     check(false, `not installed threw: ${(err as Error).message.split("\n")[0]}`)
   } finally {
@@ -2420,7 +2420,7 @@ async function securityPage() {
       // The real menu still works, once it's been back in view for a moment.
       await Bun.sleep(900)
       await menu.locator("button.row").first().click()
-      check(!!(await until("the real menu still fills", async () => (await page.inputValue("#password")) === "correct horse")), "the menu Deadbolt opened still fills")
+      check(!!(await until("the real menu still fills", async () => (await page.inputValue("#password")) === "correct horse")), "the menu Shuvbolt opened still fills")
     }
 
     // The form changes under an open menu: the pick fills nothing.
@@ -3578,7 +3578,7 @@ async function pickSignsIn() {
     check(JSON.stringify(since(before)) === JSON.stringify(["/flow/nav/password", "/flow/nav/next", "/flow/done"]), `email, password and code are each submitted once (${JSON.stringify(since(before))})`)
     check(posted[0]?.body.email === "alex@acme.test" && posted[1]?.body.password === "correct horse", "with the picked login's username and password")
     check(isCode([1, 2, 3, 4, 5, 6].map((i) => posted[2]?.body[`d${i}`] ?? "").join("")), "and the code submitted is the login's current one")
-    check((await probe(page)).blurs === 0, "nothing of Deadbolt's took the page's focus")
+    check((await probe(page)).blurs === 0, "nothing of Shuvbolt's took the page's focus")
     await Bun.sleep(1500)
     await forgetSignIns(run)
 
@@ -3701,7 +3701,7 @@ async function googleSignIn() {
     const posted = since(before)
     check(paths(before) === JSON.stringify(["identifier", "pwd", "totp"]), `email, password and code are each submitted once (${paths(before)})`)
     check(posted[0]?.body.identifier === "alex@acme.test" && posted[1]?.body.Passwd === "correct horse" && isCode(posted[2]?.body.totpPin ?? ""), "with the picked login's username, password and current code")
-    check((await probe(page)).blurs === 0, "nothing of Deadbolt's took the page's focus")
+    check((await probe(page)).blurs === 0, "nothing of Shuvbolt's took the page's focus")
     await forgetSignIns(run)
 
     // A CAPTCHA on the password step: the password fills, nothing more goes.
@@ -4247,7 +4247,7 @@ async function coveredPill() {
       })
       await until("the delayed fill reaches the host", async () => (await fillCount(run)) > 0)
       await Bun.sleep(2500)
-      check((await page.inputValue("#email")) === "" && (await page.inputValue("#password")) === "", "a pill the page stretched over the form isn't Deadbolt's own: nothing is written under it")
+      check((await page.inputValue("#email")) === "" && (await page.inputValue("#password")) === "", "a pill the page stretched over the form isn't Shuvbolt's own: nothing is written under it")
     }
   } catch (err) {
     check(false, `covered pill threw: ${(err as Error).message.split("\n")[0]}`)
@@ -4427,8 +4427,8 @@ async function conditionalHeld() {
     await page.evaluate(CONDITIONAL_GET, "#email")
     const top = await menuOn(page, "#email")
     const spied = await nativeGets(page)
-    check(spied.under && spied.secure, `the spy sits under Deadbolt's hook, in a secure context (${JSON.stringify(spied)})`)
-    check(!!top, "a top page's conditional get leaves Deadbolt's menu to open on its webauthn field")
+    check(spied.under && spied.secure, `the spy sits under Shuvbolt's hook, in a secure context (${JSON.stringify(spied)})`)
+    check(!!top, "a top page's conditional get leaves Shuvbolt's menu to open on its webauthn field")
     check(spied.gets.length === 0, `and the browser's get is never called (${spied.gets})`)
     if (top) {
       await top.locator("button.row", { hasText: "alex@acme.test" }).click()
@@ -4451,7 +4451,7 @@ async function conditionalHeld() {
       const menu = await until("the menu opens for the frame's field", menuNow, 15_000)
       const framed = await nativeGets(widget)
       check(framed.under && framed.secure, `the frame's spy sits under the hook, in a secure context (${JSON.stringify(framed)})`)
-      check(!!menu && menu.parentFrame() === page.mainFrame(), "Apple's frame's conditional get leaves Deadbolt's menu to open in the top page")
+      check(!!menu && menu.parentFrame() === page.mainFrame(), "Apple's frame's conditional get leaves Shuvbolt's menu to open in the top page")
       check(framed.gets.length === 0, `and the browser's get is never called (${framed.gets})`)
       check(((await menu?.locator(".row .sub").allTextContents()) ?? []).every((s) => !s.startsWith("Passkey")), "with logins only: the daemon's client data couldn't say cross-origin")
       if (menu) {
@@ -4705,7 +4705,7 @@ async function passkeys() {
         const r = await outcome(page, `list-${name}`, `the ${name} allow list settles`)
         if (name === "long") check(!!r && !r.ok && /^RangeError: .*allowCredentials.*\(64\)/.test(r.value), `a 65-entry allow list goes whole to the browser, which refuses it (${r?.ok ? r.value.id : r?.value})`)
         else check(!!r?.ok && r.value.id === nativeId, `a mixed-type allow list goes whole to the browser (${r?.ok ? (r.value.id === nativeId ? "the browser's passkey" : r.value.id) : r?.value})`)
-        check((await badge(run)) === "", "with no Deadbolt prompt")
+        check((await badge(run)) === "", "with no Shuvbolt prompt")
       }
     }
 
@@ -4720,7 +4720,7 @@ async function passkeys() {
         if (signIn) {
           await press(signIn, "Sign in")
           const r = await outcome(frame, "same", "same-origin frame sign-in settles")
-          if (check(!!r?.ok, `a same-origin frame signs in with Deadbolt (${r && !r.ok ? r.value : "ok"})`)) ownOrigin(r!.value, "same-origin frame")
+          if (check(!!r?.ok, `a same-origin frame signs in with Shuvbolt (${r && !r.ok ? r.value : "ok"})`)) ownOrigin(r!.value, "same-origin frame")
         }
       }
     }
@@ -4735,7 +4735,7 @@ async function passkeys() {
         const r = await outcome(inner, "nested", "nested-frame sign-in settles")
         const data = r?.ok ? clientData(r.value) : null
         check(!!data && data.crossOrigin === true && r!.value.id === nativeId, `a frame under another origin gets the browser's flow (${data ? `crossOrigin ${data.crossOrigin}` : r?.value})`)
-        check((await badge(run, `${site}/passkey/nested`)) === "", "with no Deadbolt prompt")
+        check((await badge(run, `${site}/passkey/nested`)) === "", "with no Shuvbolt prompt")
       }
     }
 
@@ -4744,16 +4744,16 @@ async function passkeys() {
     for (const kind of ["get", "create"] as const) {
       await startCall(page, `denied-${kind}`, kind, kind === "get" ? await generateAuthenticationOptions({ rpID }) : reg)
       const r = await outcome(page, `denied-${kind}`, `policy-denied ${kind} settles`)
-      check(!!r && !r.ok && String(r.value).startsWith("NotAllowedError") && !String(r.value).includes("Deadbolt"), `a page whose policy denies ${kind} gets the browser's refusal (${r?.value})`)
+      check(!!r && !r.ok && String(r.value).startsWith("NotAllowedError") && !String(r.value).includes("Shuvbolt"), `a page whose policy denies ${kind} gets the browser's refusal (${r?.value})`)
     }
-    check((await badge(run, `${site}/passkey/denied`)) === "", "with no Deadbolt prompt")
+    check((await badge(run, `${site}/passkey/denied`)) === "", "with no Shuvbolt prompt")
     await page.goto(`${site}/passkey/same-denied`)
     const denied = await passkeyFrame(page, "the denied frame loads", () => true)
     if (denied) {
       await startCall(denied, "frame-denied", "get", await generateAuthenticationOptions({ rpID }))
       const r = await outcome(denied, "frame-denied", "policy-denied frame settles")
-      check(!!r && !r.ok && String(r.value).startsWith("NotAllowedError") && !String(r.value).includes("Deadbolt"), `so does a frame its page denies (${r?.value})`)
-      check((await badge(run, `${site}/passkey/same-denied`)) === "", "with no Deadbolt prompt")
+      check(!!r && !r.ok && String(r.value).startsWith("NotAllowedError") && !String(r.value).includes("Shuvbolt"), `so does a frame its page denies (${r?.value})`)
+      check((await badge(run, `${site}/passkey/same-denied`)) === "", "with no Shuvbolt prompt")
     }
     await page.goto(`${site}/passkey`)
     await formFound(page)
@@ -4776,20 +4776,20 @@ async function passkeys() {
       await startCall(page, "gen-rsa", "create", rs, { generator: true })
       const made = await outcome(page, "gen-rsa", "the generated RS256-only registration settles")
       check(!!made?.ok && made.value.response.publicKeyAlgorithm === -257, `generated RS256-only params go to the browser (${made?.ok ? made.value.response.publicKeyAlgorithm : made?.value})`)
-      check((await badge(run)) === "", "none of them asks Deadbolt's user")
+      check((await badge(run)) === "", "none of them asks Shuvbolt's user")
     }
 
     // A site that doesn't take ES256 gets the browser's flow without asking.
     const rsa = await generateRegistrationOptions({ rpName: "Acme", rpID, userName: "rsa@acme.test", attestationType: "none", supportedAlgorithmIDs: [-257] })
     await startCall(page, "rsa", "create", rsa)
     const rsaDone = await outcome(page, "rsa", "RS256-only registration settles")
-    check((await badge(run)) === "", "an RS256-only site gets no Deadbolt prompt")
-    check(!!rsaDone && (rsaDone.ok ? rsaDone.value.response.publicKeyAlgorithm !== -7 : !String(rsaDone.value).includes("Deadbolt")), `and goes to the browser (${rsaDone?.ok ? "made by the browser" : rsaDone?.value})`)
+    check((await badge(run)) === "", "an RS256-only site gets no Shuvbolt prompt")
+    check(!!rsaDone && (rsaDone.ok ? rsaDone.value.response.publicKeyAlgorithm !== -7 : !String(rsaDone.value).includes("Shuvbolt")), `and goes to the browser (${rsaDone?.ok ? "made by the browser" : rsaDone?.value})`)
 
     // Another site's rpId: refused before anyone is asked.
     await startCall(page, "wrong", "create", { ...(await generateRegistrationOptions({ rpName: "Evil", rpID: "example.com", userName: "alex" })) })
     const wrong = await outcome(page, "wrong", "wrong-rpId registration settles")
-    check(!!wrong && !wrong.ok && wrong.value === "SecurityError: This relying party ID isn't this site's.", `a wrong rpId is Deadbolt's SecurityError (${wrong?.value})`)
+    check(!!wrong && !wrong.ok && wrong.value === "SecurityError: This relying party ID isn't this site's.", `a wrong rpId is Shuvbolt's SecurityError (${wrong?.value})`)
     await startCall(page, "wrong-get", "get", await generateAuthenticationOptions({ rpID: "com" }))
     const wrongGet = await outcome(page, "wrong-get", "public-suffix sign-in settles")
     check(!!wrongGet && !wrongGet.ok && wrongGet.value === "SecurityError: This relying party ID isn't this site's.", `a public suffix rpId is too (${wrongGet?.value})`)
@@ -4801,15 +4801,15 @@ async function passkeys() {
     if (frame) {
       await startCall(frame, "sandboxed", "get", await generateAuthenticationOptions({ rpID }))
       const r = await outcome(frame, "sandboxed", "sandboxed-frame sign-in settles")
-      check(!!r && !r.ok && r.value === "NotAllowedError: Deadbolt offers no passkeys to sandboxed frames.", `a sandboxed frame is refused by Deadbolt (${r?.value})`)
+      check(!!r && !r.ok && r.value === "NotAllowedError: Shuvbolt offers no passkeys to sandboxed frames.", `a sandboxed frame is refused by Shuvbolt (${r?.value})`)
     }
     await page.goto(`${site}/passkey/sandboxed`)
     await startCall(page, "csp", "create", reg)
     const csp = await outcome(page, "csp", "sandboxed-page registration settles")
-    check(!!csp && !csp.ok && csp.value === "NotAllowedError: Deadbolt offers no passkeys to sandboxed frames.", `so is a page sandboxed by its CSP (${csp?.value})`)
+    check(!!csp && !csp.ok && csp.value === "NotAllowedError: Shuvbolt offers no passkeys to sandboxed frames.", `so is a page sandboxed by its CSP (${csp?.value})`)
     check((await badge(run, `${site}/passkey/sandboxed`)) === "", "with no prompt")
     const after = store.cli("show", rpID)
-    check(after.ok && !after.out.includes("other@acme.test") && !after.out.includes("rsa@acme.test"), "only the passkey saved through Deadbolt is in the vault")
+    check(after.ok && !after.out.includes("other@acme.test") && !after.out.includes("rsa@acme.test"), "only the passkey saved through Shuvbolt is in the vault")
   } catch (err) {
     check(false, `passkeys threw: ${(err as Error).message.split("\n")[0]}`)
     await diagnose(run, page, "passkeys")
@@ -4923,7 +4923,7 @@ async function formsSurface(scheme: Scheme) {
     const cards = await formsMenu(run, page, "#cc", "/forms/card-single")
     if (cards) {
       check((await cards.locator(".row .title").first().textContent()) === "Visa ••4242 · 08/28", "a card field lists cards as brand, last digits and expiry")
-      check((await footText(cards)) === "Deadbolt may ask for Touch ID.", "and says Touch ID may be asked")
+      check((await footText(cards)) === "Shuvbolt may ask for Touch ID.", "and says Touch ID may be asked")
       await shotAround(page, `forms-card-${scheme}`, cards, "#cc")
       check((await pickRow(cards, "Visa")) === "ok", "picking a card says Filled")
       const got = await values(page, ["cc", "exp", "cvc", "holder"])
@@ -5033,7 +5033,7 @@ async function formsShapes() {
       const again = await formsMenu(run, page, "#vn", "/forms/labels")
       if (again && (await pickRow(again, "Work")) === "ok") {
         const next = await values(page, ["str", "plz", "ort", "bl"])
-        check(JSON.stringify(next) === JSON.stringify(["1 Market St", "94105", "Berlin", "CA"]), `picking another identity replaces Deadbolt's values, not the user's (${next.join(" | ")})`)
+        check(JSON.stringify(next) === JSON.stringify(["1 Market St", "94105", "Berlin", "CA"]), `picking another identity replaces Shuvbolt's values, not the user's (${next.join(" | ")})`)
       } else check(false, "a second pick fills")
     } else check(false, "the labels-only address fills")
 
@@ -5058,7 +5058,7 @@ async function formsShapes() {
       await until("the pill goes", () => !extensionFrame(page, "menu.html"), 5000)
       await page.press("#cvc", "Enter")
       await page.waitForURL("**/forms/thanks")
-      check((await noOffer(run, page)) && !(await formSaves(run)).length, "a card Deadbolt filled and nobody changed offers nothing")
+      check((await noOffer(run, page)) && !(await formSaves(run)).length, "a card Shuvbolt filled and nobody changed offers nothing")
     } else check(false, "the card fills on the checkout")
     // Nor is anything typed on a site saving is off for kept or looked up.
     await run.worker.evaluate(() => chrome.storage.local.set({ neverSave: ["localhost"] }))

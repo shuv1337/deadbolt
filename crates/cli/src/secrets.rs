@@ -1,4 +1,4 @@
-//! `deadbolt run`, `inject` and `read` (`docs/secrets.md`): secret
+//! `shuvbolt run`, `inject` and `read` (`docs/secrets.md`): secret
 //! references (`deadbolt://[vault/]item/field`) resolved by the daemon, into
 //! a command's environment, a 0600 file, or printed. This side never logs,
 //! echoes or passes a value on argv.
@@ -74,7 +74,7 @@ pub struct InjectArgs {
     input: Option<PathBuf>,
     /// Where to write (default: stdout, which counts as reading the values,
     /// in Activity). Written 0600, replacing it only if
-    /// `deadbolt inject` wrote it and it hasn't changed since.
+    /// `shuvbolt inject` wrote it and it hasn't changed since.
     #[arg(short = 'o', long = "out-file", value_name = "FILE")]
     output: Option<PathBuf>,
     /// Replace the output file whoever wrote it.
@@ -354,7 +354,7 @@ async fn pump(
     }
 }
 
-/// `deadbolt run`: resolves the references, runs the command with them in
+/// `shuvbolt run`: resolves the references, runs the command with them in
 /// its environment and exits with its code (128 + the signal if one ended
 /// it).
 pub async fn run(paths: &Paths, args: RunArgs, from_stdin: bool) -> Result<ExitCode> {
@@ -366,7 +366,7 @@ pub async fn run(paths: &Paths, args: RunArgs, from_stdin: bool) -> Result<ExitC
         deny_debugger: !cfg!(any(debug_assertions, test)),
     });
     for (protection, outcome) in hardening.failures() {
-        tracing::warn!("deadbolt run: {protection}: {outcome}");
+        tracing::warn!("shuvbolt run: {protection}: {outcome}");
     }
     let mut vars = environment(&args)?;
     let routes = args
@@ -593,7 +593,7 @@ fn template(text: &str) -> Result<Vec<Part<'_>>> {
     Ok(parts)
 }
 
-/// A file `deadbolt inject` wrote, as it left it.
+/// A file `shuvbolt inject` wrote, as it left it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 struct Written {
     path: PathBuf,
@@ -618,7 +618,7 @@ impl Written {
 /// The most files remembered.
 const MAX_WRITTEN: usize = 256;
 
-/// Where `deadbolt inject` remembers what it wrote: no values, only each
+/// Where `shuvbolt inject` remembers what it wrote: no values, only each
 /// file's identity, size and time.
 fn written_list(paths: &Paths) -> PathBuf {
     paths.data.join("injected.json")
@@ -667,7 +667,7 @@ fn write_output(paths: &Paths, out: &Path, text: &[u8], force: bool) -> Result<(
             let ours = written.contains(&Written::of(&path, &meta));
             if !force && !ours {
                 bail!(
-                    "{} exists and wasn't written by `deadbolt inject` (or changed since): pass --force to replace it",
+                    "{} exists and wasn't written by `shuvbolt inject` (or changed since): pass --force to replace it",
                     out.display()
                 );
             }
@@ -703,7 +703,7 @@ fn write_output(paths: &Paths, out: &Path, text: &[u8], force: bool) -> Result<(
     Ok(())
 }
 
-/// `deadbolt inject`: the template with each reference's value in place.
+/// `shuvbolt inject`: the template with each reference's value in place.
 pub async fn inject(paths: &Paths, args: InjectArgs, from_stdin: bool) -> Result<()> {
     let text = Zeroizing::new(match &args.input {
         Some(file) if file.as_os_str() != "-" => {
@@ -779,7 +779,7 @@ pub async fn inject(paths: &Paths, args: InjectArgs, from_stdin: bool) -> Result
     Ok(())
 }
 
-/// `deadbolt read`: prints one value.
+/// `shuvbolt read`: prints one value.
 pub async fn read(paths: &Paths, args: ReadArgs, from_stdin: bool) -> Result<()> {
     let reference = Reference::parse(&args.reference)
         .map_err(|e| anyhow!(e))?
@@ -799,7 +799,7 @@ mod tests {
     use super::*;
 
     /// A secret only `--route` names goes to the broker and no further:
-    /// `deadbolt run` keeps (and masks) only what the command's variables use.
+    /// `shuvbolt run` keeps (and masks) only what the command's variables use.
     #[test]
     fn secrets_only_the_broker_uses_are_dropped() {
         let secret = |value: &str| ResolvedSecret {

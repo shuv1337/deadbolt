@@ -336,10 +336,10 @@ impl From<Error> for Failure {
         let message = match &error {
             Error::Spawn(program, e) if e.kind() == std::io::ErrorKind::NotFound => {
                 if crate::binary::is_helper(program) {
-                    "Deadbolt is damaged: its deadbolt helper is missing. Reinstall Deadbolt."
+                    "Shuvbolt is damaged: its shuvbolt helper is missing. Reinstall Shuvbolt."
                         .into()
                 } else {
-                    "Couldn't find the deadbolt command. Install it, or set DEADBOLT_BIN to its path."
+                    "Couldn't find the shuvbolt command. Install it, or set DEADBOLT_BIN to its path."
                         .into()
                 }
             }
@@ -368,7 +368,7 @@ pub enum Imported {
 /// Why an export wasn't read or imported.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ImportFailure {
-    /// The file isn't an export Deadbolt reads: not text, empty, too large.
+    /// The file isn't an export Shuvbolt reads: not text, empty, too large.
     NotExport(String),
     /// The file couldn't be read.
     Read(String),
@@ -664,11 +664,11 @@ impl Daemon {
 }
 
 /// Bundles always launch their own helper; otherwise the daemon is the
-/// `deadbolt` beside this `deadbolt-ui`, else one on the PATH
+/// `shuvbolt` beside this `shuvbolt-ui`, else one on the PATH
 /// ([`crate::binary::discover`]). Development runs allow an override.
-/// A passphrase goes only to Deadbolt's daemon, by its code signature: that
+/// A passphrase goes only to Shuvbolt's daemon, by its code signature: that
 /// program, or for a Developer ID build any daemon the team signed (a Homebrew
-/// or npm `deadbolt` the user started first). Talking to that program, the
+/// or npm `shuvbolt` the user started first). Talking to that program, the
 /// `deadbolt-enclave` beside it must be the one this build pinned (macOS);
 /// another daemon checks its own helper against its own pin.
 pub fn launch() -> Launch {
@@ -705,11 +705,11 @@ mod tests {
         let helper = "/Applications/Shuvbolt.app/Contents/Helpers/shuvbolt";
         let failure = Failure::from(Error::Spawn(helper.into(), missing()));
         assert!(
-            failure.message.contains("Reinstall Deadbolt"),
+            failure.message.contains("Reinstall Shuvbolt"),
             "{failure:?}"
         );
         assert!(!failure.message.contains("DEADBOLT_BIN"));
-        let failure = Failure::from(Error::Spawn("deadbolt".into(), missing()));
+        let failure = Failure::from(Error::Spawn("shuvbolt".into(), missing()));
         assert!(failure.message.contains("DEADBOLT_BIN"), "{failure:?}");
     }
 }

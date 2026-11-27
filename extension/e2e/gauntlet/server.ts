@@ -76,7 +76,7 @@ const handle = gauntlet({
   accounts: [account],
   sameSiteOrigin: () => process.env.GAUNTLET_SAME_SITE ?? null,
   crossSiteOrigin: () => process.env.GAUNTLET_CROSS_SITE ?? null,
-  hint: `Sign in as <strong>${s.username}</strong> (save it to Deadbolt from seed.json, with its TOTP). The same account answers to ${s.aliases.phone}, customer number ${s.aliases.customerNumber} and username “${s.aliases.username}”; birth date ${s.birthday}.`,
+  hint: `Sign in as <strong>${s.username}</strong> (save it to Shuvbolt from seed.json, with its TOTP). The same account answers to ${s.aliases.phone}, customer number ${s.aliases.customerNumber} and username “${s.aliases.username}”; birth date ${s.birthday}.`,
 })
 
 const server = Bun.serve({

@@ -225,7 +225,7 @@ describe("provider chain, page side", () => {
     expect(await probe(s)).toEqual({ kind: "stop", reason: "unknown" })
   })
 
-  test("a cover over the field, Deadbolt's own pill included, fails closed", async () => {
+  test("a cover over the field, Shuvbolt's own pill included, fails closed", async () => {
     const s = fresh()
     page(LOGIN)
     await status(s)

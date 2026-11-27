@@ -1,8 +1,8 @@
 {
-  "name": "@deadbolt/extension",
+  "name": "@shuvbolt/extension",
   "private": true,
   "version": "0.1.0",
-  "description": "Deadbolt's browser extension: fill and save logins through the local Deadbolt daemon.",
+  "description": "Shuvbolt's browser extension: fill and save logins through the local Shuvbolt daemon.",
   "type": "module",
   "scripts": {
     "build": "bun scripts/build.ts",

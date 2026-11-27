@@ -316,7 +316,7 @@ function openMenu(el: FormControl | null, t: string, rows: number, as: SurfaceMo
   frame.src = chrome.runtime.getURL("menu.html")
   frame.setAttribute("allow", "")
   // A screen reader names the frame by this; it's all the page side says (nothing of the vault).
-  frame.title = "Deadbolt"
+  frame.title = "Shuvbolt"
   frame.style.cssText = frameStyle(RADIUS)
   root.append(frame)
   ;((el && modalAround(el)) ?? document.documentElement).append(box)

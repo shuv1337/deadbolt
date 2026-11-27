@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A stand-in for `deadbolt browser-host` with made-up logins, for e2e runs.
+"""A stand-in for `shuvbolt browser-host` with made-up logins, for e2e runs.
 
 The browser passes its environment through: DEADBOLT_FAKE_STATUS picks the
 hello status, DEADBOLT_FAKE_LOG gets one JSON line per request, and
@@ -233,7 +233,7 @@ while True:
     elif kind == "learn-delete":
         write({"id": rid, "type": "learn-deleted", "found": LEARNED.pop(req.get("session"), None) is not None})
     elif STATUS != "ready":
-        write({"id": rid, "type": "error", "code": "locked", "message": "Deadbolt is locked."})
+        write({"id": rid, "type": "error", "code": "locked", "message": "Shuvbolt is locked."})
     elif kind == "list":
         time.sleep(LIST_DELAY)
         write({"id": rid, "type": "list", "site": site(req["origin"]), "accounts": ACCOUNTS})

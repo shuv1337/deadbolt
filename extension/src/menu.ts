@@ -447,10 +447,10 @@ function showStatus(status: Status) {
   listbox(null)
   highlightEl.hidden = true
   if (status.state === "locked") {
-    rowsEl.replaceChildren(notice(icon("lock"), "Deadbolt is locked", "Unlock it in the app, then come back"))
+    rowsEl.replaceChildren(notice(icon("lock"), "Shuvbolt is locked", "Unlock it in the app, then come back"))
     say("")
   } else {
-    rowsEl.replaceChildren(notice(icon("plug"), "Deadbolt isn't available", "Open the toolbar button to see why"))
+    rowsEl.replaceChildren(notice(icon("plug"), "Shuvbolt isn't available", "Open the toolbar button to see why"))
     say("")
   }
   setCaption("")
@@ -535,7 +535,7 @@ async function signInWith(i: number, account: Account) {
   const name = providerOf(reply.provider).name
   const sub = rowsEl.querySelectorAll<HTMLElement>("button.row")[i]?.querySelector<HTMLElement>(".sub")
   if (sub) sub.textContent = `Look for “Continue with ${name}”`
-  say(`Deadbolt couldn't find the page's ${name} button.`)
+  say(`Shuvbolt couldn't find the page's ${name} button.`)
 }
 
 
@@ -765,7 +765,7 @@ function showForms(reply: Extract<MenuLoadReply, { kind: "forms" }>) {
   if (!accounts.length) {
     listbox(null)
     highlightEl.hidden = true
-    rowsEl.replaceChildren(notice(icon(reply.form === "card" ? "card" : "keyhole"), reply.form === "card" ? "No cards saved" : "No addresses saved", "Add one in Deadbolt"))
+    rowsEl.replaceChildren(notice(icon(reply.form === "card" ? "card" : "keyhole"), reply.form === "card" ? "No cards saved" : "No addresses saved", "Add one in Shuvbolt"))
     setCaption("")
     return say("")
   }
@@ -775,7 +775,7 @@ function showForms(reply: Extract<MenuLoadReply, { kind: "forms" }>) {
   rowsEl.replaceChildren(...accounts.map(row))
   // Where a pick goes, always: a payment provider's frames on the site, or the site itself.
   setCaption(reply.into ? `Into ${reply.into} on ${reply.site}` : `On ${reply.site}`)
-  say(reply.passphrase ? "Deadbolt asks for your passphrase first." : reply.verify ? "Deadbolt may ask for Touch ID." : "")
+  say(reply.passphrase ? "Shuvbolt asks for your passphrase first." : reply.verify ? "Shuvbolt may ask for Touch ID." : "")
   if (query) for (const [i, r] of Array.from(rowsEl.querySelectorAll<HTMLElement>("button.row")).entries()) r.hidden = !matches(accounts[i], query)
   const left = visible()
   if (left.length && !left.includes(active)) active = left[0]

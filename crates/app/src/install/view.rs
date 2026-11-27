@@ -78,13 +78,13 @@ pub fn page(s: &App, k: &Kit) -> Paged {
     let key = match &i.scan {
         None => {
             body = body
-                .child(title(k, "title", "Install the deadbolt command"))
+                .child(title(k, "title", "Install the shuvbolt command"))
                 .child(muted(k, "about", "Checking for an existing command…"));
             "checking"
         }
         Some(_) if temporary(&i.source) => {
             body = body
-                .child(title(k, "title", "Install the deadbolt command"))
+                .child(title(k, "title", "Install the shuvbolt command"))
                 .child(muted(k, "about", InstallError::Temporary.to_string()));
             "temporary"
         }
@@ -106,12 +106,12 @@ pub fn page(s: &App, k: &Kit) -> Paged {
         Some(scan) => match &scan.found {
             Some((path, Existing::Moved(target))) => {
                 body = body
-                    .child(title(k, "title", "Repair the deadbolt command"))
+                    .child(title(k, "title", "Repair the shuvbolt command"))
                     .child(muted(
                         k,
                         "about",
                         format!(
-                            "{} links to a Deadbolt that moved or was deleted ({}).",
+                            "{} links to a Shuvbolt that moved or was deleted ({}).",
                             path.display(),
                             target.display()
                         ),
@@ -142,7 +142,7 @@ pub fn page(s: &App, k: &Kit) -> Paged {
                 };
                 let label = if i.busy { "Checking…" } else { "Check again" };
                 body = body
-                    .child(title(k, "title", "Install the deadbolt command"))
+                    .child(title(k, "title", "Install the shuvbolt command"))
                     .child(muted(
                         k,
                         "about",
@@ -168,11 +168,11 @@ pub fn page(s: &App, k: &Kit) -> Paged {
             }
             None => {
                 body = body
-                    .child(title(k, "title", "Install the deadbolt command"))
+                    .child(title(k, "title", "Install the shuvbolt command"))
                     .child(muted(
                         k,
                         "about",
-                        "Use Deadbolt from your terminal and coding agents.",
+                        "Use Shuvbolt from your terminal and coding agents.",
                     ));
                 if scan.manual {
                     body = body
@@ -241,14 +241,14 @@ pub fn offer(s: &App, k: &Kit) -> Option<El> {
     );
     let (head, about, label) = if moved {
         (
-            "Your deadbolt command needs repair",
-            "It links to a Deadbolt that moved or was deleted.",
+            "Your shuvbolt command needs repair",
+            "It links to a Shuvbolt that moved or was deleted.",
             "Repair…",
         )
     } else {
         (
-            "Use Deadbolt from your terminal",
-            "Install the deadbolt command for your shell and coding agents.",
+            "Use Shuvbolt from your terminal",
+            "Install the shuvbolt command for your shell and coding agents.",
             "Install…",
         )
     };

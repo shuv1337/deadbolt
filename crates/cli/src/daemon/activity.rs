@@ -32,7 +32,7 @@ fn past_budget(dropped: Dropped) -> ActivityEntry {
     ActivityEntry {
         id: dropped.last_id,
         time: dropped.last_time,
-        caller: CallerInfo::unverified("Deadbolt"),
+        caller: CallerInfo::unverified("Shuvbolt"),
         tier: Tier::Always,
         command: ledger::PAST_BUDGET.into(),
         items: Vec::new(),
@@ -194,7 +194,7 @@ impl Daemon {
         if caller.class != CallerClass::App {
             return Err(fail(
                 ErrorCode::Failed,
-                "only Deadbolt.app reports activity",
+                "only Shuvbolt.app reports activity",
             ));
         }
         let time = session::now();

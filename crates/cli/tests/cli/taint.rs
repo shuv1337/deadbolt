@@ -1,4 +1,4 @@
-//! `deadbolt run` taints its command: the command and everything it
+//! `shuvbolt run` taints its command: the command and everything it
 //! starts get nothing from the daemon, found by their real ancestry, while
 //! every other caller is served as before (`daemon/taint.rs`).
 
@@ -53,7 +53,7 @@ fn a_run_and_everything_it_starts_get_nothing_from_the_daemon() {
     );
     assert!(!out.contains(TOKEN) && !err.contains(TOKEN), "{out}{err}");
     assert_eq!(
-        err.matches("process is running inside deadbolt run")
+        err.matches("process is running inside shuvbolt run")
             .count(),
         4,
         "{err}"

@@ -7,7 +7,7 @@ use deadbolt_app::model::{App, Screen, VaultPane};
 use rune::{Env, Key, KeyEvent, Mods, Runtime};
 
 const FRAME: f64 = 1.0 / 60.0;
-const OFFER: &str = "Use Deadbolt from your terminal";
+const OFFER: &str = "Use Shuvbolt from your terminal";
 
 fn runtime(scene: &str) -> Runtime<App> {
     let app = rune::tooling::initial_state(&deadbolt_app::spec(), Some(scene));
@@ -83,7 +83,7 @@ fn the_offer_and_settings_live_in_the_vault_only() {
             });
             settle(&mut rt, 0.6);
             assert!(!shows(&rt, OFFER), "{scene} shows the offer");
-            assert!(!shows(&rt, "Install the deadbolt command"), "{scene}");
+            assert!(!shows(&rt, "Install the shuvbolt command"), "{scene}");
             assert!(
                 rt.find("settings-trigger").is_none(),
                 "{scene} has Settings"
@@ -124,7 +124,7 @@ fn the_offer_opens_the_page_or_goes_away_for_good() {
     settle(&mut rt, 0.6);
     press(&mut rt, "open");
     assert!(rt.state.installing());
-    assert!(shows(&rt, "Install the deadbolt command"));
+    assert!(shows(&rt, "Install the shuvbolt command"));
     // Back to the vault; having seen the page answers the offer.
     press(&mut rt, "back");
     assert!(!rt.state.installing());
@@ -145,7 +145,7 @@ fn settings_takes_keys_before_the_focused_search() {
     // Open it without moving focus: the search field would get keys first.
     rt.update(|s, _| s.pane = VaultPane::Settings);
     settle(&mut rt, 0.5);
-    assert!(shows(&rt, "deadbolt command") && shows(&rt, "Install…"));
+    assert!(shows(&rt, "shuvbolt command") && shows(&rt, "Install…"));
     assert!(
         rt.state.search.focused,
         "search keeps focus beside Settings"
@@ -248,7 +248,7 @@ fn the_manual_path_stays_under_the_title_bar() {
     let mut rt = runtime("install-command");
     rt.update(|s, _| {
         let i = s.installer.as_mut().unwrap();
-        i.error = Some("Couldn't link /Users/sam/.local/bin/deadbolt: permission denied.".into());
+        i.error = Some("Couldn't link /Users/sam/.local/bin/shuvbolt: permission denied.".into());
         let scan = i.scan.as_mut().unwrap();
         scan.manual = true;
         scan.on_path = false;

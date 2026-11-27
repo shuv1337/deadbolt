@@ -33,7 +33,7 @@ export function passkeyCard(prompt: PasskeyPrompt, tabId: number | undefined, ho
     b.addEventListener("click", () => void choose(choice, b))
     return b
   }
-  const next = prompt.verify ? "Deadbolt asks for Touch ID next." : prompt.passphrase ? "Deadbolt asks for your passphrase next." : ""
+  const next = prompt.verify ? "Shuvbolt asks for Touch ID next." : prompt.passphrase ? "Shuvbolt asks for your passphrase next." : ""
   const note = next ? h("p", { class: "note" }, icon("lock"), h("span", {}, next)) : ""
   const other = button("Use another device", { action: "fallback" })
   if (prompt.kind === "get") {
@@ -59,7 +59,7 @@ export function passkeyCard(prompt: PasskeyPrompt, tabId: number | undefined, ho
   } else if (prompt.registered) {
     card.append(
       h("h2", {}, "This passkey is already saved"),
-      h("p", { class: "muted" }, `Deadbolt already has a passkey for this account on ${prompt.rpId}.`),
+      h("p", { class: "muted" }, `Shuvbolt already has a passkey for this account on ${prompt.rpId}.`),
       status,
       h("div", { class: "buttons" }, other, button("OK", { action: "cancel" }, true)),
     )

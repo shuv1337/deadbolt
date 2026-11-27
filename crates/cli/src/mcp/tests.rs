@@ -1,4 +1,4 @@
-//! `deadbolt mcp`'s protocol and its read-free tool surface. A live daemon
+//! `shuvbolt mcp`'s protocol and its read-free tool surface. A live daemon
 //! with real values is `tests/cli/mcp.rs`.
 
 use serde_json::{Value, json};
@@ -252,7 +252,7 @@ async fn a_stopped_daemon_is_a_tool_result() {
                 assert_eq!(result["isError"], false, "{reply}");
                 let command = structured["command"].as_str().unwrap();
                 assert!(
-                    command.starts_with("deadbolt run --broker --route 'openai=https://api.openai.com/v1,bearer=deadbolt://OpenAI/credential,env=OPENAI_API_KEY,base-env=OPENAI_BASE_URL' -- "),
+                    command.starts_with("shuvbolt run --broker --route 'openai=https://api.openai.com/v1,bearer=deadbolt://OpenAI/credential,env=OPENAI_API_KEY,base-env=OPENAI_BASE_URL' -- "),
                     "{command}"
                 );
                 assert!(!structured["warnings"].as_array().unwrap().is_empty());

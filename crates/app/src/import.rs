@@ -76,7 +76,7 @@ impl Preview {
     }
 
     /// Nothing new, and that's because it's all here already (rather than
-    /// the export holding nothing Deadbolt takes).
+    /// the export holding nothing Shuvbolt takes).
     pub fn all_here(&self) -> bool {
         self.new_items() == 0 && self.report.duplicates > 0
     }
@@ -156,7 +156,7 @@ impl App {
         self.enter_import();
         self.import.error = Some(Notice::new(
             Severity::Caution,
-            format!("{} isn't an export Deadbolt can read", name(file)),
+            format!("{} isn't an export Shuvbolt can read", name(file)),
             "Drop a .1pux, .csv or .json export.",
         ));
     }
@@ -422,7 +422,7 @@ fn problem(failure: ImportFailure, file: &str, apply: bool) -> Notice {
     let not_export = |message: &str| {
         Notice::new(
             Severity::Caution,
-            format!("{file} isn't an export Deadbolt can read"),
+            format!("{file} isn't an export Shuvbolt can read"),
             // The drop zone lists what it can read; the daemon's own list would repeat it.
             sentence(message.split("; import a ").next().unwrap_or(message)),
         )
@@ -482,7 +482,7 @@ pub fn details(report: &ImportReport) -> Vec<String> {
     lines.extend(report.warnings.iter().map(Tally::to_string));
     if !report.dropped.is_empty() {
         lines.push(format!(
-            "No place in Deadbolt for {}",
+            "No place in Shuvbolt for {}",
             list(&report.dropped)
         ));
     }
@@ -490,7 +490,7 @@ pub fn details(report: &ImportReport) -> Vec<String> {
 }
 
 /// The preview's line when nothing in the export is new: it's all here
-/// already, or there's nothing Deadbolt takes in it (the details say why).
+/// already, or there's nothing Shuvbolt takes in it (the details say why).
 pub fn nothing_new(p: &Preview, vault: &str) -> String {
     if p.all_here() {
         format!("Everything in this export is already in {vault}")
@@ -567,7 +567,7 @@ mod tests {
         };
         let n = problem(daemon(Some(ErrorCode::Failed)), "x.json", false);
         assert_eq!(n.severity, Severity::Caution);
-        assert_eq!(n.title, "x.json isn't an export Deadbolt can read");
+        assert_eq!(n.title, "x.json isn't an export Shuvbolt can read");
         assert_eq!(n.body, "Not a known JSON export.");
         assert_eq!(
             problem(daemon(Some(ErrorCode::Failed)), "x.json", true).severity,

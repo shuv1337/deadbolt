@@ -44,7 +44,7 @@ async function waitFor(ok: () => boolean) {
 }
 
 describe("offers", () => {
-  test("a new login is offered in the toolbar, and in the page as Deadbolt's own surface", async () => {
+  test("a new login is offered in the toolbar, and in the page as Shuvbolt's own surface", async () => {
     await signIn("new@example.com", "a new password")
     expect(saver.pending(1)).toMatchObject({ site: "example.com", username: "new@example.com", update: false })
     expect(saver.pending(1)?.id).toBeString()
@@ -84,7 +84,7 @@ describe("offers", () => {
   test("save only after the user says so, then the offer is gone", async () => {
     await signIn("new@example.com", "a new password")
     const { id } = saver.pending(1)!
-    expect(await saver.choose(1, id, "save")).toEqual({ ok: true, message: "Saved to Deadbolt" })
+    expect(await saver.choose(1, id, "save")).toEqual({ ok: true, message: "Saved to Shuvbolt" })
     const save = requests("save")[0] as unknown as { entry: Record<string, string> }
     expect(save.entry).toEqual({ title: "Example", url: "https://www.example.com/login", username: "new@example.com", password: "a new password" })
     expect(saver.pending(1)).toBeUndefined()
@@ -174,7 +174,7 @@ describe("a check that finishes late", () => {
 
   test("or before the navigation event arrives", () => lateCheck(() => void (fake.frames["1:0"] = { url: "https://elsewhere.net/", documentId: "other" })))
 
-  test("or after Deadbolt locked, even once it's unlocked again", () =>
+  test("or after Shuvbolt locked, even once it's unlocked again", () =>
     lateCheck(() => {
       host.setStatus({ state: "locked" })
       host.setStatus({ state: "ready", version: "0" })
@@ -835,7 +835,7 @@ describe("the save offer in the page", () => {
     await signIn("new@example.com", "a new password")
     const token = surfaceToken()
     await saver.surfaceLoad(token, menuSender(), SITE)
-    expect(await saver.surfaceChoose(token, menuSender(), "save")).toEqual({ ok: true, message: "Saved to Deadbolt" })
+    expect(await saver.surfaceChoose(token, menuSender(), "save")).toEqual({ ok: true, message: "Saved to Shuvbolt" })
     expect(requests("save")).toHaveLength(1)
     expect(saver.pending(1)).toBeUndefined()
     // The surface shows its own answer: nothing closes it from here.
@@ -857,7 +857,7 @@ describe("the save offer in the page", () => {
       }
       return send(req)
     }) as typeof host.host.send
-    expect(await saver.surfaceChoose(token, menuSender(), "save")).toEqual({ ok: false, message: "Deadbolt is locked. Unlock it, then save again." })
+    expect(await saver.surfaceChoose(token, menuSender(), "save")).toEqual({ ok: false, message: "Shuvbolt is locked. Unlock it, then save again." })
     expect(await saver.surfaceChoose(token, menuSender(), "save")).toMatchObject({ ok: true })
   })
 
@@ -956,7 +956,7 @@ describe("cards and identities typed into a form", () => {
     // Nothing of the number but its last four digits went to a page, the popup or the surface.
     expect(JSON.stringify([fake.delivered, saver.pending(1)])).not.toContain("4000056655665556")
     expect(JSON.stringify([fake.delivered, saver.pending(1)])).not.toContain("737")
-    expect(await saver.choose(1, saver.pending(1)!.id, "save")).toEqual({ ok: true, message: "Saved to Deadbolt" })
+    expect(await saver.choose(1, saver.pending(1)!.id, "save")).toEqual({ ok: true, message: "Saved to Shuvbolt" })
     expect(saveForm()).toEqual([{ type: "save-form", origin: "https://www.example.com", kind: "card", fields: { number: "4000056655665556", expiry: "2030-09", cardholder: "Ada Lovelace", brand: "Visa" } }])
     expect(JSON.stringify(host.requests)).not.toContain("737")
   })
@@ -987,7 +987,7 @@ describe("cards and identities typed into a form", () => {
     expect(requests("fill-form")).toEqual([])
   })
 
-  test("a changed expiry is an update of that card; an unchanged card, or one Deadbolt filled, offers nothing", async () => {
+  test("a changed expiry is an update of that card; an unchanged card, or one Shuvbolt filled, offers nothing", async () => {
     await checkout({ card: { number: "4242424242424242", expiry: "2028-08", cardholder: "Alex Mercer", brand: "Visa" } })
     expect(saver.pending(1)).toBeUndefined()
     expect(requests("forms")).toHaveLength(1)
@@ -1006,7 +1006,7 @@ describe("cards and identities typed into a form", () => {
 
   test("Save as new keeps an update's card as a new one, number and all", async () => {
     await checkout({ card: { number: "4242424242424242", expiry: "2031-01" } })
-    expect(await saver.choose(1, saver.pending(1)!.id, "new")).toEqual({ ok: true, message: "Saved to Deadbolt" })
+    expect(await saver.choose(1, saver.pending(1)!.id, "new")).toEqual({ ok: true, message: "Saved to Shuvbolt" })
     expect(saveForm()).toEqual([{ type: "save-form", origin: "https://www.example.com", kind: "card", fields: { number: "4242424242424242", expiry: "2031-01", brand: "Visa" } }])
     expect(saver.pending(1)).toBeUndefined()
   })
@@ -1032,7 +1032,7 @@ describe("cards and identities typed into a form", () => {
     expect(saver.pending(1)).toMatchObject({ username: "1 Main St, Springfield", update: false, what: "address" })
     // Compared with the identities' values for the fields typed only.
     expect(requests("fill-form")).toEqual([{ type: "fill-form", origin: "https://www.example.com", ref: HOME_REF, fields: ["given-name", "family-name", "address-line1", "city", "postal-code", "country"] }])
-    expect(await saver.choose(1, saver.pending(1)!.id, "save")).toEqual({ ok: true, message: "Saved to Deadbolt" })
+    expect(await saver.choose(1, saver.pending(1)!.id, "save")).toEqual({ ok: true, message: "Saved to Shuvbolt" })
     expect(saveForm()[0]).toMatchObject({ kind: "identity", fields: { "given-name": "Ada", "address-line1": "1 Main St", country: "US" } })
     expect(saveForm()[0].ref).toBeUndefined()
 

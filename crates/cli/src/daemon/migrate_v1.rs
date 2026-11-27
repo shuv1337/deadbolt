@@ -5,7 +5,7 @@
 //!
 //! Moves a v1 store (`store.redb`, one sealed log of signed entries) to v2
 //! under the same passphrase, on the first unlock after an upgrade (and
-//! `deadbolt migrate`, which is that unlock). Every vault is replayed from
+//! `shuvbolt migrate`, which is that unlock). Every vault is replayed from
 //! its v1 entries and written as a new v2 vault with a fresh recovery root,
 //! keeping its name, its items' ids and everything about them: fields and
 //! files, names, favorites, tags, ignored findings, password dates, trash.
@@ -44,7 +44,7 @@ pub(crate) const V1_FILE: &str = "store.redb";
 pub(crate) const BACKUP_FILE: &str = "store.redb.v1.bak";
 /// What setup says while a v1 store waits to move.
 pub(crate) const FOUND_V1: &str =
-    "Found an existing v1 vault (store.redb). Unlock or run `deadbolt migrate` to upgrade to v2.";
+    "Found an existing v1 vault (store.redb). Unlock or run `shuvbolt migrate` to upgrade to v2.";
 
 const STAGING: &str = ".v1-migrate";
 /// In the staging folder once the new store checked out: from then until

@@ -1,4 +1,4 @@
-//! `deadbolt send`: one-time links to files, secrets and vault items, served
+//! `shuvbolt send`: one-time links to files, secrets and vault items, served
 //! live by the daemon (see `docs/proposals/send.md`), and its `ls`, `show`
 //! and `revoke` for the links made.
 //!
@@ -37,7 +37,7 @@ pub const EXIT_REVOKED: u8 = 5;
 /// What a bundle holds, in whole MB, for the "too large" messages.
 const MAX_MB: usize = MAX_SEALED_LEN / 1024 / 1024;
 
-/// `deadbolt send`'s subcommand or flags, plus where each input sat on the
+/// `shuvbolt send`'s subcommand or flags, plus where each input sat on the
 /// command line: inputs go into the bundle in that order, and each
 /// `--field` belongs to the nearest `--item` before it.
 pub struct SendArgs {
@@ -439,7 +439,7 @@ pub async fn send(
         println!("{}", *link);
     }
     eprintln!(
-        "send {}: {}, {}, expires {}. Served live from this computer: it ends if the deadbolt debug daemon stops.",
+        "send {}: {}, {}, expires {}. Served live from this computer: it ends if the shuvbolt debug daemon stops.",
         send.id,
         send.label,
         opens(send.opens),
@@ -484,7 +484,7 @@ async fn manage(paths: &Paths, command: SendCommand) -> Result<()> {
                 return Ok(());
             }
             if sends.is_empty() {
-                eprintln!("no sends (they end when the deadbolt debug daemon stops)");
+                eprintln!("no sends (they end when the shuvbolt debug daemon stops)");
             }
             for send in &sends {
                 println!(

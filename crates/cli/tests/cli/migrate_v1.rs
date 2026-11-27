@@ -2,7 +2,7 @@
 //!
 //! A genuine v1 `store.redb`, written here from the v1 format (redb tables,
 //! Argon2id header, sealed key set, signed entries), moved to v2 by
-//! `deadbolt migrate` and by a plain `deadbolt unlock`.
+//! `shuvbolt migrate` and by a plain `shuvbolt unlock`.
 
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -240,7 +240,7 @@ fn write_v1(home: &Path) -> Fixture {
     let device = other.verifying_key().to_bytes();
     let consent = other.sign(
         &[
-            &b"deadbolt join consent v2\0"[..],
+            &b"shuvbolt join consent v2\0"[..],
             &work,
             &me.verifying_key().to_bytes(),
             &device,
@@ -465,7 +465,7 @@ fn migrate_moves_a_v1_store_to_v2() {
 
     // Nothing sets up a new vault over it.
     let err = a.fail(&["init"]);
-    assert!(err.contains("deadbolt migrate"), "{err}");
+    assert!(err.contains("shuvbolt migrate"), "{err}");
     assert_eq!(a.state(), "locked");
 
     // A wrong passphrase changes nothing and leaves nothing behind.
@@ -514,7 +514,7 @@ fn unlock_moves_a_v1_store_and_shows_its_kits() {
     let fx = write_v1(&home);
     let out = a.run(&["unlock"]);
     assert!(
-        out.contains("Upgraded to Deadbolt v2: moved 2 vaults"),
+        out.contains("Upgraded to Shuvbolt v2: moved 2 vaults"),
         "{out}"
     );
     assert!(out.contains("Vault personal (default): 5 items"), "{out}");
@@ -525,7 +525,7 @@ fn unlock_moves_a_v1_store_and_shows_its_kits() {
     assert!(home.join("store.redb.v1.bak").exists());
     check_moved(&a, &fx);
 }
-/// The kits `deadbolt migrate --json` printed, in order.
+/// The kits `shuvbolt migrate --json` printed, in order.
 fn migrate_kits(a: &Device) -> Vec<String> {
     let out = a.try_run_stdin(
         &["--passphrase-stdin", "migrate", "--json"],
@@ -559,7 +559,7 @@ fn a_cutover_cut_short_before_its_commit_moves_again() {
     std::fs::create_dir(home.join(".v1-migrate")).unwrap();
     std::fs::write(home.join(".v1-migrate/verified"), b"").unwrap();
     let err = a.fail(&["init"]);
-    assert!(err.contains("deadbolt migrate"), "{err}");
+    assert!(err.contains("shuvbolt migrate"), "{err}");
     assert_eq!(a.state(), "locked");
 
     let again = migrate_kits(&a);

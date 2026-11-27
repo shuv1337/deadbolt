@@ -1,4 +1,4 @@
-//! Deadbolt Send in the daemon: one [`Server`] (an iroh endpoint of its own,
+//! Shuvbolt Send in the daemon: one [`Server`] (an iroh endpoint of its own,
 //! with a fresh key each time the daemon starts) serving sealed bundles from
 //! memory. The daemon never sees a content key, needs no unlock, and keeps
 //! serving across locks; every share ends when the daemon stops.
@@ -128,7 +128,7 @@ impl Daemon {
             info = server.wait(id) => info.ok_or_else(|| not_found(id))?,
             () = conv.closed() => bail!("the client hung up"),
             _ = stopping.wait_for(|stopping| *stopping) => {
-                bail!("the deadbolt debug daemon stopped, which ended the send")
+                bail!("the shuvbolt debug daemon stopped, which ended the send")
             }
         };
         Ok(Reply::Send {

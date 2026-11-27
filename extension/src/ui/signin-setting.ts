@@ -20,5 +20,5 @@ export function signInRow(announce: (message: string) => void): HTMLElement {
   })
   return h("label", { class: "switch-row" }, h("span", { class: "text" },
     h("span", { class: "title" }, "Offer to sign in"),
-    h("span", { class: "sub", id }, "Picking an account fills it and signs you in: Deadbolt submits each sign-in step, and offers to sign in from the corner. Escape stops it. Off, a pick only fills.")), toggle)
+    h("span", { class: "sub", id }, "Picking an account fills it and signs you in: Shuvbolt submits each sign-in step, and offers to sign in from the corner. Escape stops it. Off, a pick only fills.")), toggle)
 }

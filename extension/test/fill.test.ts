@@ -19,7 +19,7 @@ describe("ownValue", () => {
     expect(await ownValue(el, el.value)).toBeUndefined()
   })
 
-  test("a value Deadbolt filled is", async () => {
+  test("a value Shuvbolt filled is", async () => {
     const el = input()
     setInputValue(el, "correct horse")
     expect(await ownValue(el, el.value)).toBe("correct horse")
@@ -122,7 +122,7 @@ describe("visibleBox", () => {
 })
 
 describe("fillable", () => {
-  test("a field under something else isn't, unless what's over it is Deadbolt's own open menu", () => {
+  test("a field under something else isn't, unless what's over it is Shuvbolt's own open menu", () => {
     document.body.innerHTML = `<input><section></section>`
     const el = document.querySelector("input")!
     const cover = document.querySelector("section")!
@@ -469,7 +469,7 @@ describe("what was submitted, for a save", () => {
     expect(JSON.stringify(got)).not.toContain("737")
   })
 
-  test("a card Deadbolt filled and nobody changed is nothing; one with a changed expiry keeps its filled number", async () => {
+  test("a card Shuvbolt filled and nobody changed is nothing; one with a changed expiry keeps its filled number", async () => {
     document.body.innerHTML = CHECKOUT
     const fields = scanForms()
     await fillForm(fields, { number: "4242424242424242", cvv: "123", expiry: "2028-08", cardholder: "Alex Mercer" }, () => true)

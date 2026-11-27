@@ -1265,7 +1265,7 @@ const NO_FIT = "No password fits this site's rules."
 
 function generateError(err: unknown): string {
   if (err instanceof HostError && err.code === "failed") return NO_FIT
-  if (err instanceof HostError && err.code === "weak") return "This site allows only weak passwords. Deadbolt won't make one."
+  if (err instanceof HostError && err.code === "weak") return "This site allows only weak passwords. Shuvbolt won't make one."
   return fillError(err)
 }
 

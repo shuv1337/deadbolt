@@ -1,4 +1,4 @@
-//! `deadbolt remote`, `recover`, `recovery rotate` and `status`: a
+//! `shuvbolt remote`, `recover`, `recovery rotate` and `status`: a
 //! vault's blind store, rebuilding a vault from its kit, handing the kit on,
 //! and why a vault is parked.
 //!
@@ -82,7 +82,7 @@ pub struct WebdavArgs {
     credentials_stdin: bool,
 }
 
-/// `deadbolt recover`.
+/// `shuvbolt recover`.
 #[derive(Args)]
 pub struct RecoverArgs {
     /// The vault id the recovery kit shows.
@@ -319,7 +319,7 @@ pub async fn recover(paths: &Paths, args: RecoverArgs, from_stdin: bool) -> Resu
         bail!("unexpected reply");
     };
     println!("recovered {} ({})", vault.name, vault.id);
-    eprintln!("Every other device was removed. Rotate the recovery kit: deadbolt recovery rotate");
+    eprintln!("Every other device was removed. Rotate the recovery kit: shuvbolt recovery rotate");
     Ok(())
 }
 
