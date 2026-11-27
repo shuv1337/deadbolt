@@ -24,10 +24,15 @@ def job_field(body, key):
 
 def job_condition(body):
     condition = job_field(body, "if")
-    condition = re.sub(r"^[>|][-+]?\s+", "", condition)
-    if len(condition) >= 2 and condition[0] == condition[-1] and condition[0] in ("'", '"'):
-        quote = condition[0]
-        condition = condition[1:-1].replace("''", "'") if quote == "'" else condition[1:-1]
+    if re.match(r"^[>|][-+]?\s+", condition):
+        condition = re.sub(r"^[>|][-+]?\s+", "", condition)
+    elif len(condition) >= 2 and condition[0] == "'" and condition[-1] == "'":
+        condition = condition[1:-1].replace("''", "'")
+    elif len(condition) >= 2 and condition[0] == '"' and condition[-1] == '"':
+        try:
+            condition = json.loads(condition)
+        except json.JSONDecodeError:
+            return ["always", "(", ")"]
     condition = condition.removeprefix("${{").removesuffix("}}").strip()
     # Keep quoted strings whole: parentheses and || inside them are not operators.
     return re.findall(r"'(?:[^']|'')*'|==|&&|\|\||[\w.-]+|[^\s]", condition)
