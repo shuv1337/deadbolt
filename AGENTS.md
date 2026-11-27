@@ -78,3 +78,11 @@ shared-file changes with other active worktrees, and remove your worktree
 (`git worktree remove`) once your PR merges.
 Site deployment is `cd site && bun run deploy`. **Ask first:** it replaces the
 live site. Rust changes do not require a site deploy.
+
+## Fork (Shuvbolt)
+
+Fork work targets `shuv/dev`, not the upstream mirror `dev`. Follow
+[`FORK_CONTRACT.md`](FORK_CONTRACT.md) for identities, compatibility and disabled
+publishing, and [`UPSTREAM_SYNC.md`](UPSTREAM_SYNC.md) for merges. Run
+`bun run check:fork`. The upstream Rune bump and shipping instructions above
+do not apply to the Shuvbolt fork conversion.
