@@ -38,7 +38,7 @@ const INVALID_PARAMS: i64 = -32602;
 /// What the server tells the agent when it connects.
 const INSTRUCTIONS: &str = "Shuvbolt is the person's password manager. These tools show \
 vault and item metadata, never values. When a command needs a credential, call \
-deadbolt_broker_hint and ask the person to run the command it gives: deadbolt's broker \
+deadbolt_broker_hint and ask the person to run the command it gives: Shuvbolt's broker \
 then supplies the credential to that command without you seeing it. Never ask the \
 person to paste a secret.";
 

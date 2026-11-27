@@ -329,7 +329,7 @@ impl Running {
 /// Starts `shuvbolt broker` with nothing of this environment, hands it
 /// `config` on its stdin and waits for its port.
 pub async fn launch(config: BrokerConfig) -> Result<Running> {
-    let exe = std::env::current_exe().context("finding deadbolt")?;
+    let exe = std::env::current_exe().context("finding shuvbolt")?;
     let mut child = tokio::process::Command::new(exe)
         .args([super::COMMAND, "--fd", "0"])
         .env_clear()

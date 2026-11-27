@@ -1,8 +1,8 @@
-// Secure Enclave helper for Deadbolt Touch ID unlock.
+// Secure Enclave helper for Shuvbolt Touch ID unlock.
 //
 // Compiled by `crates/cli/build.rs` into `deadbolt-enclave` with an embedded
-// `__TEXT,__info_plist` section (`CFBundleIdentifier = "anomaly.deadbolt.enclave"`,
-// `CFBundleDisplayName = "Deadbolt"`), pinned by SHA-256 in the daemon binary,
+// `__TEXT,__info_plist` section (`CFBundleIdentifier = "dev.shuv.shuvbolt.enclave"`,
+// `CFBundleDisplayName = "Shuvbolt"`), pinned by SHA-256 in the daemon binary,
 // and invoked over stdin/stdout pipes by `crates/cli/src/daemon/biometric.rs`.
 //
 // Commands:
@@ -520,7 +520,7 @@ private enum EnclaveHelper {
         case "unseal":
             var nonInteractive = false
             var requireBiometry = true
-            var reason = "unlock your Deadbolt vaults"
+            var reason = "unlock your Shuvbolt vaults"
             #if DEADBOLT_TEST
             var sleepMs = 0
             #endif

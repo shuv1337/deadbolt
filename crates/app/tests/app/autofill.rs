@@ -21,7 +21,7 @@ use deadbolt_proto::daemon::{
     Command as DaemonCommand, FieldInput, Message, PROTOCOL_VERSION, Request,
 };
 
-use crate::support::{PASSPHRASE, shuvbolt};
+use crate::support::{PASSPHRASE, deadbolt};
 
 fn repo_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))

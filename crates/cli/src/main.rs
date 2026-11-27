@@ -194,7 +194,7 @@ enum Commands {
     /// the default vault). Inherited variables whose value is a reference
     /// are resolved too. The command's stdin passes through, its stdout and
     /// stderr have each value (and its URL and base64 forms) replaced with
-    /// <concealed by deadbolt>, signals go on to it, and deadbolt exits with
+    /// <concealed by deadbolt>, signals go on to it, and shuvbolt exits with
     /// its code. Masking makes its stdout and stderr pipes: it sees no
     /// terminal (no colors or full-screen UIs; its pager may change), and
     /// output held back as a possible value goes out after 100 ms of quiet.

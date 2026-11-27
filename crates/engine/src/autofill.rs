@@ -261,10 +261,10 @@ pub fn link(s: &mut Engine, link: Link) -> Result<(LoginRef, bool)> {
             format!("{url} isn't on {}", site.domain),
         ));
     }
-    // Only a provider Deadbolt knows the sign-in hosts of, by its id.
+    // Only a provider whose sign-in hosts are known, by its id.
     let provider = sign_in_provider(link.provider)
         .filter(|p| SIGN_IN_HOSTS.iter().any(|(id, _)| id == p))
-        .ok_or_else(|| anyhow!("{} isn't a provider Deadbolt links", link.provider.trim()))?;
+        .ok_or_else(|| anyhow!("{} isn't a provider Shuvbolt links", link.provider.trim()))?;
     let not_found = || fail(ErrorCode::NotFound, "no such login");
     let vault = VaultId::from_bytes(unhex(&link.account.vault).map_err(|_| not_found())?);
     let id = ItemId::from_bytes(unhex(&link.account.item).map_err(|_| not_found())?);

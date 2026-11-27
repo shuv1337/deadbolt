@@ -9,24 +9,41 @@ from one you already have. See the [fork contract](FORK_CONTRACT.md) and
 ## Build and install
 
 Shuvbolt has no hosted installer, release channel, or self-update. Clone
-`shuv1337/deadbolt`, check out `shuv/dev`, and build with stable Rust:
+`shuv1337/deadbolt`, check out `shuv/dev`, and use stable Rust. Before switching
+an existing installation, see [the transition notes](FORK_CONTRACT.md#client-transition).
+
+### Linux
 
 ```sh
 cargo build --release --locked -p deadbolt-cli --bin shuvbolt
-# Optional desktop app:
-cargo build --release --locked -p deadbolt-app --bin shuvbolt-ui
 install -d ~/.local/bin
 install -m 755 target/release/shuvbolt ~/.local/bin/
-# On Linux, install the desktop binary beside the CLI:
+# Optional desktop app:
+cargo build --release --locked -p deadbolt-app --bin shuvbolt-ui
 install -m 755 target/release/shuvbolt-ui ~/.local/bin/
 ```
 
-Put `~/.local/bin` on `PATH`. Run `shuvbolt app` to open the installed app on
-Linux; `shuvbolt desktop install` registers it with the launcher.
-For a macOS bundle, use `crates/app/scripts/bundle.sh` on macOS; production
-Touch ID/AutoFill require fork signing and provisioning. See
-[the transition notes](FORK_CONTRACT.md#client-transition) before switching
-an existing installation.
+Run `shuvbolt app` to open the installed app; `shuvbolt desktop install`
+registers it with the launcher.
+
+### macOS
+
+For the standalone CLI, install `deadbolt-enclave` from the **same build**
+beside `shuvbolt`. The CLI verifies the helper against the pin built into it.
+
+```sh
+cargo build --release --locked -p deadbolt-cli --bin shuvbolt
+install -d ~/.local/bin
+install -m 755 target/release/shuvbolt target/release/deadbolt-enclave ~/.local/bin/
+```
+
+Or build `Shuvbolt.app` with `crates/app/scripts/bundle.sh` on macOS and use
+`Shuvbolt.app/Contents/Helpers/shuvbolt`. Production Touch ID and AutoFill
+require fork signing and provisioning.
+
+### First run
+
+If you installed in `~/.local/bin`, put it on `PATH`.
 
 Create a vault with `shuvbolt init` or choose **Create a vault** in the app.
 To pair another device, run `shuvbolt join` there, then `shuvbolt approve <code>`

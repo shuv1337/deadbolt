@@ -185,6 +185,34 @@ fn settings_takes_keys_before_the_focused_search() {
 }
 
 #[test]
+fn settings_hides_updates_from_a_live_daemon() {
+    use deadbolt_app::daemon::Daemon;
+    use deadbolt_proto::daemon::UpdateInfo;
+
+    let mut rt = runtime("settings-touch-id");
+    rt.set_viewport((820.0, 1_000.0));
+    rt.update(|s, _| {
+        s.status.as_mut().unwrap().update = Some(UpdateInfo {
+            version: "9.9.9".into(),
+            method: "standalone".into(),
+        });
+    });
+    settle(&mut rt, 0.5);
+    let notice = "Shuvbolt 9.9.9 is out";
+    assert!(
+        shows(&rt, notice),
+        "the offline fixture can show the notice"
+    );
+
+    rt.update(|s, _| s.daemon = Daemon::loopback(|_| None, FRAME));
+    settle(&mut rt, 0.5);
+    assert!(rt.state.daemon.is_live());
+    assert!(rt.state.status.as_ref().unwrap().update.is_some());
+    assert!(shows(&rt, "Settings"));
+    assert!(!shows(&rt, notice));
+}
+
+#[test]
 fn the_page_is_centred_and_installs_in_place() {
     let mut rt = runtime("install-command");
     settle(&mut rt, 0.6);

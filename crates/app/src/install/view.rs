@@ -208,7 +208,7 @@ pub fn page(s: &App, k: &Kit) -> Paged {
             .child(muted(
                 k,
                 "path",
-                "If your terminal can't find deadbolt, add this to your shell profile:",
+                "If your terminal can't find shuvbolt, add this to your shell profile:",
             ))
             .child(command(i, k, s.clock, Copied::Path));
     }

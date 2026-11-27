@@ -240,7 +240,7 @@ fn write_v1(home: &Path) -> Fixture {
     let device = other.verifying_key().to_bytes();
     let consent = other.sign(
         &[
-            &b"shuvbolt join consent v2\0"[..],
+            &b"deadbolt join consent v2\0"[..],
             &work,
             &me.verifying_key().to_bytes(),
             &device,
