@@ -81,7 +81,9 @@ pub(super) fn build_report(
             };
             let command = match (manager, upgrade, command) {
                 (_, Some(upgrade), _) => Some(upgrade.shown),
-                (Some(Manager::Package), None, _) => Some(Manager::Package.hint(channel)),
+                (Some(m @ (Manager::Brew | Manager::BrewCask | Manager::Package)), None, _) => {
+                    Some(m.hint(channel))
+                }
                 (Some(m), None, None) => Some(m.hint(channel)),
                 (_, None, Some(cmd)) => Some(cmd.clone()),
                 (None, None, None) => None,

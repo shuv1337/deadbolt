@@ -449,7 +449,7 @@ pub async fn run(paths: &Paths, args: UpdateArgs) -> Result<ExitCode> {
                     update_package(paths, manager, &upgrade, &exe, version, quiet).await?;
                 }
                 None if !quiet => match (manager, command) {
-                    (Manager::Package, _) | (_, None) => {
+                    (Manager::Brew | Manager::BrewCask | Manager::Package, _) | (_, None) => {
                         println!("To update: {}", manager.hint(channel))
                     }
                     (_, Some(command)) => println!("Update it with: {command}"),

@@ -295,6 +295,7 @@ impl Manager {
             channel
         };
         match self {
+            Self::Brew | Self::BrewCask => "rebuild Shuvbolt from the fork source".into(),
             Self::Nix => "update it with Nix, which installed it".into(),
             Self::Cargo => "reinstall it with cargo install, which installed it".into(),
             Self::System => "update it with the package manager that installed it".into(),
