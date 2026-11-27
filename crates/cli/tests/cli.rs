@@ -12,7 +12,7 @@ use std::process::{Child, Command, Output, Stdio};
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
-const BIN: &str = env!("CARGO_BIN_EXE_deadbolt");
+const BIN: &str = env!("CARGO_BIN_EXE_shuvbolt");
 const PASSPHRASE: &str = "correct horse";
 
 struct Device {
@@ -645,12 +645,12 @@ fn app_comes_forward_through_the_daemon_instead_of_starting_again() {
     let a = Device::new();
     let bin = a.path("bin");
     std::fs::create_dir_all(&bin).unwrap();
-    let deadbolt = bin.join("deadbolt");
+    let deadbolt = bin.join("shuvbolt");
     if std::fs::hard_link(BIN, &deadbolt).is_err() {
         std::fs::copy(BIN, &deadbolt).unwrap();
     }
     let starts = a.path("starts");
-    let ui = bin.join("deadbolt-ui");
+    let ui = bin.join("shuvbolt-ui");
     std::fs::write(
         &ui,
         format!(
@@ -660,7 +660,7 @@ fn app_comes_forward_through_the_daemon_instead_of_starting_again() {
     )
     .unwrap();
     std::fs::set_permissions(&ui, std::fs::Permissions::from_mode(0o755)).unwrap();
-    let entry = a.path("data/applications/anomaly.deadbolt.desktop");
+    let entry = a.path("data/applications/dev.shuv.shuvbolt.desktop");
 
     // No display: nothing starts, and it says why.
     let mut cmd = a.cmd_of(&deadbolt, &["app"]);

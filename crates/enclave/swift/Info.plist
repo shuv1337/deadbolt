@@ -3,10 +3,10 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleIdentifier</key>
-    <string>anomaly.deadbolt.enclave</string>
+    <string>dev.shuv.shuvbolt.enclave</string>
     <key>CFBundleName</key>
-    <string>Deadbolt</string>
+    <string>Shuvbolt</string>
     <key>CFBundleDisplayName</key>
-    <string>Deadbolt</string>
+    <string>Shuvbolt</string>
 </dict>
 </plist>

@@ -1,4 +1,4 @@
-//! Deadbolt's desktop app: a thin Rune client of the running daemon, over
+//! Shuvbolt's desktop app: a thin Rune client of the running daemon, over
 //! the same socket protocol as the CLI. See docs/app.md.
 
 pub mod activity;
@@ -37,12 +37,12 @@ use model::App;
 use onboarding::worker::Worker;
 
 /// The Wayland app id and X11 `WM_CLASS`, which the desktop matches to
-/// `deadbolt desktop install`'s entry of the same name.
-pub const APP_ID: &str = "anomaly.deadbolt";
+/// `shuvbolt desktop install`'s entry of the same name.
+pub const APP_ID: &str = "dev.shuv.shuvbolt";
 
 pub fn spec() -> AppSpec<App> {
     AppSpec {
-        title: "Deadbolt",
+        title: "Shuvbolt",
         size: (820.0, 540.0),
         min_size: Some((640.0, 420.0)),
         init: || App::new(Daemon::offline()),
@@ -84,15 +84,15 @@ pub fn run(argv: Vec<String>) {
     // and their output is the point.
     if live {
         procwatch::watch(if cfg!(debug_assertions) {
-            procwatch::Config::dev("deadbolt app")
+            procwatch::Config::dev("shuvbolt app")
         } else {
-            procwatch::Config::release("deadbolt app")
+            procwatch::Config::release("shuvbolt app")
         });
     }
     // A headless `--desktop` run drives every window, so they can reach each
     // other as in a live run (the menus' items act on the main window).
     let wired = live || argv.iter().any(|a| a == "--desktop");
-    // Started for the panel, Deadbolt runs without a Dock icon so launching
+    // Started for the panel, Shuvbolt runs without a Dock icon so launching
     // doesn't activate it and the app you were in keeps focus; opening the
     // main window brings the icon back (`Windows::open_main`).
     let accessory = live && panel_first;

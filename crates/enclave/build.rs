@@ -1,7 +1,7 @@
 //! Compiles the macOS Secure Enclave helper (`deadbolt-enclave`), or takes a
 //! prebuilt, already-signed one from `DEADBOLT_ENCLAVE_PREBUILT` (release
 //! builds, docs/releasing.md), and pins its SHA-256 for every binary that
-//! checks it: `deadbolt` before it runs the helper, and `deadbolt-ui` before it
+//! checks it: `shuvbolt` before it runs the helper, and `shuvbolt-ui` before it
 //! sends a passphrase to its daemon (docs/touch-id.md). One build script, run
 //! once per target and profile, so both pin the same bytes.
 
@@ -107,7 +107,7 @@ fn build_macos_enclave_helpers(prebuilt: Option<&Path>) -> Result<(), String> {
                  <dict>\n\
                  \x20   <key>com.apple.security.application-groups</key>\n\
                  \x20   <array>\n\
-                 \x20       <string>{team}.anomaly.deadbolt</string>\n\
+                 \x20       <string>{team}.dev.shuv.shuvbolt</string>\n\
                  \x20   </array>\n\
                  </dict>\n\
                  </plist>\n"

@@ -2,7 +2,7 @@
 //! suite (unit, offscreen UI snapshots, socket cancellation, bidirectional
 //! `LOCAL_PEERTOKEN` code-signature verification on both daemon and extension,
 //! silent fill, interactive passphrase unlock, and searchable picker) against
-//! a real `deadbolt` daemon in a staged `Deadbolt.app` bundle.
+//! a real `shuvbolt` daemon in a staged `Shuvbolt.app` bundle.
 
 #![cfg(all(debug_assertions, target_os = "macos"))]
 
@@ -21,7 +21,7 @@ use deadbolt_proto::daemon::{
     Command as DaemonCommand, FieldInput, Message, PROTOCOL_VERSION, Request,
 };
 
-use crate::support::{PASSPHRASE, deadbolt};
+use crate::support::{PASSPHRASE, shuvbolt};
 
 fn repo_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -77,12 +77,12 @@ impl AutofillDaemonHarness {
             autofill_socket.display()
         );
 
-        // Stage a real `Deadbolt.app` layout so the daemon's caller check
-        // classifies `Contents/MacOS/Deadbolt` as `CallerClass::App` and
+        // Stage a real `Shuvbolt.app` layout so the daemon's caller check
+        // classifies `Contents/MacOS/Shuvbolt` as `CallerClass::App` and
         // `Contents/PlugIns/DeadboltAutoFill.appex` as `CallerClass::AutoFill`
         // by kernel audit token + ad-hoc cdhash, and the extension's
-        // daemon check (deadbolt-ffi) verifies `Contents/Helpers/deadbolt`.
-        let app_dir = home_dir.path().join("Deadbolt.app");
+        // daemon check (deadbolt-ffi) verifies `Contents/Helpers/shuvbolt`.
+        let app_dir = home_dir.path().join("Shuvbolt.app");
         let macos_dir = app_dir.join("Contents/MacOS");
         let helpers_dir = app_dir.join("Contents/Helpers");
         let appex_dir = app_dir.join("Contents/PlugIns/DeadboltAutoFill.appex");
@@ -90,7 +90,7 @@ impl AutofillDaemonHarness {
         fs::create_dir_all(&helpers_dir).unwrap();
         fs::create_dir_all(app_dir.join("Contents/PlugIns")).unwrap();
 
-        let built_cli = fs::canonicalize(deadbolt()).expect("canonicalize deadbolt binary");
+        let built_cli = fs::canonicalize(deadbolt()).expect("canonicalize shuvbolt binary");
         let built_enclave = built_cli.with_file_name("deadbolt-enclave");
         assert!(
             built_enclave.is_file(),
@@ -98,7 +98,7 @@ impl AutofillDaemonHarness {
             built_cli.display()
         );
 
-        let staged_cli = helpers_dir.join("deadbolt");
+        let staged_cli = helpers_dir.join("shuvbolt");
         let staged_enclave = helpers_dir.join("deadbolt-enclave");
         fs::copy(&built_cli, &staged_cli).unwrap();
         // Copy `deadbolt-enclave` byte-for-byte without re-signing so its
@@ -108,13 +108,19 @@ impl AutofillDaemonHarness {
         fs::set_permissions(&staged_enclave, fs::Permissions::from_mode(0o755)).unwrap();
 
         let sign_cli = ProcessCommand::new("codesign")
-            .args(["--force", "--identifier", "deadbolt", "--sign", "-"])
+            .args([
+                "--force",
+                "--identifier",
+                deadbolt_client::peer::DAEMON_ID,
+                "--sign",
+                "-",
+            ])
             .arg(&staged_cli)
             .output()
-            .expect("codesign staged deadbolt");
+            .expect("codesign staged shuvbolt");
         assert!(
             sign_cli.status.success(),
-            "codesign staged deadbolt failed: {}",
+            "codesign staged shuvbolt failed: {}",
             String::from_utf8_lossy(&sign_cli.stderr)
         );
 
@@ -122,13 +128,19 @@ impl AutofillDaemonHarness {
         let runner = compile_swift_test_appex(&appex_dir);
 
         let sign_app = ProcessCommand::new("codesign")
-            .args(["--force", "--identifier", "anomaly.deadbolt", "--sign", "-"])
+            .args([
+                "--force",
+                "--identifier",
+                "dev.shuv.shuvbolt",
+                "--sign",
+                "-",
+            ])
             .arg(&app_dir)
             .output()
-            .expect("sign staged Deadbolt.app bundle");
+            .expect("sign staged Shuvbolt.app bundle");
         assert!(
             sign_app.status.success(),
-            "codesign staged Deadbolt.app failed: {}",
+            "codesign staged Shuvbolt.app failed: {}",
             String::from_utf8_lossy(&sign_app.stderr)
         );
 
@@ -170,7 +182,7 @@ impl AutofillDaemonHarness {
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn()
-            .expect("spawn deadbolt daemon");
+            .expect("spawn shuvbolt daemon");
         self.daemon_child = Some(child);
 
         let deadline = Instant::now() + Duration::from_secs(10);
@@ -199,7 +211,7 @@ impl AutofillDaemonHarness {
             .arg(&payload)
             .stdin(Stdio::null())
             .output()
-            .expect("run staged Deadbolt app socket helper");
+            .expect("run staged Shuvbolt app socket helper");
         assert!(
             out.status.success(),
             "app socket helper failed: {}",
@@ -244,9 +256,9 @@ fn compile_app_socket_helper(app_dir: &Path, scratch: &Path) -> PathBuf {
     let app_plist = r#"<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleIdentifier</key><string>anomaly.deadbolt</string>
-<key>CFBundleExecutable</key><string>Deadbolt</string>
-<key>CFBundleName</key><string>Deadbolt</string>
+<key>CFBundleIdentifier</key><string>dev.shuv.shuvbolt</string>
+<key>CFBundleExecutable</key><string>Shuvbolt</string>
+<key>CFBundleName</key><string>Shuvbolt</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleShortVersionString</key><string>0.0.0</string>
 <key>CFBundleVersion</key><string>1</string>
@@ -295,14 +307,14 @@ int main(int argc, char **argv) {
     )
     .unwrap();
 
-    let app_bin = app_dir.join("Contents/MacOS/Deadbolt");
+    let app_bin = app_dir.join("Contents/MacOS/Shuvbolt");
     let cc = ProcessCommand::new("clang")
         .args(["-O2", "-Wall", "-Werror"])
         .arg(&c_src)
         .arg("-o")
         .arg(&app_bin)
         .output()
-        .expect("compile staged Deadbolt app helper");
+        .expect("compile staged Shuvbolt app helper");
     assert!(
         cc.status.success(),
         "clang failed: {}",
@@ -358,7 +370,7 @@ fn autofill_appex_bundle_is_valid() {
     let plist = appex.join("Contents/Info.plist");
     assert_eq!(
         plist_value(&plist, "CFBundleIdentifier"),
-        "anomaly.deadbolt.autofill"
+        "dev.shuv.shuvbolt.autofill"
     );
     assert_eq!(plist_value(&plist, "CFBundlePackageType"), "XPC!");
     assert_eq!(plist_value(&plist, "CFBundleShortVersionString"), "0.2.3");

@@ -1,4 +1,4 @@
-//! Finding the `deadbolt` that runs the daemon for `deadbolt-ui`. Bundle
+//! Finding the `shuvbolt` that runs the daemon for `shuvbolt-ui`. Bundle
 //! discovery is deliberately independent of the shell's PATH.
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
@@ -12,14 +12,14 @@ pub fn bundled(exe: &Path) -> Option<PathBuf> {
     (macos.file_name()? == "MacOS"
         && contents.file_name()? == "Contents"
         && app.extension()? == "app")
-        .then(|| contents.join("Helpers/deadbolt"))
+        .then(|| contents.join("Helpers/shuvbolt"))
 }
 
 /// Whether `path` has the shape of a bundle's helper,
-/// `<Something>.app/Contents/Helpers/deadbolt`, whether or not it exists.
+/// `<Something>.app/Contents/Helpers/shuvbolt`, whether or not it exists.
 pub fn is_helper(path: &Path) -> bool {
     let mut up = path.ancestors().skip(1);
-    path.file_name().is_some_and(|n| n == "deadbolt")
+    path.file_name().is_some_and(|n| n == "shuvbolt")
         && up
             .next()
             .and_then(Path::file_name)
@@ -62,18 +62,18 @@ pub fn search_dirs(path: &OsStr, home: Option<&Path>) -> Vec<PathBuf> {
 }
 
 /// This program's path with symlinks resolved, so a link named like a
-/// bundle's executable (`Some.app/Contents/MacOS/Deadbolt`) doesn't make its
+/// bundle's executable (`Some.app/Contents/MacOS/Shuvbolt`) doesn't make its
 /// directory this app's bundle, with that bundle's helper as the daemon, and
-/// a linked `deadbolt-ui` finds the `deadbolt` installed beside the real one.
+/// a linked `shuvbolt-ui` finds the `shuvbolt` installed beside the real one.
 pub fn resolved(exe: PathBuf) -> PathBuf {
     std::fs::canonicalize(&exe).unwrap_or(exe)
 }
 
 /// The daemon program for the app at `exe` ([`resolved`]): the bundle's own
-/// helper inside Deadbolt.app, else `override_bin` (`DEADBOLT_BIN`), else
-/// the `deadbolt` beside `exe` (a build's `target/<profile>`, an install's
+/// helper inside Shuvbolt.app, else `override_bin` (`DEADBOLT_BIN`), else
+/// the `shuvbolt` beside `exe` (a build's `target/<profile>`, an install's
 /// directory), else the first in `search` ([`search_dirs`]) that `usable`
-/// takes, else plain `deadbolt`, which fails to start with a message that
+/// takes, else plain `shuvbolt`, which fails to start with a message that
 /// says to install it.
 pub fn discover(
     exe: Option<&Path>,
@@ -90,9 +90,9 @@ pub fn discover(
     exe.and_then(Path::parent)
         .into_iter()
         .chain(search.iter().map(PathBuf::as_path))
-        .map(|dir| dir.join("deadbolt"))
+        .map(|dir| dir.join("shuvbolt"))
         .find(|binary| usable(binary))
-        .unwrap_or_else(|| "deadbolt".into())
+        .unwrap_or_else(|| "shuvbolt".into())
 }
 
 pub fn executable(path: &Path) -> bool {
@@ -106,21 +106,21 @@ mod tests {
 
     #[test]
     fn bundle_wins_even_when_missing_and_override_is_set() {
-        let exe = Path::new("/Applications/Deadbolt.app/Contents/MacOS/Deadbolt");
+        let exe = Path::new("/Applications/Shuvbolt.app/Contents/MacOS/Shuvbolt");
         assert_eq!(
-            discover(Some(exe), Some(OsStr::new("/other/deadbolt")), &[], |_| {
+            discover(Some(exe), Some(OsStr::new("/other/shuvbolt")), &[], |_| {
                 true
             }),
-            Path::new("/Applications/Deadbolt.app/Contents/Helpers/deadbolt")
+            Path::new("/Applications/Shuvbolt.app/Contents/Helpers/shuvbolt")
         );
-        assert!(bundled(Path::new("/tmp/MacOS/Deadbolt")).is_none());
+        assert!(bundled(Path::new("/tmp/MacOS/Shuvbolt")).is_none());
     }
 
     #[test]
     fn a_link_shaped_like_a_bundle_is_not_one() {
         let dir = tempfile::tempdir().unwrap();
-        let real = dir.path().join("bin/deadbolt");
-        let link = dir.path().join("Fake.app/Contents/MacOS/Deadbolt");
+        let real = dir.path().join("bin/shuvbolt");
+        let link = dir.path().join("Fake.app/Contents/MacOS/Shuvbolt");
         std::fs::create_dir_all(real.parent().unwrap()).unwrap();
         std::fs::create_dir_all(link.parent().unwrap()).unwrap();
         std::fs::write(&real, "").unwrap();
@@ -139,17 +139,17 @@ mod tests {
     #[test]
     fn helpers_are_recognised_by_shape_alone() {
         for helper in [
-            "/Applications/Deadbolt.app/Contents/Helpers/deadbolt",
-            "/Volumes/Deadbolt/Deadbolt.app/Contents/Helpers/deadbolt",
-            "/gone/Deadbolt 2.app/Contents/Helpers/deadbolt",
+            "/Applications/Shuvbolt.app/Contents/Helpers/shuvbolt",
+            "/Volumes/Shuvbolt/Shuvbolt.app/Contents/Helpers/shuvbolt",
+            "/gone/Shuvbolt 2.app/Contents/Helpers/shuvbolt",
         ] {
             assert!(is_helper(Path::new(helper)), "{helper}");
         }
         for other in [
-            "/opt/homebrew/Cellar/deadbolt/1/bin/deadbolt",
-            "/Applications/Deadbolt.app/Contents/MacOS/Deadbolt",
-            "/Applications/Deadbolt/Contents/Helpers/deadbolt",
-            "Contents/Helpers/deadbolt",
+            "/opt/homebrew/Cellar/shuvbolt/1/bin/shuvbolt",
+            "/Applications/Shuvbolt.app/Contents/MacOS/Shuvbolt",
+            "/Applications/Shuvbolt/Contents/Helpers/shuvbolt",
+            "Contents/Helpers/shuvbolt",
         ] {
             assert!(!is_helper(Path::new(other)), "{other}");
         }
@@ -180,8 +180,8 @@ mod tests {
 
     #[test]
     fn outside_a_bundle_the_daemon_is_the_deadbolt_beside_else_on_the_path() {
-        let exe = Path::new("/home/alex/.local/bin/deadbolt-ui");
-        let beside = Path::new("/home/alex/.local/bin/deadbolt");
+        let exe = Path::new("/home/alex/.local/bin/shuvbolt-ui");
+        let beside = Path::new("/home/alex/.local/bin/shuvbolt");
         let search = [
             PathBuf::from("/usr/bin"),
             PathBuf::from("/opt/homebrew/bin"),
@@ -196,16 +196,16 @@ mod tests {
             discover(Some(exe), Some(OsStr::new("/override")), &search, all),
             Path::new("/override")
         );
-        let brew = |p: &Path| p == Path::new("/opt/homebrew/bin/deadbolt");
+        let brew = |p: &Path| p == Path::new("/opt/homebrew/bin/shuvbolt");
         assert_eq!(
             discover(Some(exe), None, &search, brew),
-            Path::new("/opt/homebrew/bin/deadbolt")
+            Path::new("/opt/homebrew/bin/shuvbolt")
         );
         let none = |_: &Path| false;
         assert_eq!(
             discover(Some(exe), None, &search, none),
-            Path::new("deadbolt")
+            Path::new("shuvbolt")
         );
-        assert_eq!(discover(None, None, &[], all), Path::new("deadbolt"));
+        assert_eq!(discover(None, None, &[], all), Path::new("shuvbolt"));
     }
 }

@@ -702,7 +702,7 @@ mod tests {
     #[test]
     fn a_missing_helper_means_a_damaged_app_not_a_missing_command() {
         let missing = || std::io::Error::from(std::io::ErrorKind::NotFound);
-        let helper = "/Applications/Deadbolt.app/Contents/Helpers/deadbolt";
+        let helper = "/Applications/Shuvbolt.app/Contents/Helpers/shuvbolt";
         let failure = Failure::from(Error::Spawn(helper.into(), missing()));
         assert!(
             failure.message.contains("Reinstall Deadbolt"),

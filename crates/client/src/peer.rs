@@ -117,7 +117,7 @@ impl CodeSignature {
         running.and_then(|p| p.canonicalize().ok()).as_deref() == Some(expected)
     }
 
-    /// Whether `self` (a running process) is Deadbolt's code `id`: signed by
+    /// Whether `self` (a running process) is Shuvbolt's code `id`: signed by
     /// `team` under `id` for a Developer ID build, else (`team` is `None`,
     /// an ad-hoc build) the code directory of `file`, the signature on disk
     /// of the binary it should be. Anything unsigned or invalid never is.
@@ -161,17 +161,17 @@ pub fn team() -> Option<&'static str> {
     Some(env!("DEADBOLT_TEAM_ID")).filter(|t| !t.is_empty())
 }
 
-/// The signing identifier of Deadbolt's daemon (`Contents/Helpers/deadbolt`,
+/// The signing identifier of Shuvbolt's daemon (`Contents/Helpers/shuvbolt`,
 /// and the CLI), as `bundle.sh` and the release (`.github/release/lib.sh`'s
 /// `DEADBOLT_CLI_ID`) sign it.
-pub const DAEMON_ID: &str = "anomaly.deadbolt.cli";
-/// The signing identifier of Deadbolt.app, its bundle identifier.
-pub const APP_ID: &str = "anomaly.deadbolt";
-/// The signing identifier of Deadbolt's macOS AutoFill extension
+pub const DAEMON_ID: &str = "dev.shuv.shuvbolt.cli";
+/// The signing identifier of Shuvbolt.app, its bundle identifier.
+pub const APP_ID: &str = "dev.shuv.shuvbolt";
+/// The signing identifier of Shuvbolt's macOS AutoFill extension
 /// (`Contents/PlugIns/DeadboltAutoFill.appex`), its bundle identifier.
-pub const AUTOFILL_ID: &str = "anomaly.deadbolt.autofill";
-/// The suffix of Deadbolt's macOS App Group (`<TEAM_ID>.anomaly.deadbolt`).
-pub const APP_GROUP_SUFFIX: &str = "anomaly.deadbolt";
+pub const AUTOFILL_ID: &str = "dev.shuv.shuvbolt.autofill";
+/// The suffix of Shuvbolt's macOS App Group (`<TEAM_ID>.dev.shuv.shuvbolt`).
+pub const APP_GROUP_SUFFIX: &str = "dev.shuv.shuvbolt";
 
 /// The macOS App Group shared with `DeadboltAutoFill.appex`, when this build
 /// knows its Apple team (`DEADBOLT_TEAM_ID`).
@@ -186,17 +186,17 @@ pub enum Accepted {
     /// nothing tells.
     Expected,
     /// Another daemon this build's team signed: a Homebrew or npm
-    /// `deadbolt`'s, or Deadbolt.app's. It checks its own `deadbolt-enclave`
+    /// `shuvbolt`'s, or Shuvbolt.app's. It checks its own `deadbolt-enclave`
     /// against its own pin.
     Elsewhere,
 }
 
-/// Checks that `socket`'s peer is Deadbolt's daemon, before a passphrase goes
+/// Checks that `socket`'s peer is Shuvbolt's daemon, before a passphrase goes
 /// to it. `expected` is the daemon this client would run (its own binary, or
 /// its bundle's helper).
 ///
 /// On macOS the peer's code is looked up by its audit token and must be
-/// Deadbolt's daemon by signature (`daemon_is`): any daemon its team signed,
+/// Shuvbolt's daemon by signature (`daemon_is`): any daemon its team signed,
 /// for a Developer ID build, else `expected` itself, not a copy elsewhere.
 /// On Linux nothing tells two processes of one user apart, so this checks
 /// only that the peer runs as this user; the socket's 0700 directory is what
@@ -220,7 +220,7 @@ pub fn check(socket: &impl AsFd, expected: &Path) -> Result<Accepted, String> {
         let file = macos::file_signature(&expected);
         daemon_is(&code, file.as_ref(), &expected, team()).map_err(|why| {
             format!(
-                "the daemon (pid {}) {why}; run `deadbolt debug daemon stop`",
+                "the daemon (pid {}) {why}; run `shuvbolt debug daemon stop`",
                 peer.pid
             )
         })?;
@@ -237,18 +237,18 @@ pub fn check(socket: &impl AsFd, expected: &Path) -> Result<Accepted, String> {
     }
 }
 
-/// What Deadbolt says when its `deadbolt-enclave` isn't where it belongs.
+/// What Shuvbolt says when its `deadbolt-enclave` isn't where it belongs.
 pub fn missing_helper(helper: &Path) -> String {
     format!(
-        "{} is missing: Deadbolt uses it for Touch ID. \
-         Reinstall Deadbolt so deadbolt-enclave sits beside deadbolt",
+        "{} is missing: Shuvbolt uses it for Touch ID. \
+         Reinstall Shuvbolt so deadbolt-enclave sits beside shuvbolt",
         helper.display()
     )
 }
 
-/// Whether running `code` is Deadbolt's daemon. A Developer ID build knows
+/// Whether running `code` is Shuvbolt's daemon. A Developer ID build knows
 /// it by `team` and [`DAEMON_ID`] wherever it runs, so a Homebrew or npm
-/// `deadbolt` and `/Applications/Deadbolt.app` share one daemon, whichever
+/// `shuvbolt` and `/Applications/Shuvbolt.app` share one daemon, whichever
 /// started it. An ad-hoc build knows it only as the daemon at `expected`
 /// (canonical): it runs from that very file, with the code hash of `file`,
 /// the signature on disk there.
@@ -683,36 +683,36 @@ mod tests {
         assert!(!sig("aa", None, DAEMON_ID, true).signed_as(Some(&unsigned), None, DAEMON_ID));
 
         let team = Some("T");
-        assert!(sig("bb", team, "anomaly.deadbolt", true).signed_as(
+        assert!(sig("bb", team, "dev.shuv.shuvbolt", true).signed_as(
             None,
             team,
-            "anomaly.deadbolt"
+            "dev.shuv.shuvbolt"
         ));
-        assert!(!sig("bb", team, "anomaly.deadbolt.cli", true).signed_as(
+        assert!(!sig("bb", team, "dev.shuv.shuvbolt.cli", true).signed_as(
             None,
             team,
-            "anomaly.deadbolt"
+            "dev.shuv.shuvbolt"
         ));
-        assert!(!sig("bb", Some("U"), "anomaly.deadbolt", true).signed_as(
+        assert!(!sig("bb", Some("U"), "dev.shuv.shuvbolt", true).signed_as(
             None,
             team,
-            "anomaly.deadbolt"
+            "dev.shuv.shuvbolt"
         ));
         // A build that knows its team takes no ad-hoc code, even the file's.
-        assert!(!sig("aa", None, "anomaly.deadbolt", true).signed_as(
+        assert!(!sig("aa", None, "dev.shuv.shuvbolt", true).signed_as(
             Some(&file),
             team,
-            "anomaly.deadbolt"
+            "dev.shuv.shuvbolt"
         ));
     }
 
     /// A client takes only the daemon running from the file it expects, by
-    /// that file's code hash (ad-hoc) or Deadbolt's team and identifier: a
+    /// that file's code hash (ad-hoc) or Shuvbolt's team and identifier: a
     /// byte-for-byte copy elsewhere, beside other files, is refused.
     #[test]
     fn the_daemon_is_that_file_not_a_copy() {
         let dir = tempfile::tempdir().unwrap();
-        let real = dir.path().canonicalize().unwrap().join("deadbolt");
+        let real = dir.path().canonicalize().unwrap().join("shuvbolt");
         let copy = dir.path().canonicalize().unwrap().join("copy");
         std::fs::write(&real, b"").unwrap();
         std::fs::write(&copy, b"").unwrap();
@@ -759,7 +759,15 @@ mod tests {
             )
             .is_err()
         );
-        assert!(daemon_is(&running(&real, team, "anomaly.deadbolt"), None, &real, team).is_err());
+        assert!(
+            daemon_is(
+                &running(&real, team, "dev.shuv.shuvbolt"),
+                None,
+                &real,
+                team
+            )
+            .is_err()
+        );
         assert!(daemon_is(&running(&real, None, DAEMON_ID), Some(&file), &real, team).is_err());
         // ... wherever that daemon runs from.
         assert_eq!(
@@ -768,14 +776,14 @@ mod tests {
         );
     }
 
-    /// The split install: a signed Homebrew or npm `deadbolt` and a signed
-    /// `/Applications/Deadbolt.app` each take the daemon the other started.
+    /// The split install: a signed Homebrew or npm `shuvbolt` and a signed
+    /// `/Applications/Shuvbolt.app` each take the daemon the other started.
     /// An ad-hoc build takes only the daemon at the path it expects.
     #[test]
     fn signed_cli_and_app_share_either_daemon() {
         let team = Some("TEAM123456");
-        let cli = Path::new("/opt/homebrew/bin/deadbolt");
-        let helper = Path::new("/Applications/Deadbolt.app/Contents/Helpers/deadbolt");
+        let cli = Path::new("/opt/homebrew/bin/shuvbolt");
+        let helper = Path::new("/Applications/Shuvbolt.app/Contents/Helpers/shuvbolt");
         let running = |path: &Path, team: Option<&str>| CodeSignature {
             path: Some(path.display().to_string()),
             signing_id: Some(DAEMON_ID.into()),

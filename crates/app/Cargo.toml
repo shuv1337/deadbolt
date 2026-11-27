@@ -1,6 +1,6 @@
 [package]
 name = "deadbolt-app"
-description = "Deadbolt's desktop app, the deadbolt-ui binary: a Rune client of the running daemon (docs/app.md)."
+description = "Shuvbolt's desktop app, the shuvbolt-ui binary: a Rune client of the running daemon (docs/app.md)."
 version.workspace = true
 edition.workspace = true
 publish.workspace = true
@@ -15,9 +15,9 @@ workspace = true
 # Keycaps overlay (`--keys` / `--pointer`) in release builds (used by `scripts/hold-down.sh`).
 keys-overlay = ["rune/keys-overlay"]
 
-# The app's own program, apart from the headless `deadbolt` (docs/app.md).
+# The app's own program, apart from the headless `shuvbolt` (docs/app.md).
 [[bin]]
-name = "deadbolt-ui"
+name = "shuvbolt-ui"
 path = "src/main.rs"
 
 [[test]]
