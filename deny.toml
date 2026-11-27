@@ -12,6 +12,7 @@ ignore = [
     { id = "RUSTSEC-2026-0371", reason = "zbus_names: Linux-only, through Rune's zbus 5 / accesskit_unix atspi; drop when Rune moves back to zbus 6" },
     { id = "RUSTSEC-2026-0372", reason = "zvariant_derive: Linux-only, through Rune's zbus 5 / accesskit_unix atspi; drop when Rune moves back to zbus 6" },
     { id = "RUSTSEC-2026-0543", reason = "chrono is unmaintained but pulled in by zxcvbn and iroh's netwatch/wmi; no replacement available yet" },
+    { id = "RUSTSEC-2026-0192", reason = "ttf-parser is unmaintained and only used transitively by Rune's Wayland client-side title decoration via sctk-adwaita / ab_glyph; drop when Rune moves to a maintained parser" },
 ]
 
 [licenses]
