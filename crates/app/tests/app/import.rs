@@ -73,7 +73,7 @@ fn bitwarden_again() -> String {
     BITWARDEN.replace(r#""password": null"#, r#""password": "nopass-secret-777""#)
 }
 
-/// A Bitwarden export of a bank account alone, which Deadbolt doesn't take.
+/// A Bitwarden export of a bank account alone, which Shuvbolt doesn't take.
 const UNSUPPORTED_ONLY: &str = r#"{
   "encrypted": false,
   "folders": [],
@@ -237,7 +237,7 @@ fn a_file_that_isnt_an_export_says_so() {
     rt.frame(1.0 / 60.0);
     let error = rt.state.import.error.clone().expect("a caution");
     assert_eq!(error.severity, Severity::Caution);
-    assert_eq!(error.title, "notes.txt isn't an export Deadbolt can read");
+    assert_eq!(error.title, "notes.txt isn't an export Shuvbolt can read");
     assert!(shows(&rt, &error.title));
     assert_eq!(rt.state.import.phase, Phase::Idle);
 
@@ -255,7 +255,7 @@ fn a_file_that_isnt_an_export_says_so() {
     assert_eq!(error.severity, Severity::Caution);
     assert_eq!(
         error.title,
-        "package.json isn't an export Deadbolt can read"
+        "package.json isn't an export Shuvbolt can read"
     );
     assert!(shows(&rt, &error.title));
 
@@ -393,7 +393,7 @@ fn a_file_changed_into_something_else_says_it_isnt_an_export() {
     until(&mut rt, "the error", |s| s.import.error.is_some());
     let error = rt.state.import.error.clone().unwrap();
     assert_eq!(error.severity, Severity::Caution, "{error:?}");
-    assert_eq!(error.title, "export.json isn't an export Deadbolt can read");
+    assert_eq!(error.title, "export.json isn't an export Shuvbolt can read");
     assert!(!error.body.contains("; import a"), "{error:?}");
     assert_eq!(rt.state.import.phase, Phase::Idle);
     assert!(device.output(&["ls"]).is_empty(), "nothing was imported");

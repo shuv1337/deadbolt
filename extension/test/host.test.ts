@@ -79,9 +79,9 @@ describe("Host", () => {
 
   test("locked, not set up and unavailable come straight from hello", async () => {
     const ready = host.connect()
-    ports[0].push(hello(1, "locked", { detail: "Unlock Deadbolt" }))
+    ports[0].push(hello(1, "locked", { detail: "Unlock Shuvbolt" }))
     await ready
-    expect(host.status).toEqual({ state: "locked", detail: "Unlock Deadbolt" })
+    expect(host.status).toEqual({ state: "locked", detail: "Unlock Shuvbolt" })
   })
 
   test("a different protocol version is unavailable, not ready", async () => {
@@ -153,7 +153,7 @@ describe("Host", () => {
     ports[0].push(hello(1))
     await ready
     const list = host.send({ type: "list", origin: "https://github.com" })
-    ports[0].push({ id: 2, type: "error", code: "locked", message: "Deadbolt is locked." })
+    ports[0].push({ id: 2, type: "error", code: "locked", message: "Shuvbolt is locked." })
     await list.catch(() => {})
     expect(ports[0].last()).toEqual({ type: "hello", id: 3 })
     ports[0].push(hello(3, "locked"))
@@ -200,7 +200,7 @@ describe("Host", () => {
     expect(host.status.state).toBe("locked")
 
     ports[0].push({ type: "changed", change: "stopped" })
-    expect(host.status).toEqual({ state: "locked", detail: "Deadbolt isn't running" })
+    expect(host.status).toEqual({ state: "locked", detail: "Shuvbolt isn't running" })
     // Stopped must not send hello: hello would start the daemon again.
     expect(ports[0].sent).toHaveLength(1)
 

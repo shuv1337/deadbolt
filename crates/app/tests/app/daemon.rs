@@ -55,7 +55,7 @@ fn unlock_search_copy_lock() {
     rt.state.daemon.send(deadbolt_app::daemon::Job::Connect);
 
     until(&mut rt, "the locked screen", |s| s.screen == Screen::Locked);
-    assert!(shows(&rt, "Deadbolt"));
+    assert!(shows(&rt, "Shuvbolt"));
 
     // A wrong passphrase stays on the unlock screen and says so.
     for c in "nope".chars() {
@@ -183,7 +183,7 @@ fn quick_panel_unlock_filter_copy() {
     rt.update(|s, tx| s.summon(tx));
 
     until(&mut rt, "the locked panel", |s| s.screen == Screen::Locked);
-    assert!(shows(&rt, "Unlock Deadbolt"));
+    assert!(shows(&rt, "Unlock Shuvbolt"));
     type_text(&mut rt, PASSPHRASE);
     rt.key(key(Key::Enter));
     until(&mut rt, "the vault in the panel", |s| {
@@ -233,7 +233,7 @@ fn quick_panel_unlock_filter_copy() {
     assert_eq!(text(&board).as_deref(), Some("ops"));
 }
 
-/// Another launch (`deadbolt app`, `app-activate`) reaches the main window's
+/// Another launch (`shuvbolt app`, `app-activate`) reaches the main window's
 /// watch, never the quick panel's, and bringing the window forward leaves
 /// what it shows as it was. Headless runs drop window requests, so the
 /// focus itself isn't seen here.
@@ -394,7 +394,7 @@ fn type_text(rt: &mut Runtime<App>, text: &str) {
 /// Picks `flow` on the welcome screen and fills the form for a new device.
 fn fill_form(rt: &mut Runtime<App>, flow: Flow, name: &str) {
     until(rt, "the welcome screen", |s| s.screen == Screen::Onboarding);
-    assert!(shows(rt, "Deadbolt"));
+    assert!(shows(rt, "Shuvbolt"));
     rt.update(|s, _| s.choose(flow));
     rt.update(|s, _| s.onboarding.device = rune::TextEdit::new(name));
     rt.frame(1.0 / 60.0);
@@ -462,7 +462,7 @@ fn create_a_vault_in_the_app() {
 }
 
 /// Shows a code on `device`'s app and pairs it from `inviter`; returns the
-/// inviter's `deadbolt approve`.
+/// inviter's `shuvbolt approve`.
 fn pair_from(rt: &mut Runtime<App>, inviter: &Device, form: bool) -> std::process::Child {
     if form {
         fill_form(rt, Flow::Join, "beta");
@@ -473,7 +473,7 @@ fn pair_from(rt: &mut Runtime<App>, inviter: &Device, form: bool) -> std::proces
     assert!(shows(rt, "Approve from your other device"));
     let code = rt.state.onboarding.code.as_ref().unwrap().clone();
     assert_eq!(code.split('-').count(), 5, "{}", code.as_str());
-    assert!(shows(rt, &format!("deadbolt approve {}", code.as_str())));
+    assert!(shows(rt, &format!("shuvbolt approve {}", code.as_str())));
     inviter.spawn(&["approve", &code])
 }
 

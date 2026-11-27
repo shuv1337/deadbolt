@@ -1,4 +1,4 @@
-//! `deadbolt receive`: opens a Deadbolt Send link from a terminal, through the
+//! `shuvbolt receive`: opens a Shuvbolt Send link from a terminal, through the
 //! same [`deadbolt_send::receive`] the browser page uses. Nothing is looked up
 //! in the vault and no daemon is needed: the link carries everything.
 

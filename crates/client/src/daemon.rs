@@ -1,4 +1,4 @@
-//! Async client for the local Deadbolt daemon over its control socket.
+//! Async client for the local Shuvbolt daemon over its control socket.
 
 use std::fs;
 use std::os::fd::{AsFd, OwnedFd};
@@ -140,7 +140,7 @@ pub enum Error {
     #[error("the daemon sent a line longer than {MAX_LINE} bytes")]
     LineTooLong,
     #[error(
-        "a newer Deadbolt daemon is running ({}, version {}, pid {}): it speaks protocol {}, and this copy speaks {}. Update this copy of Deadbolt, or stop that daemon with `deadbolt debug daemon stop` and try again",
+        "a newer Shuvbolt daemon is running ({}, version {}, pid {}): it speaks protocol {}, and this copy speaks {}. Update this copy of Shuvbolt, or stop that daemon with `shuvbolt debug daemon stop` and try again",
         .0.program.as_deref().unwrap_or("unknown program"),
         .0.version,
         .0.pid,
@@ -149,7 +149,7 @@ pub enum Error {
     )]
     NewerDaemon(Box<DaemonId>),
     #[error(
-        "a Deadbolt daemon of another build is running ({}, version {}, pid {}): it says protocol {} but its status doesn't match this copy's. Stop it with `deadbolt debug daemon stop` and try again",
+        "a Shuvbolt daemon of another build is running ({}, version {}, pid {}): it says protocol {} but its status doesn't match this copy's. Stop it with `shuvbolt debug daemon stop` and try again",
         .0.program.as_deref().unwrap_or("unknown program"),
         .0.version,
         .0.pid,
@@ -182,7 +182,7 @@ impl Error {
 /// How to start a daemon when none is running.
 #[derive(Debug, Clone)]
 pub struct Launch {
-    /// A `deadbolt` binary; the daemon runs as `<program> daemon`.
+    /// A `shuvbolt` binary; the daemon runs as `<program> daemon`.
     pub program: PathBuf,
 }
 
@@ -475,7 +475,7 @@ async fn status_line(paths: &Paths) -> Result<(Zeroizing<Vec<u8>>, Result<(), St
 /// - newer protocol: [`Error::NewerDaemon`], leaving it running
 ///
 /// A rebuilt daemon of the same protocol is only picked up once the running
-/// one stops (`deadbolt debug daemon stop`).
+/// one stops (`shuvbolt debug daemon stop`).
 pub async fn ensure_running(paths: &Paths, launch: &Launch) -> Result<Status, Error> {
     if let Some(Probe {
         daemon,
@@ -558,7 +558,7 @@ fn lock_free(paths: &Paths) -> bool {
 /// Stops the daemon. Returns whether one was running.
 ///
 /// Waits until the lock file is really free before returning, so a new daemon
-/// started right after `stop` (e.g. `deadbolt debug daemon stop && deadbolt unlock`)
+/// started right after `stop` (e.g. `shuvbolt debug daemon stop && shuvbolt unlock`)
 /// doesn't fail with "the daemon is already running" while the old process is
 /// still releasing the lock.
 pub async fn stop(paths: &Paths) -> Result<bool, Error> {
@@ -785,7 +785,7 @@ mod tests {
                 "/opt/homebrew/bin/deadbolt",
                 "another-build",
                 "pid 41",
-                "deadbolt debug daemon stop",
+                "shuvbolt debug daemon stop",
             ] {
                 assert!(message.contains(part), "{message}");
             }

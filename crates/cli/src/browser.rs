@@ -1,12 +1,12 @@
-//! Deadbolt's browser extension talks to the daemon through this binary, run
+//! Shuvbolt's browser extension talks to the daemon through this binary, run
 //! by the browser as a native messaging host (see `docs/autofill.md`).
 //!
-//! `deadbolt browser install` registers it: a manifest named
+//! `shuvbolt browser install` registers it: a manifest named
 //! [`HOST_NAME`] in each browser's `NativeMessagingHosts` directory, whose
 //! `path` is this binary and whose only allowed origin is the extension.
 //! The browser runs `path` with the extension's origin as its one argument
 //! and no way to add others, so `main` reads a first argument of
-//! `chrome-extension://…` as `deadbolt browser-host <origin>`: no launcher
+//! `chrome-extension://…` as `shuvbolt browser-host <origin>`: no launcher
 //! script to keep in step with the binary.
 
 pub mod host;
@@ -136,7 +136,7 @@ fn manifest(program: &Path) -> Result<String> {
         .context("the path of this binary is not UTF-8")?;
     let manifest = serde_json::json!({
         "name": HOST_NAME,
-        "description": "Deadbolt password manager",
+        "description": "Shuvbolt password manager",
         "path": path,
         "type": "stdio",
         "allowed_origins": [extension_origin()],
@@ -239,10 +239,15 @@ fn pick(chosen: &[Browser], dirs: &Dirs) -> Result<Vec<Browser>> {
 }
 
 /// Registers this binary as the native messaging host with `browsers`, and
-/// `extension_dir` as the unpacked copy that `deadbolt update` keeps
+/// `extension_dir` as the unpacked copy that `shuvbolt update` keeps
 /// current.
 pub fn install(browsers: &[Browser], extension_dir: Option<&Path>, config: &Path) -> Result<()> {
     if let Some(dir) = extension_dir {
+        if !cfg!(feature = "upstream-update-fixtures") {
+            bail!(
+                "Shuvbolt doesn't download browser updates; build from source and load extension/dist unpacked. Run `shuvbolt browser install` without --extension-dir to register the native host."
+            );
+        }
         register_extension_dir(dir, config)?;
     }
     let dirs = Dirs::get()?;
@@ -256,30 +261,28 @@ pub fn install(browsers: &[Browser], extension_dir: Option<&Path>, config: &Path
         println!("{}: wrote {}", browser.name(), path.display());
     }
     println!(
-        "The Deadbolt extension ({EXTENSION_ID}) can now reach {}.\n\
+        "The Shuvbolt extension ({EXTENSION_ID}) can now reach {}.\n\
          Run this again if you move that binary.",
         program.display()
     );
     Ok(())
 }
 
-/// Records `dir` as the unpacked extension `deadbolt update` keeps current:
-/// it must not exist yet, be empty, or already hold Deadbolt's extension, as
+/// Records `dir` as the unpacked extension `shuvbolt update` keeps current:
+/// it must not exist yet, be empty, or already hold Shuvbolt's extension, as
 /// updating replaces everything in it.
 fn register_extension_dir(dir: &Path, config: &Path) -> Result<()> {
     let dir = extension_path(dir)?;
     if !crate::update::extension_dir_ok(&dir) {
         bail!(
-            "{} holds files deadbolt update didn't install; \
+            "{} holds files shuvbolt update didn't install; \
              choose an empty or new directory",
             dir.display()
         );
     }
     crate::config::set_extension_dir(config, &dir)?;
     println!(
-        "`deadbolt update` keeps the extension in {} current: run it now to \
-         fetch it, then load it unpacked from there (chrome://extensions, \
-         Developer mode, Load unpacked)",
+        "Registered {} for the loopback updater fixture.",
         dir.display()
     );
     Ok(())
@@ -287,7 +290,7 @@ fn register_extension_dir(dir: &Path, config: &Path) -> Result<()> {
 
 /// `dir` as an extension directory is registered: absolute, with links
 /// resolved (its parent's when it doesn't exist yet), so it's the same path
-/// before `deadbolt update` creates it and after.
+/// before `shuvbolt update` creates it and after.
 pub fn extension_path(dir: &Path) -> Result<PathBuf> {
     let dir = std::path::absolute(dir).with_context(|| format!("finding {}", dir.display()))?;
     if let Ok(path) = dir.canonicalize() {
@@ -300,20 +303,19 @@ pub fn extension_path(dir: &Path) -> Result<PathBuf> {
     Ok(resolved.unwrap_or(dir))
 }
 
-/// Stops `deadbolt update` keeping the unpacked extension in `dir` current,
+/// Stops `shuvbolt update` keeping the unpacked extension in `dir` current,
 /// leaving its files and the host's manifests alone.
 pub fn unregister_extension_dir(dir: &Path, config: &Path) -> Result<()> {
     let dir = extension_path(dir)?;
     if !crate::config::remove_extension_dir(config, &dir)? {
         bail!(
-            "{} isn't a registered extension directory (`deadbolt browser install \
+            "{} isn't a registered extension directory (`shuvbolt browser install \
              --extension-dir <dir>` registers one)",
             dir.display()
         );
     }
     println!(
-        "`deadbolt update` no longer keeps {} current; remove Deadbolt loaded from \
-         there in chrome://extensions, then delete the directory, if you're done with it",
+        "Removed the updater registration for {}; no files were changed.",
         dir.display()
     );
     Ok(())
@@ -342,7 +344,7 @@ pub fn uninstall(browsers: &[Browser]) -> Result<()> {
         }
     }
     if removed == 0 {
-        println!("Deadbolt wasn't registered with any browser.");
+        println!("Shuvbolt wasn't registered with any browser.");
     }
     Ok(())
 }
@@ -487,7 +489,7 @@ mod tests {
             json,
             serde_json::json!({
                 "name": "anomaly.deadbolt.browser",
-                "description": "Deadbolt password manager",
+                "description": "Shuvbolt password manager",
                 "path": "/opt/deadbolt/bin/deadbolt",
                 "type": "stdio",
                 "allowed_origins": ["chrome-extension://jhocodkhpifjndffenppfmdkmiolngal/"],

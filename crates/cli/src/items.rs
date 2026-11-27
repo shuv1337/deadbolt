@@ -25,9 +25,9 @@ pub enum ItemCommand {
     /// license, bank, document, passport, driver-license, membership, crypto,
     /// id-document.
     ///
-    /// Examples: deadbolt new login username=sam url=github.com
-    ///           deadbolt new api credential=- username=deploy-bot type=bearer
-    ///           deadbolt new document file=./passport.pdf --name Passport scan
+    /// Examples: shuvbolt new login username=sam url=github.com
+    ///           shuvbolt new api credential=- username=deploy-bot type=bearer
+    ///           shuvbolt new document file=./passport.pdf --name Passport scan
     New {
         /// Item type (see above).
         #[arg(value_name = "TYPE")]
@@ -106,9 +106,9 @@ pub enum ItemCommand {
     /// Set fields, the name, favorite state or tags. Arguments containing `=`
     /// are assignments, the others are the query.
     ///
-    /// Example: deadbolt set github sam password=- url=github.com
-    ///          deadbolt set github recovery:file=./codes.pdf
-    ///          deadbolt set github --favorite --tag work/aws
+    /// Example: shuvbolt set github sam password=- url=github.com
+    ///          shuvbolt set github recovery:file=./codes.pdf
+    ///          shuvbolt set github --favorite --tag work/aws
     Set {
         #[arg(required = true, value_name = "QUERY|FIELD=VALUE")]
         args: Vec<String>,
@@ -231,8 +231,8 @@ fn fill_required(kind: &str, inputs: &mut Vec<FieldInput>) -> Result<()> {
         if inputs.iter().any(|i| i.name == field.name) {
             continue;
         }
-        // `deadbolt new ssh` without `private-key=` generates an Ed25519 key in
-        // the daemon, matching `deadbolt new login` without `password=`.
+        // `shuvbolt new ssh` without `private-key=` generates an Ed25519 key in
+        // the daemon, matching `shuvbolt new login` without `password=`.
         if kind == "ssh" && field.name == "private-key" {
             continue;
         }

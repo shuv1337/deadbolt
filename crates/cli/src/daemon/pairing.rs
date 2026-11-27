@@ -306,11 +306,11 @@ fn explain_join(error: deadbolt_net::Error) -> anyhow::Error {
     use deadbolt_net::Error;
     match error {
         Error::PairingExpired => {
-            anyhow!("the code expired (codes work for 5 minutes); run `deadbolt join` again")
+            anyhow!("the code expired (codes work for 5 minutes); run `shuvbolt join` again")
         }
         Error::PairingCodeMismatch => anyhow!(
             "pairing failed: a device tried a wrong code, so this one no longer works. If that \
-             wasn't you, someone may be trying to get in. Run `deadbolt join` again"
+             wasn't you, someone may be trying to get in. Run `shuvbolt join` again"
         ),
         Error::Remote(message) => anyhow!("the other device refused: {message}"),
         other => other.into(),
@@ -322,16 +322,16 @@ fn explain_pair(error: deadbolt_net::Error) -> anyhow::Error {
     use deadbolt_net::Error;
     match error {
         Error::PairingNotFound => anyhow!(
-            "no device is waiting for that code: check it, or run `deadbolt join` again on the \
+            "no device is waiting for that code: check it, or run `shuvbolt join` again on the \
              new device (codes work for 5 minutes)"
         ),
         Error::PairingCodeUsed => anyhow!(
             "pairing failed: that code was already used. If it wasn't you, someone else may \
-             have used it: run `deadbolt join` again on the new device"
+             have used it: run `shuvbolt join` again on the new device"
         ),
         Error::PairingCodeMismatch => {
             anyhow!(
-                "pairing failed: the code didn't match; run `deadbolt join` again on the new device"
+                "pairing failed: the code didn't match; run `shuvbolt join` again on the new device"
             )
         }
         Error::OwnCode => {
@@ -352,7 +352,7 @@ async fn fresh_node(daemon: &Daemon, seed: &[u8; 32]) -> Result<Node> {
     Ok(Node::spawn(config, Arc::new(|_: &PeerId| false), NoSync).await?)
 }
 
-/// `deadbolt join`: show a code and wait for an existing device to pair.
+/// `shuvbolt join`: show a code and wait for an existing device to pair.
 pub async fn join(
     daemon: &Arc<Daemon>,
     conv: &Conversation,
@@ -515,7 +515,7 @@ impl Inviter for ExistingDevice<'_> {
     }
 }
 
-/// `deadbolt approve`: admit the device showing `code` into a vault.
+/// `shuvbolt approve`: admit the device showing `code` into a vault.
 pub async fn pair(
     daemon: &Arc<Daemon>,
     conv: &Conversation,

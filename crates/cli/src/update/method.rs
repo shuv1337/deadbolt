@@ -9,7 +9,7 @@ use std::time::Duration;
 use serde::Deserialize;
 
 /// Receipt written beside an install by the installer (`site/public/install`),
-/// identifying who owns it so `deadbolt update` knows before guessing from
+/// identifying who owns it so `shuvbolt update` knows before guessing from
 /// paths.
 pub(super) const RECEIPT_FILE: &str = "install.json";
 /// Largest `install.json` receipt we will read.
@@ -96,7 +96,7 @@ fn same_dir(recorded: &Path, actual: &Path) -> bool {
 }
 
 /// Reads and validates an `install.json` receipt for `exe` if a trusted one
-/// exists beside the binary (or inside a macOS `Deadbolt.app` bundle). Any
+/// exists beside the binary (or inside a macOS `Shuvbolt.app` bundle). Any
 /// missing, corrupt, untrusted, or mismatched receipt returns `None` so the
 /// caller falls back to path heuristics.
 pub(super) fn read_receipt(exe: &Path, macos: bool) -> Option<Install> {
@@ -203,9 +203,9 @@ pub(super) const PLATFORM_PACKAGES: [&str; 6] = [
 /// means.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Install {
-    /// The helper of this Deadbolt.app.
+    /// The helper of this Shuvbolt.app.
     App(PathBuf),
-    /// A Deadbolt.app run from a disk image or under App Translocation,
+    /// A Shuvbolt.app run from a disk image or under App Translocation,
     /// which can't be replaced.
     Unmovable(PathBuf),
     /// A standalone `deadbolt` (the install script, a tarball, a build) in
@@ -223,7 +223,7 @@ pub enum Manager {
     Cargo,
     System,
     /// `npm`, `pnpm`, `bun` or `yarn` said it has `@deadbolt/cli` globally:
-    /// the command links into its platform package (Deadbolt.app's helper
+    /// the command links into its platform package (Shuvbolt.app's helper
     /// there, on macOS).
     Npm,
     Pnpm,
@@ -286,7 +286,7 @@ impl Manager {
         }
     }
 
-    /// What to run by hand when `deadbolt update` doesn't run the manager,
+    /// What to run by hand when `shuvbolt update` doesn't run the manager,
     /// for `channel`.
     pub(super) fn hint(self, channel: &str) -> String {
         let tag = if channel == "stable" {
@@ -295,6 +295,7 @@ impl Manager {
             channel
         };
         match self {
+            Self::Brew | Self::BrewCask => "rebuild Shuvbolt from the fork source".into(),
             Self::Nix => "update it with Nix, which installed it".into(),
             Self::Cargo => "reinstall it with cargo install, which installed it".into(),
             Self::System => "update it with the package manager that installed it".into(),
@@ -322,7 +323,7 @@ pub(super) struct Upgrade {
 }
 
 /// [`Upgrade`] for `manager`, pinned to `version`; `None` for the managers
-/// `deadbolt update` leaves to the user.
+/// `shuvbolt update` leaves to the user.
 pub(super) fn upgrade_command(manager: Manager, version: &str) -> Option<Upgrade> {
     let target = format!("{PACKAGE}@{version}");
     let (program, args): (&str, Vec<String>) = match manager {
@@ -347,19 +348,12 @@ pub(super) fn upgrade_command(manager: Manager, version: &str) -> Option<Upgrade
             ],
         ),
         Manager::Yarn => ("yarn", vec!["global".into(), "add".into(), target]),
-        Manager::Brew => (
-            "brew",
-            vec!["upgrade".into(), "anomalyco/tap/deadbolt".into()],
-        ),
-        Manager::BrewCask => (
-            "brew",
-            vec![
-                "upgrade".into(),
-                "--cask".into(),
-                "anomalyco/tap/deadbolt".into(),
-            ],
-        ),
-        Manager::Nix | Manager::Cargo | Manager::System | Manager::Package => return None,
+        Manager::Brew
+        | Manager::BrewCask
+        | Manager::Nix
+        | Manager::Cargo
+        | Manager::System
+        | Manager::Package => return None,
     };
     Some(Upgrade {
         program,
@@ -381,7 +375,7 @@ pub fn method_key(install: &Install) -> &'static str {
         Install::App(_) | Install::Unmovable(_) => "app",
         Install::Standalone(dir) => {
             if matches!(
-                read_receipt(&dir.join("deadbolt"), false),
+                read_receipt(&dir.join("shuvbolt"), false),
                 Some(Install::Standalone(_))
             ) {
                 return "direct";
@@ -405,7 +399,7 @@ pub fn method_key(install: &Install) -> &'static str {
 /// How `update` and the notice name an install method ([`method_key`]).
 pub fn installed_with(key: &str) -> String {
     match key {
-        "app" => "Deadbolt.app".into(),
+        "app" => "Shuvbolt.app".into(),
         "direct" | "curl" => "installed with the install script".into(),
         "standalone" => "standalone".into(),
         "brew" => "installed with Homebrew".into(),
@@ -414,7 +408,7 @@ pub fn installed_with(key: &str) -> String {
     }
 }
 
-/// Where Homebrew keeps casks' records: a Deadbolt.app with one is the cask's.
+/// Where Homebrew keeps casks' records: a Shuvbolt.app with one is the cask's.
 pub(super) const CASKROOMS: [&str; 2] = [
     "/opt/homebrew/Caskroom/deadbolt",
     "/usr/local/Caskroom/deadbolt",
@@ -424,7 +418,7 @@ pub(super) const CASKROOMS: [&str; 2] = [
 /// alone: npm's package is [`Manager::Package`] until [`method`] asks the
 /// managers. `exists` says whether a path exists (Homebrew's cask records).
 pub fn classify(exe: &Path, macos: bool, exists: impl Fn(&Path) -> bool) -> Install {
-    // Before the bundle: npm's darwin package carries Deadbolt.app.
+    // Before the bundle: npm's darwin package carries Shuvbolt.app.
     if exe.components().any(|c| c.as_os_str() == "node_modules") {
         return Install::Managed(Manager::Package);
     }
@@ -455,7 +449,7 @@ pub fn classify(exe: &Path, macos: bool, exists: impl Fn(&Path) -> bool) -> Inst
     Install::Standalone(dir)
 }
 
-/// Checks `install.json` beside `exe` (or inside a macOS `Deadbolt.app`
+/// Checks `install.json` beside `exe` (or inside a macOS `Shuvbolt.app`
 /// bundle) first, falling back to path heuristics ([`classify`]) when no
 /// trusted receipt is present.
 pub fn classify_with_receipt(exe: &Path, macos: bool, exists: impl Fn(&Path) -> bool) -> Install {

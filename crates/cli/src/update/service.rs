@@ -13,16 +13,14 @@ use url::Url;
 use super::method::PACKAGE;
 use super::protocol::{Target, VERSION};
 
-/// Where the release service lives.
-pub(super) const SERVICE: &str = "https://anoma.ly/release/";
-/// Overrides [`SERVICE`] in debug builds only, and only with a loopback
-/// URL, so tests can serve a fake release and no environment can send a
-/// release build anywhere else.
+/// Shuvbolt has no release service or registry defaults.
+pub(super) const SERVICE: Option<&str> = None;
+const REGISTRY: Option<&str> = None;
+/// Only the debug fixture feature accepts a loopback release service.
 pub(super) const SERVICE_OVERRIDE: &str = "DEADBOLT_RELEASE_URL";
-/// The npm registry, which says what npm, pnpm, bun and yarn can install.
-const REGISTRY: &str = "https://registry.npmjs.org/";
-/// Overrides [`REGISTRY`] as [`SERVICE_OVERRIDE`] does the service.
 const REGISTRY_OVERRIDE: &str = "DEADBOLT_NPM_REGISTRY_URL";
+const DISABLED: &str =
+    "self-update is disabled in Shuvbolt; rebuild from https://github.com/shuv1337/deadbolt";
 
 /// The largest manifest read.
 const MANIFEST_LIMIT: usize = 1 << 20;
@@ -50,7 +48,7 @@ enum Small {
 
 pub(super) struct Service {
     base: Url,
-    registry: Url,
+    registry: Option<Url>,
     client: reqwest::Client,
 }
 
@@ -58,14 +56,13 @@ impl Service {
     pub(super) fn new(channel: Option<&str>) -> Result<Self> {
         let env = |name| crate::config::env(name).ok();
         let base = loopback_or(SERVICE, SERVICE_OVERRIDE, env(SERVICE_OVERRIDE).as_deref())?;
-        let registry = loopback_or(
-            REGISTRY,
-            REGISTRY_OVERRIDE,
-            env(REGISTRY_OVERRIDE).as_deref(),
-        )?;
+        let registry = env(REGISTRY_OVERRIDE)
+            .filter(|url| !url.is_empty())
+            .map(|url| loopback_or(REGISTRY, REGISTRY_OVERRIDE, Some(&url)))
+            .transpose()?;
         let client = client(
-            &format!("deadbolt/{}/{VERSION}/cli", channel.unwrap_or("source")),
-            base.scheme() == "https" && registry.scheme() == "https",
+            &format!("shuvbolt/{}/{VERSION}/cli", channel.unwrap_or("source")),
+            base.scheme() == "https" && registry.as_ref().is_none_or(|url| url.scheme() == "https"),
         )?;
         Ok(Self {
             base,
@@ -79,8 +76,8 @@ impl Service {
     pub(super) fn at(base: Url) -> Self {
         let https = base.scheme() == "https";
         Self {
-            registry: base.clone(),
-            client: client("deadbolt/test/source/cli", https).expect("a client"),
+            registry: Some(base.clone()),
+            client: client("shuvbolt/test/source/cli", https).expect("a client"),
             base,
         }
     }
@@ -112,6 +109,8 @@ impl Service {
     pub(super) async fn npm_version(&self, channel: &str) -> Result<Option<String>> {
         let url = self
             .registry
+            .as_ref()
+            .context("the fixture has no loopback npm registry")?
             .join(&format!("-/package/{PACKAGE}/dist-tags"))?;
         let tag = if channel == "stable" {
             "latest"
@@ -130,7 +129,11 @@ impl Service {
     /// (`<registry>/<name>/<version>`). Large platform packages show up
     /// minutes after the small `@deadbolt/cli` that needs them.
     pub(super) async fn npm_has(&self, name: &str, version: &str) -> Result<bool> {
-        let url = self.registry.join(&format!("{name}/{version}"))?;
+        let url = self
+            .registry
+            .as_ref()
+            .context("the fixture has no loopback npm registry")?
+            .join(&format!("{name}/{version}"))?;
         let Some(text) = self.small(&url).await? else {
             return Ok(false);
         };
@@ -253,6 +256,7 @@ fn client(user_agent: &str, https_only: bool) -> Result<reqwest::Client> {
         .install_default()
         .ok();
     reqwest::Client::builder()
+        .no_proxy()
         .user_agent(user_agent)
         .https_only(https_only)
         .redirect(reqwest::redirect::Policy::none())
@@ -262,12 +266,15 @@ fn client(user_agent: &str, https_only: bool) -> Result<reqwest::Client> {
         .context("setting up HTTPS")
 }
 
-/// A base URL: `default`, or in debug builds `over` (from the variable
-/// `var`) on 127.0.0.1 or [::1].
-pub(super) fn loopback_or(default: &str, var: &str, over: Option<&str>) -> Result<Url> {
-    let Some(over) = over.filter(|o| cfg!(debug_assertions) && !o.is_empty()) else {
-        return Ok(Url::parse(default)?);
-    };
+/// Only debug fixture builds can resolve an explicit loopback service.
+pub(super) fn loopback_or(default: Option<&str>, var: &str, over: Option<&str>) -> Result<Url> {
+    if !cfg!(all(debug_assertions, feature = "upstream-update-fixtures")) {
+        bail!("{DISABLED}");
+    }
+    let over = over
+        .filter(|o| !o.is_empty())
+        .or(default)
+        .context(DISABLED)?;
     let mut url = Url::parse(over).with_context(|| format!("{var} {over}"))?;
     let loopback = matches!(
         url.host(),

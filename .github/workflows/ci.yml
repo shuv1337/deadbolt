@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [dev, production]
+    branches: [dev, production, shuv/dev]
   pull_request:
   schedule:
     - cron: "0 5 * * *"
@@ -34,6 +34,7 @@ jobs:
       # The cheapest gate first, before any install or cache: it needs only git
       # and awk, and `bun run check` runs it before fmt and clippy too.
       - run: bash scripts/file-size.sh
+      - run: python3 scripts/check-fork-boundary.py
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - if: runner.os == 'Linux'
         run: sudo apt-get update -q && sudo apt-get install -y -q libxkbcommon-dev
@@ -48,6 +49,7 @@ jobs:
           cargo +stable run -q -p deadbolt-proto --bin gen-ts --locked -- extension/src/gen/proto.ts
           git diff --exit-code extension/src/gen/proto.ts
       - run: cargo +stable test --workspace --locked
+      - run: cargo +stable test -p deadbolt-cli --features upstream-update-fixtures --test cli --locked -- updates
       - if: runner.os == 'Linux'
         run: cargo +stable check -p deadbolt-net --features private-relay-fixture --locked
 
@@ -83,6 +85,8 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run check
       - run: bun run build
+      - run: python3 scripts/check-fork-boundary.py --dist extension/dist
+        working-directory: .
 
   # Hidden and covered fields, form swaps, opaque origins, value swaps,
   # navigating mid-fill and the back/forward cache, in headless Chromium with
@@ -129,14 +133,14 @@ jobs:
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.4.2
-      # The headless deadbolt only: no app, so no desktop libraries to install.
+      # The headless Shuvbolt CLI only: no app, so no desktop libraries to install.
       - run: cargo +stable build -p deadbolt-cli --locked
       - run: bun install --frozen-lockfile
       - run: bunx playwright-core install --with-deps chromium
         timeout-minutes: 10
       - run: |
           mkdir -p e2e-out
-          bun e2e/run.ts --shard ${{ matrix.shard }}/4 --deadbolt ../target/debug/deadbolt --stills e2e-out/stills 2>&1 | tee e2e-out/run.log
+          bun e2e/run.ts --shard ${{ matrix.shard }}/4 --deadbolt ../target/debug/shuvbolt --stills e2e-out/stills 2>&1 | tee e2e-out/run.log
       - if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

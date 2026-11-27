@@ -209,7 +209,7 @@ pub fn page(s: &App, k: &Kit) -> El {
             .is_some_and(crate::install::Installer::installed);
         getting.push(row_el(
             Row::Command,
-            "deadbolt command",
+            "shuvbolt command",
             about(
                 k,
                 if installed {
@@ -349,19 +349,22 @@ fn devices(s: &App, k: &Kit) -> El {
     let peers = s.status.as_ref().map_or(0, |st| st.peers);
     let online = s.status.as_ref().map_or(0, |st| st.peers_online);
     let shares = match peers {
-        0 => "No other devices yet. Run deadbolt join on the new one, then deadbolt approve its code here.".to_owned(),
+        0 => "No other devices yet. Run shuvbolt join on the new one, then shuvbolt approve its code here.".to_owned(),
         1 => format!("Shares with 1 other device, {online} online"),
         n => format!("Shares with {n} other devices, {online} online"),
     };
     setting(k, "devices", false, device, about(k, &shares), el())
 }
 
-/// A newer Deadbolt the daemon's background check found, quietly: nothing
-/// installs until `deadbolt update` runs.
+/// Update copy for offline fixtures only. A running app must not advertise
+/// updates, even if an older daemon still returns an upstream update.
 fn update(s: &App, k: &Kit) -> Option<El> {
+    if s.daemon.is_live() {
+        return None;
+    }
     let update = s.status.as_ref()?.update.as_ref()?;
-    let label = format!("Deadbolt {} is out", update.version);
-    let words = "Run deadbolt update in a terminal to install it";
+    let label = format!("Shuvbolt {} is out", update.version);
+    let words = "Run shuvbolt update in a terminal to install it";
     Some(setting(k, "update", false, &label, about(k, words), el()))
 }
 

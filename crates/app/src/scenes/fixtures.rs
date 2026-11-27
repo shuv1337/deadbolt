@@ -175,7 +175,7 @@ pub(super) fn vault_info(name: &str) -> VaultInfo {
     }
 }
 
-/// A pairing code as `deadbolt join` shows it.
+/// A pairing code as `shuvbolt join` shows it.
 pub(super) fn fixture_pairing_code() -> String {
     "violin-garden-tiger-lamp-zoo".into()
 }

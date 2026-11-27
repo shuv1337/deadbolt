@@ -29,7 +29,7 @@ pub(super) fn notice_due(last: Option<&str>, version: &str, now: u64) -> bool {
 
 pub(super) fn notice_line(update: &UpdateInfo) -> String {
     format!(
-        "deadbolt {} is out ({}): run deadbolt update",
+        "shuvbolt {} is out ({}): run shuvbolt update",
         update.version,
         installed_with(&update.method)
     )

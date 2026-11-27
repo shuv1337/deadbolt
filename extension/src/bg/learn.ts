@@ -151,7 +151,7 @@ function timelineEvent(v: unknown): TimelineEvent | null {
 
 /** Pages no extension may script: Chrome's own, the Web Store. */
 function blocked(url: URL | null): string | null {
-  if (!url || !/^https?:$/.test(url.protocol)) return "Deadbolt can't record the browser's own pages."
+  if (!url || !/^https?:$/.test(url.protocol)) return "Shuvbolt can't record the browser's own pages."
   if (url.hostname === "chromewebstore.google.com" || (url.hostname === "chrome.google.com" && url.pathname.startsWith("/webstore"))) return "Chrome doesn't let extensions record the Web Store."
   return null
 }
@@ -226,7 +226,7 @@ export class Learner {
     if (why || !url) return { ok: false, message: why ?? "" }
     await this.host.reconnectNow()
     if (!this.host.capabilities.includes("learn"))
-      return { ok: false, message: this.host.status.state === "ready" || this.host.status.state === "locked" ? "This Deadbolt can't keep a recording. Update Deadbolt, then try again." : "Deadbolt isn't connected, so there's nowhere to keep a recording." }
+      return { ok: false, message: this.host.status.state === "ready" || this.host.status.state === "locked" ? "This Shuvbolt can't keep a recording. Update Shuvbolt, then try again." : "Shuvbolt isn't connected, so there's nowhere to keep a recording." }
     if (this.tabs.has(tabId)) await this.stop(tabId, "replaced")
     await this.dismiss(tabId)
 
@@ -279,7 +279,7 @@ export class Learner {
       clearTimeout(a.idle)
       this.tabs.delete(tabId)
       void this.forget(tabId)
-      return { ok: false, message: "Deadbolt couldn't start the recording." }
+      return { ok: false, message: "Shuvbolt couldn't start the recording." }
     }
     this.badge(tabId)
     void this.broadcast(tabId, this.session(a))
@@ -439,7 +439,7 @@ export class Learner {
     if (action === "dismiss") return this.dismiss(tabId).then(() => ({ ok: true }))
     await this.host.reconnectNow()
     if (!this.host.capabilities.includes("learn-files"))
-      return { ok: false, message: "This Deadbolt can't hand recordings back. Update Deadbolt; meanwhile it's in ~/.local/state/deadbolt/learn." }
+      return { ok: false, message: "This Shuvbolt can't hand recordings back. Update Shuvbolt; meanwhile it's in ~/.local/state/deadbolt/learn." }
     try {
       if (action === "delete") {
         await this.host.send({ type: "learn-delete", session: d.session })
@@ -456,7 +456,7 @@ export class Learner {
       const lines = text.split("\n").filter(Boolean)
       return { ok: true, text: learnExport([{ session: d.session, updated: 0, bytes: text.length, lines }]) }
     } catch (err) {
-      return { ok: false, message: (err as Error).message || "Deadbolt couldn't read the recording." }
+      return { ok: false, message: (err as Error).message || "Shuvbolt couldn't read the recording." }
     }
   }
 

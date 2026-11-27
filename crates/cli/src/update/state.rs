@@ -30,7 +30,7 @@ impl UpdateState {
         match lock.try_lock() {
             Ok(()) => {}
             Err(std::fs::TryLockError::WouldBlock) => {
-                bail!("another deadbolt update is running; try again when it finishes");
+                bail!("another shuvbolt update is running; try again when it finishes");
             }
             Err(error) => return Err(error).with_context(|| format!("locking {}", path.display())),
         }

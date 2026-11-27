@@ -12,7 +12,7 @@ use std::process::{Child, Command, Output, Stdio};
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
-const BIN: &str = env!("CARGO_BIN_EXE_deadbolt");
+const BIN: &str = env!("CARGO_BIN_EXE_shuvbolt");
 const PASSPHRASE: &str = "correct horse";
 
 struct Device {
@@ -42,7 +42,7 @@ impl Device {
             .env("XDG_RUNTIME_DIR", self.path("run"))
             .env("XDG_STATE_HOME", self.path("state"))
             .env("XDG_CONFIG_HOME", self.path("config"))
-            // `deadbolt app` writes a desktop entry here, never the real one.
+            // `shuvbolt app` writes a desktop entry here, never the real one.
             .env("XDG_DATA_HOME", self.path("data"))
             .env_remove("DEADBOLT_TEST_UI")
             .env("DEADBOLT_NET", "local")
@@ -55,6 +55,8 @@ impl Device {
             .env_remove("DEADBOLT_UPDATE_CHECK_CHANNEL")
             .env_remove("DEADBOLT_NO_UPDATE_CHECK")
             .env_remove("DEADBOLT_NPM_REGISTRY_URL")
+            .env_remove("DEADBOLT_RELEASE_URL")
+            .env_remove("DEADBOLT_FIXTURE_MANAGER")
             .env_remove("RUST_LOG")
             .stdin(Stdio::null());
         cmd
@@ -219,7 +221,7 @@ for chunk in iter(lambda: s.recv(65536), b""):
     sys.stdout.buffer.flush()
 "#;
 
-/// Starts `deadbolt join` on `new`: the process, its stdout lines after the
+/// Starts `shuvbolt join` on `new`: the process, its stdout lines after the
 /// code, and the code.
 fn start_join(new: &Device, device_name: &str) -> (Child, mpsc::Receiver<String>, String) {
     let mut child = new
@@ -260,7 +262,7 @@ fn finish_join(mut child: Child) -> (std::process::ExitStatus, String) {
     (status, err)
 }
 
-/// `new` runs `deadbolt join`, `inviter` runs `deadbolt approve <code>`.
+/// `new` runs `shuvbolt join`, `inviter` runs `shuvbolt approve <code>`.
 fn pair(inviter: &Device, new: &Device, device_name: &str, vault: Option<&str>) {
     let (child, rx, code) = start_join(new, device_name);
     let mut args = vec!["approve", &code];
@@ -275,7 +277,7 @@ fn pair(inviter: &Device, new: &Device, device_name: &str, vault: Option<&str>) 
     let (status, err) = finish_join(child);
     assert!(status.success(), "join failed");
     assert!(
-        err.contains(&format!("run: deadbolt approve {code}")),
+        err.contains(&format!("run: shuvbolt approve {code}")),
         "{err}"
     );
     let joined = rx.recv_timeout(Duration::from_secs(5)).unwrap();
@@ -323,7 +325,7 @@ fn init_vaults_and_locking() {
     assert_eq!(a.state(), "locked");
     let out = a.try_run(&["vault", "ls"]);
     assert_eq!(out.status.code(), Some(3));
-    assert!(String::from_utf8_lossy(&out.stderr).contains("locked: run `deadbolt unlock`"));
+    assert!(String::from_utf8_lossy(&out.stderr).contains("locked: run `shuvbolt unlock`"));
     assert_eq!(a.try_run(&["ls"]).status.code(), Some(3));
     assert_eq!(a.state(), "locked");
     a.run(&["unlock"]);
@@ -631,10 +633,10 @@ fn a_new_device_join_needs_a_passphrase_source() {
     assert!(out.status.success());
 }
 
-/// `deadbolt app` with a stand-in for the app it starts (the `deadbolt-ui`
+/// `shuvbolt app` with a stand-in for the app it starts (the `deadbolt-ui`
 /// beside it) that records each start and the token it was given. The app's
 /// window is a watcher with `app` set. The first opening adds the desktop
-/// entry. `deadbolt ui` runs it in the foreground, arguments and exit status
+/// entry. `shuvbolt ui` runs it in the foreground, arguments and exit status
 /// passed through.
 #[cfg(target_os = "linux")]
 #[test]
@@ -645,12 +647,12 @@ fn app_comes_forward_through_the_daemon_instead_of_starting_again() {
     let a = Device::new();
     let bin = a.path("bin");
     std::fs::create_dir_all(&bin).unwrap();
-    let deadbolt = bin.join("deadbolt");
+    let deadbolt = bin.join("shuvbolt");
     if std::fs::hard_link(BIN, &deadbolt).is_err() {
         std::fs::copy(BIN, &deadbolt).unwrap();
     }
     let starts = a.path("starts");
-    let ui = bin.join("deadbolt-ui");
+    let ui = bin.join("shuvbolt-ui");
     std::fs::write(
         &ui,
         format!(
@@ -660,7 +662,7 @@ fn app_comes_forward_through_the_daemon_instead_of_starting_again() {
     )
     .unwrap();
     std::fs::set_permissions(&ui, std::fs::Permissions::from_mode(0o755)).unwrap();
-    let entry = a.path("data/applications/anomaly.deadbolt.desktop");
+    let entry = a.path("data/applications/dev.shuv.shuvbolt.desktop");
 
     // No display: nothing starts, and it says why.
     let mut cmd = a.cmd_of(&deadbolt, &["app"]);
@@ -748,7 +750,7 @@ fn app_comes_forward_through_the_daemon_instead_of_starting_again() {
     std::thread::sleep(Duration::from_millis(300));
     assert_eq!(started(), ["app one", "app two"], "nothing started again");
 
-    // `deadbolt ui` is the app in the foreground, whatever is running.
+    // `shuvbolt ui` is the app in the foreground, whatever is running.
     let mut ui = a.cmd_of(&deadbolt, &["ui", "--scene", "vault"]);
     let out = a.output(ui.env_remove("XDG_ACTIVATION_TOKEN"));
     assert_eq!(out.status.code(), Some(7));
@@ -772,7 +774,7 @@ fn daemon_is_single_instance() {
     assert_eq!(a.run(&["debug", "daemon", "stop"]), "not running\n");
 }
 
-/// An older build's `deadbolt update` restarts the daemon as `deadbolt
+/// An older build's `shuvbolt update` restarts the daemon as `deadbolt
 /// agent` and waits for it at `agent.sock`.
 #[test]
 fn the_daemon_answers_under_its_old_name() {
@@ -1090,10 +1092,10 @@ fn leaves_a_daemon_of_a_newer_protocol_running() {
 
     let error = a.fail(&["debug", "whoami"]);
     for part in [
-        "a newer Deadbolt daemon is running",
+        "a newer Shuvbolt daemon is running",
         BIN,
         &format!("pid {pid}"),
-        "deadbolt debug daemon stop",
+        "shuvbolt debug daemon stop",
     ] {
         assert!(error.contains(part), "{error}");
     }
@@ -1718,7 +1720,7 @@ fn watch_prints_changes_as_json_lines() {
 
 const EXTENSION: &str = "chrome-extension://jhocodkhpifjndffenppfmdkmiolngal/";
 
-/// `deadbolt browser-host`, run as a browser runs it: the extension's origin
+/// `shuvbolt browser-host`, run as a browser runs it: the extension's origin
 /// as the only argument, length-prefixed JSON both ways.
 struct Host {
     child: Child,
@@ -2351,7 +2353,7 @@ fn browser_host_frames_and_refusals() {
     }
     host.close();
 
-    // Only the Deadbolt extension may run the host.
+    // Only the Shuvbolt extension may run the host.
     for args in [
         &["chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/"][..],
         &[
@@ -2364,7 +2366,7 @@ fn browser_host_frames_and_refusals() {
         assert!(!output.status.success(), "{args:?}");
         assert!(output.stdout.is_empty(), "{args:?}");
         assert!(
-            String::from_utf8_lossy(&output.stderr).contains("only the Deadbolt extension"),
+            String::from_utf8_lossy(&output.stderr).contains("only the Shuvbolt extension"),
             "{args:?}"
         );
     }
@@ -2396,7 +2398,7 @@ fn browser_host_when_locked_or_not_set_up() {
     a.run(&["lock"]);
     let hello = host.ask(serde_json::json!({"type": "hello"}));
     assert_eq!(hello["status"], "locked", "{hello}");
-    assert_eq!(hello["detail"], "Unlock Deadbolt to fill passwords");
+    assert_eq!(hello["detail"], "Unlock Shuvbolt to fill passwords");
     for request in [
         serde_json::json!({"type": "list", "origin": "https://github.com"}),
         serde_json::json!({"type": "fill", "origin": "https://github.com", "ref": github_ref, "want": ["password"]}),
@@ -3037,595 +3039,6 @@ fn a_waiting_send_reports_the_pickup() {
         .read_to_string(&mut err)
         .unwrap();
     assert!(err.contains("picked up"), "{err}");
-}
-
-/// A release service on 127.0.0.1 for `deadbolt update`: serves whatever
-/// `files` holds at each path, one request per connection.
-fn release_service(
-    files: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, Vec<u8>>>>,
-) -> String {
-    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
-    let base = format!("http://{}/release/", listener.local_addr().unwrap());
-    std::thread::spawn(move || {
-        for stream in listener.incoming() {
-            let Ok(mut stream) = stream else { continue };
-            let mut reader = BufReader::new(stream.try_clone().unwrap());
-            let mut request = String::new();
-            reader.read_line(&mut request).ok();
-            let mut line = String::new();
-            while reader.read_line(&mut line).is_ok_and(|n| n > 2) {
-                line.clear();
-            }
-            let path = request.split_whitespace().nth(1).unwrap_or("").to_string();
-            let body = files.lock().unwrap().get(&path).cloned();
-            let (status, body) = match body {
-                Some(body) => ("200 OK", body),
-                None => ("404 Not Found", b"{}".to_vec()),
-            };
-            let head = format!(
-                "HTTP/1.1 {status}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
-                body.len()
-            );
-            stream.write_all(head.as_bytes()).ok();
-            stream.write_all(&body).ok();
-        }
-    });
-    base
-}
-
-#[test]
-fn concurrent_updates_cannot_pass_a_pending_extension_install() {
-    use sha2::Digest;
-    let first = ["update", "--channel", "dev"];
-    let a = Device::new();
-    let ext = a.path("extension");
-    let output = a.output(
-        a.cmd(&[
-            "browser",
-            "install",
-            "--browser",
-            "chrome",
-            "--extension-dir",
-        ])
-        .arg(&ext)
-        .env("HOME", a.path("user")),
-    );
-    assert!(output.status.success());
-    let mut zip = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
-    zip.start_file("manifest.json", zip::write::SimpleFileOptions::default())
-        .unwrap();
-    zip.write_all(br#"{"version":"1.0","permissions":["nativeMessaging"]}"#)
-        .unwrap();
-    let zip = zip.finish().unwrap().into_inner();
-    let sha = data_encoding::HEXLOWER.encode(&sha2::Sha256::digest(&zip));
-    let file = format!("/release/deadbolt/files/{sha}/extension.zip");
-    let target = serde_json::json!({"url": file, "size": zip.len(), "sha256": sha});
-    let extension = serde_json::json!({
-        "schema": 1, "app": "deadbolt", "artifact": "extension", "channel": "dev",
-        "sequence": 7, "published_at": "2026-10-28T00:00:00Z",
-        "release": {"version": "1.0.0", "rollout_percent": 100,
-            "targets": {"chromium": target}, "distributions": []}
-    });
-    let mut cli = extension.clone();
-    cli["artifact"] = "cli".into();
-    cli["release"]["version"] = env!("CARGO_PKG_VERSION").into();
-    cli["release"]["targets"] = serde_json::json!({
-        "macos-arm64": target, "macos-x64": target,
-        "linux-arm64": target, "linux-x64": target
-    });
-    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
-    let base = format!("http://{}/release/", listener.local_addr().unwrap());
-    let (pending, ready) = mpsc::channel();
-    let (resume, proceed) = mpsc::channel();
-    let server = std::thread::spawn(move || {
-        for stream in listener.incoming() {
-            let mut stream = stream.unwrap();
-            let mut reader = BufReader::new(stream.try_clone().unwrap());
-            let mut request = String::new();
-            reader.read_line(&mut request).unwrap();
-            let mut line = String::new();
-            while reader.read_line(&mut line).is_ok_and(|n| n > 2) {
-                line.clear();
-            }
-            let path = request.split_whitespace().nth(1).unwrap();
-            let downloading = path == file;
-            let body = if downloading {
-                pending.send(()).unwrap();
-                proceed.recv_timeout(Duration::from_secs(15)).unwrap();
-                zip.clone()
-            } else if path.ends_with("/cli/dev.json") {
-                cli.to_string().into_bytes()
-            } else {
-                assert!(path.ends_with("/extension/dev.json"), "{path}");
-                extension.to_string().into_bytes()
-            };
-            write!(
-                stream,
-                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
-                body.len()
-            )
-            .unwrap();
-            stream.write_all(&body).unwrap();
-            if downloading {
-                break;
-            }
-        }
-    });
-    let mut updating = a
-        .cmd(&first)
-        .env("DEADBOLT_RELEASE_URL", &base)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .unwrap();
-    ready.recv_timeout(Duration::from_secs(10)).unwrap();
-    // The floor is already written, but the payload has not arrived.
-    let paths = deadbolt_client::Paths::from_vars(|name| match name {
-        "DEADBOLT_HOME" => Some(a.path("home").into()),
-        "XDG_STATE_HOME" => Some(a.path("state").into()),
-        "XDG_CONFIG_HOME" => Some(a.path("config").into()),
-        _ => None,
-    });
-    let floors = paths.log.with_file_name("release-sequences.json");
-    let before = std::fs::read(&floors).unwrap();
-    let config = paths.config;
-    let registered = std::fs::read(&config).unwrap();
-    let contender = ["update", "--check", "--channel", "dev"];
-    let mut child = a
-        .cmd(&contender)
-        .env("DEADBOLT_RELEASE_URL", &base)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .unwrap();
-    assert!(!wait(&mut child, Duration::from_secs(5)).success());
-    let output = child.wait_with_output().unwrap();
-    assert!(String::from_utf8_lossy(&output.stderr).contains("another deadbolt update"));
-    assert_eq!(std::fs::read(&floors).unwrap(), before);
-    assert_eq!(std::fs::read(&config).unwrap(), registered);
-    resume.send(()).unwrap();
-    assert!(wait(&mut updating, Duration::from_secs(5)).success());
-    server.join().unwrap();
-    assert!(
-        std::fs::read_to_string(ext.join("manifest.json"))
-            .unwrap()
-            .contains("1.0")
-    );
-    // A process finishing releases the persistent lock file for the next one.
-    let lock = std::fs::OpenOptions::new()
-        .read(true)
-        .write(true)
-        .open(paths.log.with_file_name("update.lock"))
-        .unwrap();
-    lock.try_lock().unwrap();
-}
-
-#[test]
-fn update_replaces_a_standalone_deadbolt_only_once_it_checks_out() {
-    use sha2::Digest;
-    let a = Device::new();
-    let bin = a.path("bin");
-    std::fs::create_dir_all(&bin).unwrap();
-    let exe = bin.join("deadbolt");
-    std::fs::copy(BIN, &exe).unwrap();
-    let original = std::fs::read(&exe).unwrap();
-
-    // The release: a tarball whose deadbolt is a stand-in script.
-    let release = a.path("release");
-    std::fs::create_dir_all(&release).unwrap();
-    std::fs::write(
-        release.join("deadbolt"),
-        "#!/bin/sh\necho stand-in deadbolt\n",
-    )
-    .unwrap();
-    let tarball = a.path("deadbolt.tar.gz");
-    let status = Command::new("tar")
-        .arg("-czf")
-        .arg(&tarball)
-        .arg("-C")
-        .arg(&release)
-        .arg("deadbolt")
-        .status()
-        .unwrap();
-    assert!(status.success());
-    let tar = std::fs::read(&tarball).unwrap();
-    let sha = |bytes: &[u8]| data_encoding::HEXLOWER.encode(&sha2::Sha256::digest(bytes));
-    let os = if cfg!(target_os = "macos") {
-        "macos"
-    } else {
-        "linux"
-    };
-    let arch = if cfg!(target_arch = "aarch64") {
-        "arm64"
-    } else {
-        "x64"
-    };
-    let manifest = |artifact: &str, channel: &str, version: &str, target: &str, size, sha256| {
-        let mut targets = serde_json::Map::new();
-        targets.insert(
-            target.to_string(),
-            serde_json::json!({
-                "url": format!("/release/deadbolt/files/{sha256}/{artifact}.bin"),
-                "size": size,
-                "sha256": sha256,
-            }),
-        );
-        serde_json::json!({
-            "schema": 1, "app": "deadbolt", "artifact": artifact, "channel": channel,
-            "sequence": 1, "published_at": "2026-10-28T00:00:00Z",
-            "release": {
-                "version": version, "rollout_percent": 100, "targets": targets,
-                "distributions": [{ "kind": "direct" }], "revoked_versions": []
-            }
-        })
-        .to_string()
-        .into_bytes()
-    };
-    let target = format!("{os}-{arch}");
-    let good = sha(&tar);
-    let wrong = sha(b"something else");
-    let files = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::from([
-        (
-            format!("/release/deadbolt/files/{good}/cli.bin"),
-            tar.clone(),
-        ),
-        (
-            format!("/release/deadbolt/files/{wrong}/cli.bin"),
-            tar.clone(),
-        ),
-        (
-            "/release/deadbolt/cli/beta.json".to_string(),
-            manifest(
-                "cli",
-                "beta",
-                "0.0.0-beta.9",
-                &target,
-                tar.len(),
-                wrong.clone(),
-            ),
-        ),
-        (
-            "/release/deadbolt/cli/stable.json".to_string(),
-            manifest(
-                "cli",
-                "stable",
-                "9.9.9",
-                &target,
-                tar.len() + 1,
-                good.clone(),
-            ),
-        ),
-        (
-            "/release/deadbolt/cli/dev.json".to_string(),
-            manifest(
-                "cli",
-                "dev",
-                env!("CARGO_PKG_VERSION"),
-                &target,
-                tar.len(),
-                good.clone(),
-            ),
-        ),
-    ])));
-    let base = release_service(files.clone());
-    let update = |args: &[&str]| {
-        let mut cmd = a.cmd_of(&exe, args);
-        cmd.env("DEADBOLT_RELEASE_URL", &base);
-        a.output(&mut cmd)
-    };
-    let leftovers = || {
-        std::fs::read_dir(&bin)
-            .unwrap()
-            .map(|e| e.unwrap().file_name().into_string().unwrap())
-            .filter(|name| name != "deadbolt")
-            .collect::<Vec<_>>()
-    };
-
-    // A build from source follows no channel until told one.
-    let output = update(&["update", "--check"]);
-    assert!(!output.status.success());
-    assert!(String::from_utf8_lossy(&output.stderr).contains("--channel"));
-
-    // The running version is the channel's: nothing to do.
-    let output = update(&["update", "--check", "--channel", "dev"]);
-    assert_eq!(output.status.code(), Some(0));
-    assert!(String::from_utf8_lossy(&output.stdout).contains("up to date"));
-
-    // A wrong SHA-256 or size leaves the old binary alone.
-    for channel in ["beta", "stable"] {
-        let output = update(&["update", "--channel", channel]);
-        assert!(!output.status.success(), "{channel}");
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        assert!(
-            stderr.contains("SHA-256") || stderr.contains("size"),
-            "{stderr}"
-        );
-        assert!(std::fs::read(&exe).unwrap() == original, "{channel}");
-        assert!(leftovers().is_empty(), "{:?}", leftovers());
-    }
-    // So does a manifest pointing anywhere but the service's files.
-    files.lock().unwrap().insert(
-        "/release/deadbolt/cli/dev.json".to_string(),
-        String::from_utf8(manifest(
-            "cli",
-            "dev",
-            "0.0.0-dev-99",
-            &target,
-            tar.len(),
-            good.clone(),
-        ))
-        .unwrap()
-        .replace(
-            "/release/deadbolt/files/",
-            "http://198.51.100.1/release/deadbolt/files/",
-        )
-        .into_bytes(),
-    );
-    let output = update(&["update", "--channel", "dev"]);
-    assert!(!output.status.success());
-    assert!(String::from_utf8_lossy(&output.stderr).contains("outside"));
-    assert!(std::fs::read(&exe).unwrap() == original);
-
-    // A replayed older manifest is refused unless asked for.
-    let sequenced = |n: u32| {
-        String::from_utf8(manifest(
-            "cli",
-            "dev",
-            "0.0.0-dev-99",
-            &target,
-            tar.len(),
-            good.clone(),
-        ))
-        .unwrap()
-        .replace("\"sequence\":1", &format!("\"sequence\":{n}"))
-        .into_bytes()
-    };
-    let serve = |n: u32| {
-        files
-            .lock()
-            .unwrap()
-            .insert("/release/deadbolt/cli/dev.json".to_string(), sequenced(n));
-    };
-    serve(3);
-    assert_eq!(
-        update(&["update", "--check", "--channel", "dev"])
-            .status
-            .code(),
-        Some(10)
-    );
-    serve(2);
-    let output = update(&["update", "--channel", "dev"]);
-    assert!(String::from_utf8_lossy(&output.stderr).contains("--allow-rollback"));
-    assert!(std::fs::read(&exe).unwrap() == original);
-    let output = update(&["update", "--check", "--channel", "dev", "--allow-rollback"]);
-    assert_eq!(output.status.code(), Some(10));
-    serve(3);
-
-    // On macOS the new deadbolt pins its own helper: a release without one
-    // never replaces a deadbolt that has one beside it.
-    if cfg!(target_os = "macos") {
-        std::fs::write(bin.join("deadbolt-enclave"), "old helper").unwrap();
-        let output = update(&["update", "--channel", "dev"]);
-        assert!(String::from_utf8_lossy(&output.stderr).contains("deadbolt-enclave"));
-        assert!(std::fs::read(&exe).unwrap() == original);
-        assert_eq!(
-            std::fs::read(bin.join("deadbolt-enclave")).unwrap(),
-            b"old helper"
-        );
-        std::fs::remove_file(bin.join("deadbolt-enclave")).unwrap();
-    }
-
-    // A good release, with an unpacked extension registered beside it.
-    let mut zip = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
-    zip.start_file("manifest.json", zip::write::SimpleFileOptions::default())
-        .unwrap();
-    zip.write_all(br#"{"name":"Deadbolt","version":"0.0.0.99","version_name":"0.0.0-dev-99","permissions":["storage","nativeMessaging"]}"#)
-        .unwrap();
-    let extension = zip.finish().unwrap().into_inner();
-    let ext_sha = sha(&extension);
-    files.lock().unwrap().extend([
-        (
-            format!("/release/deadbolt/files/{ext_sha}/extension.bin"),
-            extension.clone(),
-        ),
-        (
-            "/release/deadbolt/extension/dev.json".to_string(),
-            manifest(
-                "extension",
-                "dev",
-                "0.0.0-dev-99",
-                "chromium",
-                extension.len(),
-                ext_sha.clone(),
-            ),
-        ),
-    ]);
-    let ext = a.path("extension");
-    std::fs::create_dir_all(&ext).unwrap();
-    std::fs::write(ext.join("mine.txt"), "not an extension").unwrap();
-    let output = a.output(
-        a.cmd(&[
-            "browser",
-            "install",
-            "--browser",
-            "chrome",
-            "--extension-dir",
-        ])
-        .arg(&ext)
-        .env("HOME", a.path("user")),
-    );
-    assert!(
-        !output.status.success(),
-        "replaced a directory that isn't the extension"
-    );
-    std::fs::remove_file(ext.join("mine.txt")).unwrap();
-    let output = a.output(
-        a.cmd(&[
-            "browser",
-            "install",
-            "--browser",
-            "chrome",
-            "--extension-dir",
-        ])
-        .arg(&ext)
-        .env("HOME", a.path("user")),
-    );
-    assert!(output.status.success());
-
-    // A rejected extension manifest must not poison the replay floor.
-    let ext_feed = "/release/deadbolt/extension/dev.json";
-    let valid = files.lock().unwrap()[ext_feed].clone();
-    for (field, value) in [("artifact", "cli"), ("channel", "stable"), ("app", "other")] {
-        let mut invalid: serde_json::Value = serde_json::from_slice(&valid).unwrap();
-        invalid[field] = value.into();
-        invalid["sequence"] = 999.into();
-        files
-            .lock()
-            .unwrap()
-            .insert(ext_feed.into(), invalid.to_string().into_bytes());
-        let output = update(&["update", "--check", "--channel", "dev"]);
-        assert!(!output.status.success());
-        assert!(String::from_utf8_lossy(&output.stderr).contains("not a usable"));
-        files.lock().unwrap().insert(ext_feed.into(), valid.clone());
-        let output = update(&["update", "--check", "--channel", "dev"]);
-        assert_eq!(
-            output.status.code(),
-            Some(10),
-            "{}",
-            String::from_utf8_lossy(&output.stderr)
-        );
-    }
-
-    let output = update(&["update", "--check", "--channel", "dev"]);
-    assert_eq!(output.status.code(), Some(10));
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("0.0.0-dev-99 is available"), "{stdout}");
-    assert!(
-        stdout.contains("Browser extension 0.0.0-dev-99"),
-        "{stdout}"
-    );
-    assert!(std::fs::read(&exe).unwrap() == original);
-
-    let output = update(&["update", "--channel", "dev"]);
-    assert!(output.status.success());
-    assert!(String::from_utf8_lossy(&output.stdout).contains("chrome://extensions"));
-    assert_eq!(
-        std::fs::read(&exe).unwrap(),
-        b"#!/bin/sh\necho stand-in deadbolt\n"
-    );
-    let ran = Command::new(&exe).output().unwrap();
-    assert_eq!(String::from_utf8_lossy(&ran.stdout), "stand-in deadbolt\n");
-    assert!(leftovers().is_empty(), "{:?}", leftovers());
-    assert!(
-        std::fs::read_to_string(ext.join("manifest.json"))
-            .unwrap()
-            .contains("0.0.0-dev-99")
-    );
-    // It knows the files it put there, and nothing else is in the way.
-    assert_eq!(
-        std::fs::read_to_string(ext.join(".deadbolt-extension")).unwrap(),
-        "manifest.json\n"
-    );
-
-    // This test's deadbolt (built from source, so it names the channel);
-    // the copy above is the stand-in now.
-    let deadbolt = |args: &[&str]| {
-        let mut cmd = a.cmd(args);
-        cmd.env("DEADBOLT_RELEASE_URL", &base);
-        a.output(&mut cmd)
-    };
-
-    // A second directory: `update` refreshes each one registered.
-    let second = a.path("extension-second");
-    let output = a.output(
-        a.cmd(&[
-            "browser",
-            "install",
-            "--browser",
-            "chrome",
-            "--extension-dir",
-        ])
-        .arg(&second)
-        .env("HOME", a.path("user")),
-    );
-    assert!(output.status.success());
-    let mut zip = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
-    zip.start_file("manifest.json", zip::write::SimpleFileOptions::default())
-        .unwrap();
-    zip.write_all(br#"{"name":"Deadbolt","version":"0.0.0.100","version_name":"0.0.0-dev-100","permissions":["storage","nativeMessaging"]}"#)
-        .unwrap();
-    let native = zip.finish().unwrap().into_inner();
-    let native_sha = sha(&native);
-    let mut release: serde_json::Value = serde_json::from_slice(&manifest(
-        "extension",
-        "dev",
-        "0.0.0-dev-100",
-        "chromium",
-        native.len(),
-        native_sha.clone(),
-    ))
-    .unwrap();
-    release["sequence"] = 3.into();
-    // This test's deadbolt is the channel's current CLI, so `update` only
-    // touches the extensions.
-    let current_cli = String::from_utf8(manifest(
-        "cli",
-        "dev",
-        env!("CARGO_PKG_VERSION"),
-        &target,
-        tar.len(),
-        good.clone(),
-    ))
-    .unwrap()
-    .replace("\"sequence\":1", "\"sequence\":4")
-    .into_bytes();
-    files.lock().unwrap().extend([
-        (
-            format!("/release/deadbolt/files/{native_sha}/extension.bin"),
-            native,
-        ),
-        (
-            "/release/deadbolt/extension/dev.json".to_string(),
-            release.to_string().into_bytes(),
-        ),
-        ("/release/deadbolt/cli/dev.json".to_string(), current_cli),
-    ]);
-    let output = deadbolt(&["update", "--channel", "dev"]);
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(
-        output.status.success(),
-        "{stdout}{}",
-        String::from_utf8_lossy(&output.stderr)
-    );
-    assert_eq!(
-        stdout.matches("Updated the browser extension").count(),
-        2,
-        "{stdout}"
-    );
-    let manifest_of =
-        |dir: &std::path::Path| std::fs::read_to_string(dir.join("manifest.json")).unwrap();
-    assert!(manifest_of(&ext).contains("0.0.0-dev-100"));
-    assert!(manifest_of(&second).contains("0.0.0-dev-100"));
-
-    // Unregistered, a directory is left alone by `update`.
-    let output = a.output(
-        a.cmd(&["browser", "uninstall", "--extension-dir"])
-            .arg(&second)
-            .env("HOME", a.path("user")),
-    );
-    assert!(output.status.success());
-    let output = a.output(
-        a.cmd(&["browser", "uninstall", "--extension-dir"])
-            .arg(&second)
-            .env("HOME", a.path("user")),
-    );
-    assert!(!output.status.success(), "unregistered twice");
-    let output = deadbolt(&["update", "--check", "--channel", "dev"]);
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let shown = |dir: &std::path::Path| dir.canonicalize().unwrap().display().to_string();
-    assert!(stdout.contains(&shown(&ext)), "{stdout}");
-    assert!(!stdout.contains(&shown(&second)), "{stdout}");
-    assert!(second.join("manifest.json").exists());
 }
 
 /// The `export.data` of a `.1pux` with an identity and a card, as
@@ -4359,4 +3772,80 @@ mod recovery;
 #[path = "cli/taint.rs"]
 mod taint;
 #[path = "cli/updates.rs"]
+#[cfg(feature = "upstream-update-fixtures")]
 mod updates;
+
+#[cfg(not(feature = "upstream-update-fixtures"))]
+#[test]
+fn updates_are_disabled_without_network_or_state() {
+    use std::net::TcpListener;
+
+    let d = Device::new();
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    listener.set_nonblocking(true).unwrap();
+    let base = format!("http://{}/release/", listener.local_addr().unwrap());
+    for args in [
+        &["update"][..],
+        &["update", "--check", "--json"],
+        &["update", "--channel", "dev", "--yes"],
+    ] {
+        let out = d.output(
+            d.cmd(args)
+                .env("DEADBOLT_RELEASE_URL", &base)
+                .env("DEADBOLT_NPM_REGISTRY_URL", &base),
+        );
+        assert_eq!(out.status.code(), Some(1));
+        if args.contains(&"--json") {
+            assert_eq!(
+                serde_json::from_slice::<serde_json::Value>(&out.stdout).unwrap(),
+                serde_json::json!({
+                    "status": "disabled",
+                    "reason": "no_fork_release_channel",
+                    "current": env!("CARGO_PKG_VERSION"),
+                })
+            );
+            assert!(out.stderr.is_empty());
+        } else {
+            let stderr = String::from_utf8_lossy(&out.stderr);
+            assert!(
+                stderr.contains("Shuvbolt self-update is disabled"),
+                "{stderr}"
+            );
+            assert!(stderr.contains("https://github.com/shuv1337/deadbolt"));
+        }
+    }
+    assert!(matches!(listener.accept(), Err(e) if e.kind() == std::io::ErrorKind::WouldBlock));
+    assert_eq!(std::fs::read_dir(d.dir.path()).unwrap().count(), 0);
+}
+
+#[cfg(not(feature = "upstream-update-fixtures"))]
+#[test]
+fn browser_install_with_extension_dir_leaves_config_alone() {
+    let d = Device::new();
+    let config = d.path("config/deadbolt/config.toml");
+    let extension = d.path("extension");
+    let run = || {
+        let out = d.output(
+            d.cmd(&[
+                "browser",
+                "install",
+                "--browser",
+                "chrome",
+                "--extension-dir",
+            ])
+            .arg(&extension)
+            .env("HOME", d.path("user")),
+        );
+        assert_eq!(out.status.code(), Some(1));
+        assert!(String::from_utf8_lossy(&out.stderr).contains("without --extension-dir"));
+        assert!(!extension.exists());
+    };
+    run();
+    assert!(!d.path("config").exists());
+    assert!(!d.path("user").exists());
+    std::fs::create_dir_all(config.parent().unwrap()).unwrap();
+    let original = b"# Keep the existing configuration.\n";
+    std::fs::write(&config, original).unwrap();
+    run();
+    assert_eq!(std::fs::read(&config).unwrap(), original);
+}

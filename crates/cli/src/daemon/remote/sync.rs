@@ -63,7 +63,7 @@ impl Daemon {
     pub(in crate::daemon) async fn remote_sync(&self, vault: VaultId) -> Result<RemoteReport> {
         let (saved, mut anchor, me) = self.with(|s| {
             let saved = load(s, &vault)?.ok_or_else(|| {
-                anyhow::anyhow!("no remote for this vault: run `deadbolt remote set`")
+                anyhow::anyhow!("no remote for this vault: run `shuvbolt remote set`")
             })?;
             Ok((saved, load_anchor(s, &vault)?, s.id))
         })?;

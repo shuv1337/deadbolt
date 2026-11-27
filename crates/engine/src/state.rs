@@ -523,13 +523,13 @@ impl Engine {
                     .map_err(|e| match self.vaults.is_empty() {
                         true => e,
                         false => anyhow!(
-                            "{e}; pick another with --vault or `deadbolt vault default <name>`"
+                            "{e}; pick another with --vault or `shuvbolt vault default <name>`"
                         ),
                     });
             }
             return match self.vaults.len() + self.unavailable.len() {
                 0 => bail!(
-                    "no vaults yet; create one with `deadbolt init` or join one with `deadbolt join`"
+                    "no vaults yet; create one with `shuvbolt init` or join one with `shuvbolt join`"
                 ),
                 1 => self
                     .vaults
@@ -539,7 +539,7 @@ impl Engine {
                     .copied()
                     .context("no vaults")
                     .and_then(|id| self.available(id)),
-                _ => bail!("no default vault; pick one with --vault or `deadbolt vault default`"),
+                _ => bail!("no default vault; pick one with --vault or `shuvbolt vault default`"),
             };
         };
         let matches = resolve_by_name_or_id(

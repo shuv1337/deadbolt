@@ -1,20 +1,5 @@
-//! `deadbolt update`: updates this Deadbolt from the Anomaly release service
-//! (docs/releasing.md, "Updater"), following the service's client rules
-//! (`anomalyco/release` docs/protocol.md). What it updates depends on how
-//! this binary is installed ([`method`]): Deadbolt.app (the `desktop`
-//! artifact) or a standalone CLI (`cli`) replace themselves; npm, pnpm, bun,
-//! yarn and Homebrew installs run that manager, pinned to the version it
-//! serves; Nix, Cargo and system installs get their manager's command. An
-//! unpacked browser extension registered with `deadbolt browser install
-//! --extension-dir` is updated too (`extension`).
-//!
-//! The daemon checks in the background ([`available`]) and only ever says
-//! so: nothing is installed unless the user runs `deadbolt update`.
-//!
-//! Nothing downloaded runs or replaces anything before its size and SHA-256
-//! match the manifest and, on macOS, its code signature satisfies what the
-//! running install would ([`APP_REQUIREMENT`]). Each replacement is staged
-//! beside its destination and renamed into place.
+//! Self-update is disabled in Shuvbolt. The debug-only fixture feature
+//! exercises the retained upstream updater protocol against loopback servers.
 
 mod extension;
 mod install;
@@ -71,8 +56,7 @@ use self::service::{SERVICE, SERVICE_OVERRIDE, file_url, loopback_or};
 #[cfg(test)]
 use self::state::{UpdateState, check_sequence};
 
-/// What `Deadbolt.app` must satisfy (identifier, team, Developer ID,
-/// notarized), the release's `verify-macos` check.
+/// No fork team is configured for automated replacement.
 const APP_REQUIREMENT: &str = include_str!("../../app/update-requirement.txt");
 
 #[cfg(test)]

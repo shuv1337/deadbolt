@@ -1,8 +1,8 @@
 //! `$XDG_CONFIG_HOME/deadbolt/config.toml`:
 //!
 //! ```toml
-//! # Lock the daemon after this long without a deadbolt command (idle timeout).
-//! # "never" (the default) keeps it unlocked until `deadbolt lock`, the daemon
+//! # Lock the daemon after this long without a shuvbolt command (idle timeout).
+//! # "never" (the default) keeps it unlocked until `shuvbolt lock`, the daemon
 //! # stops, or the machine reboots. Units: s, m, h, d.
 //! unlock_timeout = "8h"
 //!
@@ -14,11 +14,11 @@
 //! # (default false).
 //! touch_id = true
 //!
-//! # Unpacked copies of the browser extension that `deadbolt update` keeps
-//! # current (`deadbolt browser install --extension-dir <dir>` adds one,
-//! # `deadbolt browser uninstall --extension-dir <dir>` removes it).
+//! # Unpacked copies of the browser extension that `shuvbolt update` keeps
+//! # current (`shuvbolt browser install --extension-dir <dir>` adds one,
+//! # `shuvbolt browser uninstall --extension-dir <dir>` removes it).
 //! [[extensions]]
-//! dir = "/Users/me/Deadbolt Extension"
+//! dir = "/Users/me/Shuvbolt Extension"
 //! ```
 //!
 //! Older configs' single `extension_dir` is read as one entry, and written
@@ -148,7 +148,7 @@ pub struct Config {
     _ssh_allow_forwarding: Option<IgnoredAny>,
 }
 
-/// An unpacked extension `deadbolt update` keeps current.
+/// An unpacked extension `shuvbolt update` keeps current.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ExtensionDir {
@@ -231,7 +231,7 @@ pub fn set_breach_checks(path: &Path, enabled: bool) -> Result<()> {
     change(path, |cfg| cfg.breach_checks = Some(enabled))
 }
 
-/// Records an extension directory `deadbolt update` keeps current.
+/// Records an extension directory `shuvbolt update` keeps current.
 pub fn set_extension_dir(path: &Path, dir: &Path) -> Result<()> {
     change(path, |cfg| {
         if !cfg.extensions.iter().any(|e| e.dir == dir) {
@@ -240,7 +240,7 @@ pub fn set_extension_dir(path: &Path, dir: &Path) -> Result<()> {
     })
 }
 
-/// Stops `deadbolt update` keeping `dir` current; false if it wasn't
+/// Stops `shuvbolt update` keeping `dir` current; false if it wasn't
 /// registered.
 pub fn remove_extension_dir(path: &Path, dir: &Path) -> Result<bool> {
     if Config::load(path)?.extension(dir).is_none() {

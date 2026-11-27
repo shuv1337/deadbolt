@@ -1,6 +1,6 @@
-//! `deadbolt_broker_hint`: the `deadbolt run --broker` command that gives a
+//! `deadbolt_broker_hint`: the `shuvbolt run --broker` command that gives a
 //! program an API credential it never holds (docs/broker.md). The route it
-//! builds is checked by the same parser `deadbolt run` uses.
+//! builds is checked by the same parser `shuvbolt run` uses.
 
 use serde_json::{Value, json};
 
@@ -10,7 +10,7 @@ use crate::paths::Paths;
 use crate::protocol::ItemInfo;
 use deadbolt_core::listing::primary_field;
 
-/// An API whose route Deadbolt knows.
+/// An API whose route Shuvbolt knows.
 struct Service {
     name: &'static str,
     upstream: &'static str,
@@ -139,7 +139,7 @@ pub(super) async fn broker_hint(paths: &Paths, args: &Args<'_>) -> Result<Value,
     RouteSpec::parse(&route).map_err(|e| Failure::Params(format!("{e:#}")))?;
     let program = args.string("command").unwrap_or_else(|| "<command>".into());
     let command = format!(
-        "deadbolt run --broker --route {} -- {program}",
+        "shuvbolt run --broker --route {} -- {program}",
         quote(&route)
     );
     Ok(json!({

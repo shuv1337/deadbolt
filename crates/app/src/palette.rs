@@ -1,6 +1,6 @@
 //! ⌘K: what you can do with the selected item, then everywhere, over the
 //! page. ↑↓ move, ↵ runs, Esc or ⌘K again closes. The quick panel's has only
-//! what it can do: copy, open and go to Deadbolt.
+//! what it can do: copy, open and go to Shuvbolt.
 
 pub mod tags;
 
@@ -176,7 +176,7 @@ pub fn label(s: &App, a: Action) -> String {
         Action::Trash => "Recently deleted".into(),
         Action::Settings => "Settings".into(),
         Action::Lock => "Lock".into(),
-        Action::Window => "Open Deadbolt".into(),
+        Action::Window => "Open Shuvbolt".into(),
     }
 }
 
@@ -357,7 +357,7 @@ pub fn view(s: &App, k: &Kit) -> Option<El> {
                 .px(16.0)
                 .center_y()
                 .child(
-                    text(item.unwrap_or_else(|| "Deadbolt".into()))
+                    text(item.unwrap_or_else(|| "Shuvbolt".into()))
                         .font(k.ty.small_medium)
                         .color(k.c.text_muted)
                         .truncate(),

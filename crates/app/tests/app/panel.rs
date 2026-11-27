@@ -185,18 +185,18 @@ fn phase(rt: &Runtime<App>) -> Phase {
 #[test]
 fn every_state_renders_inside_the_card() {
     let states: &[(&str, &[&str])] = &[
-        ("connecting", &["Starting Deadbolt…"]),
+        ("connecting", &["Starting Shuvbolt…"]),
         ("empty", &["Cloudflare", "github.com"]),
         ("filtering", &["github.com", "gitlab.com"]),
         ("no-match", &["No matches"]),
         ("empty-vault", &["No items yet"]),
-        ("locked", &["Unlock Deadbolt"]),
+        ("locked", &["Unlock Shuvbolt"]),
         (
             "locked-error",
             &["That passphrase didn't unlock this device."],
         ),
-        ("not-set-up", &["Set up Deadbolt", "Open Deadbolt"]),
-        ("failed", &["Can't reach Deadbolt", "Try again"]),
+        ("not-set-up", &["Set up Shuvbolt", "Open Shuvbolt"]),
+        ("failed", &["Can't reach Shuvbolt", "Try again"]),
     ];
     for dark in [true, false] {
         for (scene, texts) in states {
@@ -208,7 +208,7 @@ fn every_state_renders_inside_the_card() {
             let enter = match *scene {
                 "empty" | "filtering" => "Copy password",
                 "locked" | "locked-error" => "Unlock",
-                "not-set-up" => "Open Deadbolt",
+                "not-set-up" => "Open Shuvbolt",
                 "failed" => "Try again",
                 _ => "",
             };
@@ -284,7 +284,7 @@ fn it_has_no_settings_or_install_offer_and_keeps_its_keys() {
         s.pane = VaultPane::Settings;
     });
     frames(&mut rt, 10);
-    for text in ["Settings", "Install the deadbolt command", "Install…"] {
+    for text in ["Settings", "Install the shuvbolt command", "Install…"] {
         assert!(!shows(&rt, text), "the panel shows {text:?}");
     }
 
@@ -892,7 +892,7 @@ fn a_lock_while_hidden_leaves_nothing_behind() {
     assert!(rt.state.items.is_empty() && rt.state.detail.is_none());
     rt.update(|s, tx| s.summon(tx));
     frames(&mut rt, 2);
-    assert!(shows(&rt, "Unlock Deadbolt"), "it opens locked");
+    assert!(shows(&rt, "Unlock Shuvbolt"), "it opens locked");
     assert!(!shows(&rt, "github.com"));
 }
 

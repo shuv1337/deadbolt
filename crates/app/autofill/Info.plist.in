@@ -5,9 +5,9 @@
     <key>CFBundleName</key>
     <string>DeadboltAutoFill</string>
     <key>CFBundleDisplayName</key>
-    <string>Deadbolt</string>
+    <string>Shuvbolt</string>
     <key>CFBundleIdentifier</key>
-    <string>anomaly.deadbolt.autofill</string>
+    <string>dev.shuv.shuvbolt.autofill</string>
     <key>CFBundleExecutable</key>
     <string>DeadboltAutoFill</string>
     <key>CFBundlePackageType</key>

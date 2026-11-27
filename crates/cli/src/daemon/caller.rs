@@ -80,7 +80,7 @@ struct Own {
     autofill: Option<CodeSignature>,
 }
 
-/// One of Deadbolt's own binaries: where it is (canonical) and its
+/// One of Shuvbolt's own binaries: where it is (canonical) and its
 /// signature on disk.
 #[cfg_attr(
     not(any(test, target_os = "macos")),
@@ -243,9 +243,9 @@ impl Callers {
     }
 }
 
-/// The app of the daemon's own bundle, `Deadbolt.app/Contents/MacOS/Deadbolt`
-/// for its `Contents/Helpers/deadbolt`, symlinks resolved. Outside a bundle
-/// there is none: `deadbolt-ui` there has no app identity to check, so it's
+/// The app of the daemon's own bundle, `Shuvbolt.app/Contents/MacOS/Shuvbolt`
+/// for its `Contents/Helpers/shuvbolt`, symlinks resolved. Outside a bundle
+/// there is none: `shuvbolt-ui` there has no app identity to check, so it's
 /// a caller like the CLI.
 #[cfg(any(test, target_os = "macos"))]
 fn app_beside(exe: &Path) -> Option<PathBuf> {
@@ -254,13 +254,13 @@ fn app_beside(exe: &Path) -> Option<PathBuf> {
     if dir.file_name()? != "Helpers" || contents.file_name()? != "Contents" {
         return None;
     }
-    let app = contents.join("MacOS/Deadbolt");
+    let app = contents.join("MacOS/Shuvbolt");
     Some(app.canonicalize().unwrap_or(app))
 }
 
 /// The AutoFill extension of the daemon's own bundle,
-/// `Deadbolt.app/Contents/PlugIns/DeadboltAutoFill.appex/Contents/MacOS/DeadboltAutoFill`
-/// for its `Contents/Helpers/deadbolt`, symlinks resolved.
+/// `Shuvbolt.app/Contents/PlugIns/DeadboltAutoFill.appex/Contents/MacOS/DeadboltAutoFill`
+/// for its `Contents/Helpers/shuvbolt`, symlinks resolved.
 #[cfg(any(test, target_os = "macos"))]
 fn autofill_beside(exe: &Path) -> Option<PathBuf> {
     let dir = exe.parent()?;
@@ -272,7 +272,7 @@ fn autofill_beside(exe: &Path) -> Option<PathBuf> {
     Some(ext.canonicalize().unwrap_or(ext))
 }
 
-/// Whether `args` run `deadbolt browser-host`, as a browser does.
+/// Whether `args` run `shuvbolt browser-host`, as a browser does.
 fn browser_host_args(args: &[String]) -> bool {
     match args {
         [_, mode, ..] if mode == "browser-host" => true,
@@ -304,9 +304,9 @@ fn browser_ancestor(parent: &Ancestor) -> bool {
 /// The class `evidence` supports. Nothing a client says enters here.
 ///
 /// A Developer ID build knows its own code by team and identifier, wherever
-/// it runs: a Homebrew or npm `deadbolt`'s daemon takes
-/// `/Applications/Deadbolt.app` as the app, and the app's own bundled daemon
-/// takes it too. The app's executable is `deadbolt-ui`, which has no CLI
+/// it runs: a Homebrew or npm `shuvbolt`'s daemon takes
+/// `/Applications/Shuvbolt.app` as the app, and the app's own bundled daemon
+/// takes it too. The app's executable is `shuvbolt-ui`, which has no CLI
 /// commands, so its signature vouches only for the app. An ad-hoc build
 /// knows its code by path and code hash: the peer runs from the daemon's own
 /// binary or its bundle's app, and is the code signed there.
@@ -411,7 +411,7 @@ fn unverified(peer: Option<Peer>, label: &str) -> CallerInfo {
     info
 }
 
-/// "Ghostty › zsh › deadbolt": the nearest app, the nearest shell, then the
+/// "Ghostty › zsh › shuvbolt": the nearest app, the nearest shell, then the
 /// program.
 fn label(class: CallerClass, program: Option<&str>, process: &Process) -> String {
     let base = |path: &str| {
@@ -428,7 +428,7 @@ fn label(class: CallerClass, program: Option<&str>, process: &Process) -> String
         .iter()
         .find_map(|a| a.path.as_deref().and_then(bundle));
     match class {
-        CallerClass::App => return "Deadbolt".into(),
+        CallerClass::App => return "Shuvbolt".into(),
         CallerClass::AutoFill => return "macOS AutoFill".into(),
         CallerClass::BrowserHost => {
             return match host {
@@ -488,7 +488,7 @@ pub(super) mod tests {
             DAEMON_ID,
             Process {
                 args: vec![
-                    "deadbolt".into(),
+                    "shuvbolt".into(),
                     "browser-host".into(),
                     crate::browser::extension_origin(),
                 ],
@@ -523,7 +523,7 @@ pub(super) mod tests {
             DAEMON_ID,
             Process {
                 ancestry: vec![chrome()],
-                args: vec!["deadbolt".into(), "browser-host".into()],
+                args: vec!["shuvbolt".into(), "browser-host".into()],
                 ..Process::default()
             },
         );
@@ -569,10 +569,10 @@ pub(super) mod tests {
     fn the_app_is_the_code_in_the_daemons_own_bundle() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path().canonicalize().unwrap();
-        let app_path = root.join("MacOS/Deadbolt");
+        let app_path = root.join("MacOS/Shuvbolt");
         let autofill_path =
             root.join("PlugIns/DeadboltAutoFill.appex/Contents/MacOS/DeadboltAutoFill");
-        let exe_path = root.join("Helpers/deadbolt");
+        let exe_path = root.join("Helpers/shuvbolt");
         let elsewhere = root.join("Copy");
         for path in [&app_path, &autofill_path, &exe_path, &elsewhere] {
             std::fs::create_dir_all(path.parent().unwrap()).unwrap();
@@ -626,19 +626,19 @@ pub(super) mod tests {
         forged.valid = false;
         assert_eq!(class_of(forged, &[]), CallerClass::Caller);
 
-        let host = args(&["deadbolt", "chrome-extension://abc/"]);
+        let host = args(&["shuvbolt", "chrome-extension://abc/"]);
         assert_eq!(
             class_of(at(&exe_path, "e1", None, "x"), &host),
             CallerClass::BrowserHost
         );
-        let mode = args(&["deadbolt", "browser-host", "chrome-extension://abc/"]);
+        let mode = args(&["shuvbolt", "browser-host", "chrome-extension://abc/"]);
         assert_eq!(
             class_of(at(&exe_path, "e1", None, "x"), &mode),
             CallerClass::BrowserHost
         );
         // The same binary running anything else is a caller, and so is any
         // other code saying it's the browser host.
-        let cli = args(&["deadbolt", "get", "github"]);
+        let cli = args(&["shuvbolt", "get", "github"]);
         assert_eq!(
             class_of(at(&exe_path, "e1", None, "x"), &cli),
             CallerClass::Caller
@@ -654,14 +654,14 @@ pub(super) mod tests {
     }
 
     /// A Developer ID build's app is the app its own team signed as
-    /// `anomaly.deadbolt`, and nothing ad-hoc, wherever it runs: its
-    /// executable is `deadbolt-ui`, which runs only the app.
+    /// `dev.shuv.shuvbolt`, and nothing ad-hoc, wherever it runs: its
+    /// executable is `shuvbolt-ui`, which runs only the app.
     #[test]
     fn a_signed_build_knows_its_app_by_team_and_identifier() {
         let team = Some("TEAM123456");
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path().canonicalize().unwrap();
-        let path = root.join("MacOS/Deadbolt");
+        let path = root.join("MacOS/Shuvbolt");
         let elsewhere = root.join("Copy");
         for file in [&path, &elsewhere] {
             std::fs::create_dir_all(file.parent().unwrap()).unwrap();
@@ -709,24 +709,24 @@ pub(super) mod tests {
             class_of(at(&path, "a1", team, DAEMON_ID), &[]),
             CallerClass::Caller
         );
-        let host = vec!["deadbolt".into(), "chrome-extension://abc/".into()];
+        let host = vec!["shuvbolt".into(), "chrome-extension://abc/".into()];
         assert_eq!(
             class_of(at(&elsewhere, "e1", team, DAEMON_ID), &host),
             CallerClass::BrowserHost
         );
     }
 
-    /// The split install: a signed Homebrew/npm `deadbolt` runs the daemon
-    /// outside any bundle, and a signed `/Applications/Deadbolt.app` talks to
+    /// The split install: a signed Homebrew/npm `shuvbolt` runs the daemon
+    /// outside any bundle, and a signed `/Applications/Shuvbolt.app` talks to
     /// it. The daemon takes the app as the app; an ad-hoc build doesn't, since
     /// it knows its app only by its own bundle's path.
     #[test]
     fn a_signed_standalone_daemon_takes_the_signed_app() {
-        let app = Path::new("/Applications/Deadbolt.app/Contents/MacOS/Deadbolt");
+        let app = Path::new("/Applications/Shuvbolt.app/Contents/MacOS/Shuvbolt");
         let autofill = Path::new(
-            "/Applications/Deadbolt.app/Contents/PlugIns/DeadboltAutoFill.appex/Contents/MacOS/DeadboltAutoFill",
+            "/Applications/Shuvbolt.app/Contents/PlugIns/DeadboltAutoFill.appex/Contents/MacOS/DeadboltAutoFill",
         );
-        let exe = Path::new("/opt/homebrew/bin/deadbolt");
+        let exe = Path::new("/opt/homebrew/bin/shuvbolt");
         assert_eq!(app_beside(exe), None);
         let class_of = |code: CodeSignature, team: Option<&str>| {
             let evidence = Evidence::Signature {
@@ -774,8 +774,8 @@ pub(super) mod tests {
     #[test]
     fn a_linux_peer_is_an_unverified_caller() {
         let process = Process {
-            exe: Some("/usr/lib/deadbolt/deadbolt-ui".into()),
-            args: vec!["deadbolt".into(), "chrome-extension://abc/".into()],
+            exe: Some("/usr/lib/shuvbolt/shuvbolt-ui".into()),
+            args: vec!["shuvbolt".into(), "chrome-extension://abc/".into()],
             ..Process::default()
         };
         let info = from_proc(peer(77, 1), process);
@@ -783,9 +783,9 @@ pub(super) mod tests {
         assert_eq!(info.check, Check::Unverified);
         assert_eq!(
             info.program.as_deref(),
-            Some("/usr/lib/deadbolt/deadbolt-ui")
+            Some("/usr/lib/shuvbolt/shuvbolt-ui")
         );
-        assert_eq!(info.label, "deadbolt-ui · unverified (Linux)");
+        assert_eq!(info.label, "shuvbolt-ui · unverified (Linux)");
     }
 
     #[test]
@@ -804,10 +804,10 @@ pub(super) mod tests {
             ..Process::default()
         };
         let label =
-            |class, process: &Process| super::label(class, Some("/opt/bin/deadbolt"), process);
+            |class, process: &Process| super::label(class, Some("/opt/bin/shuvbolt"), process);
         assert_eq!(
             label(CallerClass::Caller, &process),
-            "Ghostty › zsh › deadbolt"
+            "Ghostty › zsh › shuvbolt"
         );
         let brave = Process {
             ancestry: vec![ancestor(
@@ -821,25 +821,25 @@ pub(super) mod tests {
             label(CallerClass::BrowserHost, &brave),
             "browser host (Brave Browser)"
         );
-        assert_eq!(label(CallerClass::App, &brave), "Deadbolt");
+        assert_eq!(label(CallerClass::App, &brave), "Shuvbolt");
         assert_eq!(label(CallerClass::AutoFill, &brave), "macOS AutoFill");
     }
 
     #[test]
     fn the_app_sits_beside_the_daemon() {
         assert_eq!(
-            app_beside(Path::new("/A/Deadbolt.app/Contents/Helpers/deadbolt")),
-            Some(PathBuf::from("/A/Deadbolt.app/Contents/MacOS/Deadbolt"))
+            app_beside(Path::new("/A/Shuvbolt.app/Contents/Helpers/shuvbolt")),
+            Some(PathBuf::from("/A/Shuvbolt.app/Contents/MacOS/Shuvbolt"))
         );
         assert_eq!(
-            autofill_beside(Path::new("/A/Deadbolt.app/Contents/Helpers/deadbolt")),
+            autofill_beside(Path::new("/A/Shuvbolt.app/Contents/Helpers/shuvbolt")),
             Some(PathBuf::from(
-                "/A/Deadbolt.app/Contents/PlugIns/DeadboltAutoFill.appex/Contents/MacOS/DeadboltAutoFill"
+                "/A/Shuvbolt.app/Contents/PlugIns/DeadboltAutoFill.appex/Contents/MacOS/DeadboltAutoFill"
             ))
         );
-        assert_eq!(autofill_beside(Path::new("/w/target/debug/deadbolt")), None);
+        assert_eq!(autofill_beside(Path::new("/w/target/debug/shuvbolt")), None);
         // Outside a bundle there's no app, development builds included.
-        assert_eq!(app_beside(Path::new("/w/target/debug/deadbolt")), None);
+        assert_eq!(app_beside(Path::new("/w/target/debug/shuvbolt")), None);
     }
 
     /// The CLI and the app send a passphrase only to a daemon running the
@@ -859,7 +859,7 @@ pub(super) mod tests {
         assert!(refused.contains("not /bin/sh"), "{refused}");
 
         let dir = tempfile::tempdir().unwrap();
-        let copy = dir.path().join("deadbolt");
+        let copy = dir.path().join("shuvbolt");
         std::fs::copy(&me, &copy).unwrap();
         let refused = deadbolt_client::peer::check(&ours, &copy).unwrap_err();
         assert!(refused.contains("not "), "a copy is refused: {refused}");
@@ -867,7 +867,7 @@ pub(super) mod tests {
 
     /// A peer is looked up by its whole audit token: once a pid version is
     /// gone, the token names nobody, even if the pid lives on. Our own test
-    /// binary, as the daemon's own `deadbolt` outside a bundle, is a caller
+    /// binary, as the daemon's own `shuvbolt` outside a bundle, is a caller
     /// identified by its signature.
     #[cfg(target_os = "macos")]
     #[test]

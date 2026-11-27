@@ -230,7 +230,7 @@ async function settles(w: Watch, path: string, label: string, optional = false) 
   return texts
 }
 const quietOn = (w: Watch, host: string) => !w.samples.some((s) => { try { return new URL(s.url).hostname === host } catch { return false } })
-const noFocus = (w: Watch, label: string) => check(!w.focus.length, `${label}: nothing of Deadbolt's takes focus (${JSON.stringify(w.focus)})`)
+const noFocus = (w: Watch, label: string) => check(!w.focus.length, `${label}: nothing of Shuvbolt's takes focus (${JSON.stringify(w.focus)})`)
 
 // What the chain asked each page and what it answered, for the DIAG line on a failure.
 await worker.evaluate(() => {
@@ -603,7 +603,7 @@ try {
     check(save?.heading === "Save a passkey for accounts.google.test?", `the person is asked to save a passkey for accounts.google.test (${save?.heading})`)
     await save!.press("Save")
     await p.locator("#enroll-status", { hasText: /\S/ }).waitFor({ timeout: 20_000 })
-    check(await p.locator("#enroll-status").textContent() === "Passkey created" && !!googlePasskey.credential, `@simplewebauthn/server verifies Deadbolt's registration (AAGUID ${googlePasskey.aaguid})`)
+    check(await p.locator("#enroll-status").textContent() === "Passkey created" && !!googlePasskey.credential, `@simplewebauthn/server verifies Shuvbolt's registration (AAGUID ${googlePasskey.aaguid})`)
     await p.close()
   }
 
@@ -769,7 +769,7 @@ try {
     await p.waitForTimeout(1400)
     const top = f.locator("button.row").first()
     check(await rowCount(f) === 1 && /Sign in with Google/.test(await top.textContent() ?? "") && await f.locator(".more").count() === 1, "several accounts: the offer is its top login's own row, with a quiet chevron")
-    check(!/Sign in with Deadbolt/.test(await f.locator("body").innerText()), "nothing says Sign in with Deadbolt")
+    check(!/Sign in with Shuvbolt/.test(await f.locator("body").innerText()), "nothing says Sign in with Shuvbolt")
     await still(p, f, `offer-collapsed-several-${scheme}`)
     // A page can't list them or pick: synthetic events at the surface's host, and messages to every frame.
     await p.evaluate(() => {
@@ -809,7 +809,7 @@ try {
     if (recording) recording.clicks.push({ seconds: (performance.now() - recording.start) / 1000, x: at.x + at.width / 2, y: at.y + at.height / 2 })
     await tile.click()
     await p.waitForURL(`${site}/account*`, { timeout: 20_000 })
-    check(await p.locator("#who").textContent() === `Signed in as ${GOOGLE_OTHER} with Google`, "after the person's pick, Deadbolt signs the second Gmail in to Acme")
+    check(await p.locator("#who").textContent() === `Signed in as ${GOOGLE_OTHER} with Google`, "after the person's pick, Shuvbolt signs the second Gmail in to Acme")
     check(posts(flow, "/v3/signin/challenge/pwd") === 1 && posts(flow, "/v3/signin/challenge/totp") === 1, "with that account's password and code, once each")
     check(!!await until("Acme is linked to the second Gmail", () => linkedTo(site, GOOGLE_OTHER), 5000), "Acme now has a login that signs in with the second Gmail")
     noFocus(w, flow)

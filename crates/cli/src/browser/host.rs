@@ -52,7 +52,7 @@ const LEARNS: (u32, Duration) = (100, Duration::from_millis(100));
 pub async fn run(paths: Paths, origin: &str) -> Result<()> {
     if origin != extension_origin() {
         bail!(
-            "refusing {origin:?}: only the Deadbolt extension ({EXTENSION_ID}) may use this host"
+            "refusing {origin:?}: only the Shuvbolt extension ({EXTENSION_ID}) may use this host"
         );
     }
     let input = stdin()?;

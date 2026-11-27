@@ -145,7 +145,7 @@ pub struct Daemon {
     watchers: Watchers,
     /// Who connections come from.
     callers: caller::Callers,
-    /// The `deadbolt run`s going on, whose processes get nothing.
+    /// The `shuvbolt run`s going on, whose processes get nothing.
     taints: Mutex<taint::TaintTable>,
     /// Activity not stored yet: entries recorded while locked, and each
     /// caller's count against its limit.
@@ -155,7 +155,7 @@ pub struct Daemon {
     autofill_passkey_rate: Mutex<Option<crate::browser::host::Bucket>>,
     /// Every passphrase check: one at a time, wrong ones backed off.
     guesses: guesses::Guesses,
-    /// Deadbolt Send's endpoint, started by the first send.
+    /// Shuvbolt Send's endpoint, started by the first send.
     send_server: tokio::sync::Mutex<Option<deadbolt_send::Server>>,
     /// Set as the daemon stops, ending sends and anyone waiting on one.
     stopping: watch::Sender<bool>,
@@ -410,7 +410,7 @@ impl Daemon {
         if !set_up(&self.paths.data) {
             return Err(fail(
                 ErrorCode::NotInitialized,
-                "this device is not set up; run `deadbolt init` or `deadbolt join`",
+                "this device is not set up; run `shuvbolt init` or `shuvbolt join`",
             ));
         }
         let dir = self.paths.data.clone();
@@ -464,7 +464,7 @@ impl Daemon {
     /// to a shorter one at once, to a longer one (or never) only after a
     /// Touch ID prompt succeeds.
     async fn unlock_biometric(self: &Arc<Self>, timeout_secs: Option<u64>) -> Result<()> {
-        self.unlock_biometric_with_reason(timeout_secs, "unlock your Deadbolt vaults")
+        self.unlock_biometric_with_reason(timeout_secs, "unlock your Shuvbolt vaults")
             .await
             .map(drop)
     }
@@ -499,12 +499,12 @@ impl Daemon {
             }
             return Err(fail(
                 ErrorCode::NotInitialized,
-                "this device is not set up; run `deadbolt init` or `deadbolt join`",
+                "this device is not set up; run `shuvbolt init` or `shuvbolt join`",
             ));
         }
         if !Config::load(&self.paths.config)?.touch_id() {
             bail!(
-                "Touch ID unlock is not enabled; turn it on in Settings or run `deadbolt touchid on`"
+                "Touch ID unlock is not enabled; turn it on in Settings or run `shuvbolt touchid on`"
             );
         }
         if let Some(until) = *self
@@ -860,11 +860,11 @@ impl Daemon {
                 .is_none()
             {
                 return Err(if set_up(&self.paths.data) {
-                    fail(ErrorCode::Locked, "locked: run `deadbolt unlock`")
+                    fail(ErrorCode::Locked, "locked: run `shuvbolt unlock`")
                 } else {
                     fail(
                         ErrorCode::NotInitialized,
-                        "this device is not set up; run `deadbolt init` or `deadbolt join`",
+                        "this device is not set up; run `shuvbolt init` or `shuvbolt join`",
                     )
                 });
             }

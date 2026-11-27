@@ -1,4 +1,4 @@
-//! What `deadbolt run` hands the broker over its inherited pipe: the run's
+//! What `shuvbolt run` hands the broker over its inherited pipe: the run's
 //! process, and one route per upstream with the real secrets it injects.
 
 use std::collections::HashSet;
@@ -21,7 +21,7 @@ pub const DEFAULT_METHODS: [&str; 7] = ["GET", "HEAD", "POST", "PUT", "PATCH", "
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct BrokerConfig {
-    /// The `deadbolt run` process: only connections from it and its
+    /// The `shuvbolt run` process: only connections from it and its
     /// descendants are served. `None` serves any local caller (tests).
     #[serde(default)]
     pub root_pid: Option<u32>,

@@ -25,7 +25,7 @@ use crate::worker::Inbox;
 pub enum Existing {
     /// A link to this app's helper.
     Ours,
-    /// A link to another Deadbolt bundle's helper, live or not: the app moved,
+    /// A link to another Shuvbolt bundle's helper, live or not: the app moved,
     /// was deleted, or ran from a disk image. Ours to repoint.
     Moved(PathBuf),
     Homebrew,
@@ -41,10 +41,10 @@ impl Existing {
 
 #[derive(Debug, thiserror::Error)]
 pub enum InstallError {
-    #[error("Deadbolt is damaged: its deadbolt helper is missing. Reinstall Deadbolt.")]
+    #[error("Shuvbolt is damaged: its shuvbolt helper is missing. Reinstall Shuvbolt.")]
     MissingHelper,
     #[error(
-        "Move Deadbolt to Applications first. A command linked to this copy would stop working once it's moved or ejected."
+        "Move Shuvbolt to Applications first. A command linked to this copy would stop working once it's moved or ejected."
     )]
     Temporary,
     #[error("{} already exists. Remove it with its installer, then try again.", .0.display())]
@@ -108,7 +108,7 @@ pub fn temporary(source: &Path) -> bool {
 
 /// Links `destination` to `source`. `symlink` is the no-clobber operation: a
 /// file created after inspection also wins, and a dangling symlink that isn't
-/// ours is preserved. Only a link to a moved Deadbolt is replaced.
+/// ours is preserved. Only a link to a moved Shuvbolt is replaced.
 pub fn install(source: &Path, destination: &Path) -> Result<(), InstallError> {
     if temporary(source) {
         return Err(InstallError::Temporary);
@@ -123,7 +123,7 @@ pub fn install(source: &Path, destination: &Path) -> Result<(), InstallError> {
         Some(Existing::Ours) => Ok(()),
         // Link beside it, then rename over it: the command never goes missing.
         Some(Existing::Moved(_)) => {
-            let fresh = destination.with_file_name(format!(".deadbolt-{}", std::process::id()));
+            let fresh = destination.with_file_name(format!(".shuvbolt-{}", std::process::id()));
             match fs::remove_file(&fresh) {
                 Err(e) if e.kind() != io::ErrorKind::NotFound => {
                     return Err(InstallError::Link(fresh, e));
@@ -168,7 +168,7 @@ pub fn destination(home: &Path, path: &[PathBuf]) -> (PathBuf, bool) {
         .or_else(|| preferred.iter().find(|p| writable(p)))
         .or_else(|| preferred.iter().find(|p| path.contains(p)))
         .unwrap_or(&preferred[0]);
-    (dir.join("deadbolt"), path.contains(dir))
+    (dir.join("shuvbolt"), path.contains(dir))
 }
 
 pub fn quote(path: &Path) -> String {
@@ -182,7 +182,7 @@ pub struct Scan {
     pub destination: PathBuf,
     /// Whether the app's own PATH has that directory.
     pub on_path: bool,
-    /// The first `deadbolt` found, ours before anybody else's.
+    /// The first `shuvbolt` found, ours before anybody else's.
     pub found: Option<(PathBuf, Existing)>,
     /// The directory isn't writable without an administrator.
     pub manual: bool,
@@ -194,7 +194,7 @@ impl Scan {
     }
 }
 
-/// Looks for `deadbolt` in `search` ([`binary::search_dirs`]: PATH, then the
+/// Looks for `shuvbolt` in `search` ([`binary::search_dirs`]: PATH, then the
 /// usual places a Finder launch's PATH lacks). Directories that can't be read
 /// count as not having one.
 pub fn scan(source: &Path, home: &Path, path: &OsStr, search: &[PathBuf]) -> Scan {
@@ -208,7 +208,7 @@ pub fn scan(source: &Path, home: &Path, path: &OsStr, search: &[PathBuf]) -> Sca
         .then(|| destination.clone());
     let mut found: Vec<(PathBuf, Existing)> = search
         .iter()
-        .map(|dir| dir.join("deadbolt"))
+        .map(|dir| dir.join("shuvbolt"))
         .chain(extra)
         .filter_map(|p| existing(&p, source).ok().flatten().map(|kind| (p, kind)))
         .collect();
@@ -310,9 +310,9 @@ impl Installer {
     pub fn fixture() -> Self {
         Self {
             offered: false,
-            source: "/Applications/Deadbolt.app/Contents/Helpers/deadbolt".into(),
+            source: "/Applications/Shuvbolt.app/Contents/Helpers/shuvbolt".into(),
             scan: Some(Scan {
-                destination: "/Users/sam/.local/bin/deadbolt".into(),
+                destination: "/Users/sam/.local/bin/shuvbolt".into(),
                 on_path: true,
                 found: None,
                 manual: false,
@@ -471,7 +471,7 @@ impl Installer {
 
     fn destination(&self) -> PathBuf {
         self.scan.as_ref().map_or_else(
-            || PathBuf::from("/usr/local/bin/deadbolt"),
+            || PathBuf::from("/usr/local/bin/shuvbolt"),
             |s| s.destination.clone(),
         )
     }
@@ -533,7 +533,7 @@ mod tests {
     use std::os::unix::fs::{PermissionsExt, symlink};
 
     fn helper(dir: &Path, app: &str) -> PathBuf {
-        let source = dir.join(app).join("Contents/Helpers/deadbolt");
+        let source = dir.join(app).join("Contents/Helpers/shuvbolt");
         fs::create_dir_all(source.parent().unwrap()).unwrap();
         fs::write(&source, "binary").unwrap();
         fs::set_permissions(&source, fs::Permissions::from_mode(0o755)).unwrap();
@@ -543,8 +543,8 @@ mod tests {
     #[test]
     fn installs_once_and_preserves_every_other_entry() {
         let dir = tempfile::tempdir().unwrap();
-        let source = helper(dir.path(), "Deadbolt.app");
-        let link = dir.path().join("bin/deadbolt");
+        let source = helper(dir.path(), "Shuvbolt.app");
+        let link = dir.path().join("bin/shuvbolt");
         install(&source, &link).unwrap();
         install(&source, &link).unwrap();
         assert_eq!(existing(&link, &source).unwrap(), Some(Existing::Ours));
@@ -556,26 +556,26 @@ mod tests {
         ));
         assert_eq!(fs::read_to_string(&link).unwrap(), "cargo install");
         fs::remove_file(&link).unwrap();
-        symlink("/missing/Cellar/deadbolt/1/bin/deadbolt", &link).unwrap();
+        symlink("/missing/Cellar/shuvbolt/1/bin/shuvbolt", &link).unwrap();
         assert_eq!(existing(&link, &source).unwrap(), Some(Existing::Homebrew));
         assert!(install(&source, &link).is_err());
         assert_eq!(
             fs::read_link(&link).unwrap(),
-            Path::new("/missing/Cellar/deadbolt/1/bin/deadbolt")
+            Path::new("/missing/Cellar/shuvbolt/1/bin/shuvbolt")
         );
     }
 
     #[test]
     fn a_link_to_a_moved_app_is_ours_and_gets_repointed() {
         let dir = tempfile::tempdir().unwrap();
-        let source = helper(dir.path(), "Applications/Deadbolt.app");
-        let link = dir.path().join("bin/deadbolt");
+        let source = helper(dir.path(), "Applications/Shuvbolt.app");
+        let link = dir.path().join("bin/shuvbolt");
         fs::create_dir_all(link.parent().unwrap()).unwrap();
         for old in [
             // Deleted, a disk image, App Translocation: all dangling now.
-            "/Users/sam/Downloads/Deadbolt.app/Contents/Helpers/deadbolt",
-            "/Volumes/Deadbolt/Deadbolt.app/Contents/Helpers/deadbolt",
-            "/private/var/folders/x/T/AppTranslocation/1/d/Deadbolt.app/Contents/Helpers/deadbolt",
+            "/Users/sam/Downloads/Shuvbolt.app/Contents/Helpers/shuvbolt",
+            "/Volumes/Shuvbolt/Shuvbolt.app/Contents/Helpers/shuvbolt",
+            "/private/var/folders/x/T/AppTranslocation/1/d/Shuvbolt.app/Contents/Helpers/shuvbolt",
         ] {
             fs::remove_file(&link).ok();
             symlink(old, &link).unwrap();
@@ -592,32 +592,32 @@ mod tests {
     #[test]
     fn a_disk_image_or_translocated_copy_refuses_to_install() {
         let dir = tempfile::tempdir().unwrap();
-        let link = dir.path().join("bin/deadbolt");
+        let link = dir.path().join("bin/shuvbolt");
         for source in [
-            "/Volumes/Deadbolt/Deadbolt.app/Contents/Helpers/deadbolt",
-            "/private/var/folders/x/T/AppTranslocation/1/d/Deadbolt.app/Contents/Helpers/deadbolt",
+            "/Volumes/Shuvbolt/Shuvbolt.app/Contents/Helpers/shuvbolt",
+            "/private/var/folders/x/T/AppTranslocation/1/d/Shuvbolt.app/Contents/Helpers/shuvbolt",
         ] {
             let error = install(Path::new(source), &link).unwrap_err();
             assert!(matches!(error, InstallError::Temporary));
             assert!(
                 error
                     .to_string()
-                    .starts_with("Move Deadbolt to Applications first")
+                    .starts_with("Move Shuvbolt to Applications first")
             );
         }
         assert!(fs::symlink_metadata(&link).is_err());
         assert!(!temporary(Path::new(
-            "/Applications/Deadbolt.app/Contents/Helpers/deadbolt"
+            "/Applications/Shuvbolt.app/Contents/Helpers/shuvbolt"
         )));
     }
 
     #[test]
     fn a_missing_helper_says_reinstall() {
         let dir = tempfile::tempdir().unwrap();
-        let source = dir.path().join("Deadbolt.app/Contents/Helpers/deadbolt");
-        let error = install(&source, &dir.path().join("deadbolt")).unwrap_err();
+        let source = dir.path().join("Shuvbolt.app/Contents/Helpers/shuvbolt");
+        let error = install(&source, &dir.path().join("shuvbolt")).unwrap_err();
         assert!(matches!(error, InstallError::MissingHelper));
-        assert!(error.to_string().contains("Reinstall Deadbolt"));
+        assert!(error.to_string().contains("Reinstall Shuvbolt"));
     }
 
     #[test]
@@ -626,16 +626,16 @@ mod tests {
         let bin = home.path().join(".local/bin");
         assert_eq!(
             destination(home.path(), std::slice::from_ref(&bin)),
-            (bin.join("deadbolt"), true)
+            (bin.join("shuvbolt"), true)
         );
-        assert_eq!(destination(home.path(), &[]), (bin.join("deadbolt"), false));
+        assert_eq!(destination(home.path(), &[]), (bin.join("shuvbolt"), false));
     }
 
     #[test]
     fn a_finder_path_still_finds_a_cargo_install() {
         let home = tempfile::tempdir().unwrap();
-        let source = helper(home.path(), "Deadbolt.app");
-        let cargo = home.path().join(".cargo/bin/deadbolt");
+        let source = helper(home.path(), "Shuvbolt.app");
+        let cargo = home.path().join(".cargo/bin/shuvbolt");
         fs::create_dir_all(cargo.parent().unwrap()).unwrap();
         fs::write(&cargo, "cargo").unwrap();
         let finder = OsStr::new("/usr/bin:/bin:/usr/sbin:/sbin");
@@ -647,7 +647,7 @@ mod tests {
         let found = scan(&source, home.path(), finder, &search);
         assert_eq!(found.found, Some((cargo.clone(), Existing::Cargo)));
         // Our own link elsewhere is what the page reports.
-        let ours = home.path().join(".local/bin/deadbolt");
+        let ours = home.path().join(".local/bin/shuvbolt");
         install(&source, &ours).unwrap();
         let found = scan(&source, home.path(), finder, &search);
         assert!(found.installed());
@@ -657,7 +657,7 @@ mod tests {
     #[test]
     fn unreadable_directories_count_as_empty() {
         let home = tempfile::tempdir().unwrap();
-        let source = helper(home.path(), "Deadbolt.app");
+        let source = helper(home.path(), "Shuvbolt.app");
         let locked = home.path().join("locked");
         fs::create_dir(&locked).unwrap();
         fs::set_permissions(&locked, fs::Permissions::from_mode(0o000)).unwrap();
@@ -669,27 +669,27 @@ mod tests {
         );
         fs::set_permissions(&locked, fs::Permissions::from_mode(0o755)).unwrap();
         assert_eq!(found.found, None);
-        assert_eq!(found.destination, home.path().join(".local/bin/deadbolt"));
+        assert_eq!(found.destination, home.path().join(".local/bin/shuvbolt"));
         assert!(!found.manual);
     }
 
     #[test]
     fn shell_paths_are_quoted() {
         assert_eq!(
-            quote(Path::new("/Sam's Mac/Deadbolt.app")),
-            "'/Sam'\\''s Mac/Deadbolt.app'"
+            quote(Path::new("/Sam's Mac/Shuvbolt.app")),
+            "'/Sam'\\''s Mac/Shuvbolt.app'"
         );
     }
 
     #[test]
     fn cargo_and_foreign_symlinks_are_identified_without_replacing_them() {
         let dir = tempfile::tempdir().unwrap();
-        let cargo = dir.path().join(".cargo/bin/deadbolt");
+        let cargo = dir.path().join(".cargo/bin/shuvbolt");
         fs::create_dir_all(cargo.parent().unwrap()).unwrap();
         fs::write(&cargo, "cargo").unwrap();
-        let source = dir.path().join("bundle/deadbolt");
+        let source = dir.path().join("bundle/shuvbolt");
         assert_eq!(existing(&cargo, &source).unwrap(), Some(Existing::Cargo));
-        let link = dir.path().join("deadbolt");
+        let link = dir.path().join("shuvbolt");
         symlink("some-other-app", &link).unwrap();
         assert_eq!(existing(&link, &source).unwrap(), Some(Existing::Other));
     }
@@ -714,11 +714,11 @@ mod tests {
     #[test]
     fn stale_scan_outcomes_do_not_clobber_newer_install_state() {
         let home = tempfile::tempdir().unwrap();
-        let source = helper(home.path(), "Deadbolt.app");
+        let source = helper(home.path(), "Shuvbolt.app");
         let marker = home.path().join("app-command-offered");
         let inbox = Inbox::new();
         let post = inbox.poster();
-        let destination = home.path().join(".local/bin/deadbolt");
+        let destination = home.path().join(".local/bin/shuvbolt");
         let mut state = Installer {
             offered: false,
             source,

@@ -47,7 +47,7 @@ pub struct Panel {
 
 pub fn spec() -> AppSpec<App> {
     AppSpec {
-        title: "Deadbolt",
+        title: "Shuvbolt",
         size: SIZE,
         min_size: Some((0.0, 0.0)),
         init: || App::panel(Daemon::offline()),
@@ -225,7 +225,7 @@ impl App {
         }
     }
 
-    /// ⇧⌘Space inside Deadbolt while it isn't registered globally
+    /// ⇧⌘Space inside Shuvbolt while it isn't registered globally
     /// (`App::shortcut_fallback`): the main window brings the panel up; the
     /// panel closes.
     pub(crate) fn panel_shortcut(&mut self, ev: &KeyEvent, tx: &mut Tx) -> bool {

@@ -23,14 +23,14 @@ pub(super) fn stage_beside(dest: &Path) -> Result<tempfile::TempDir> {
         .with_context(|| format!("can't write to {}", dir.display()))
 }
 
-/// The code-signing requirement for Deadbolt's `identifier`, from the app's
+/// The code-signing requirement for Shuvbolt's `identifier`, from the app's
 /// update requirement without `notarized` (bare executables are notarized
 /// but can't be stapled, so only the app's ticket can be checked offline).
 pub(super) fn requirement(identifier: &str) -> String {
     APP_REQUIREMENT
         .trim()
         .replace(
-            "identifier \"anomaly.deadbolt\"",
+            "identifier \"dev.shuv.shuvbolt\"",
             &format!("identifier \"{identifier}\""),
         )
         .trim_end_matches(" and notarized")
@@ -45,8 +45,8 @@ const XATTR: &str = "/usr/bin/xattr";
 const OSASCRIPT: &str = "/usr/bin/osascript";
 const OPEN: &str = "/usr/bin/open";
 
-/// Whether a standalone `deadbolt`'s replacement must be signed with
-/// Deadbolt's Developer ID: always for a release build (one published on a
+/// Whether a standalone `shuvbolt`'s replacement must be signed with
+/// Shuvbolt's Developer ID: always for a release build (one published on a
 /// channel) on macOS, decided when it was built, never by what's on disk.
 /// Builds from source rely on the checksum alone.
 pub(super) fn signature_required(macos: bool, built: Option<&str>) -> bool {
@@ -100,7 +100,7 @@ pub(super) fn refuse_foreign_root(dir: &Path) -> Result<()> {
     let euid = rustix::process::geteuid().as_raw();
     if !root_may_update(euid, owner(dir), home.as_deref().and_then(owner)) {
         bail!(
-            "refusing to update {} as root: run `deadbolt update` as the user who owns it",
+            "refusing to update {} as root: run `shuvbolt update` as the user who owns it",
             dir.display()
         );
     }
@@ -150,13 +150,13 @@ pub(super) fn swap(files: &[(PathBuf, PathBuf)], aside: &Path) -> Result<()> {
 /// The largest file taken from a CLI tarball.
 const TAR_FILE_LIMIT: u64 = 256 << 20;
 
-/// Unpacks `deadbolt`, `deadbolt-enclave` and `deadbolt-ui` from the gzipped
+/// Unpacks `shuvbolt`, `deadbolt-enclave` and `shuvbolt-ui` from the gzipped
 /// tarball `archive` into `out`, and nothing else: no other names, links,
 /// devices or paths, so nothing lands outside `out` or keeps the archive's
 /// owner.
 pub(super) fn unpack_cli(archive: &Path, out: &Path) -> Result<Vec<PathBuf>> {
     use std::io::Read;
-    const NAMES: [&str; 3] = ["deadbolt", "deadbolt-enclave", "deadbolt-ui"];
+    const NAMES: [&str; 3] = ["shuvbolt", "deadbolt-enclave", "shuvbolt-ui"];
     let octal = |field: &[u8]| -> Result<u64> {
         let text = std::str::from_utf8(field)
             .ok()
@@ -271,7 +271,7 @@ pub(super) fn pax_path(body: &[u8]) -> Option<String> {
 }
 
 /// Replaces the standalone `exe` (and the `deadbolt-enclave` and
-/// `deadbolt-ui` beside it) with the release's tarball.
+/// `shuvbolt-ui` beside it) with the release's tarball.
 #[expect(clippy::too_many_arguments, reason = "one call site, all distinct")]
 pub(super) async fn update_cli(
     paths: &Paths,
@@ -285,19 +285,19 @@ pub(super) async fn update_cli(
     quiet: bool,
 ) -> Result<()> {
     let stage = stage_beside(exe)?;
-    let archive = stage.path().join("deadbolt.tar.gz");
+    let archive = stage.path().join("shuvbolt.tar.gz");
     service.download(manifest, target, &archive).await?;
     let unpacked = stage.path().join("unpacked");
     std::fs::create_dir(&unpacked)?;
     unpack_cli(&archive, &unpacked)?;
-    let new = unpacked.join("deadbolt");
+    let new = unpacked.join("shuvbolt");
     if !new.is_file() {
-        bail!("the release has no deadbolt");
+        bail!("the release has no shuvbolt");
     }
     let enclave = unpacked.join("deadbolt-enclave");
     let enclave = enclave.is_file().then_some(enclave);
     let installed_enclave = dir.join("deadbolt-enclave");
-    // The new deadbolt pins its own helper: never leave the old one beside it.
+    // The new shuvbolt pins its own helper: never leave the old one beside it.
     if macos && enclave.is_none() && std::fs::symlink_metadata(&installed_enclave).is_ok() {
         bail!(
             "the release has no deadbolt-enclave to replace {}; nothing was changed",
@@ -305,24 +305,24 @@ pub(super) async fn update_cli(
         );
     }
     if signature_required(macos, built) {
-        if !satisfies(CODESIGN, &new, &requirement("anomaly.deadbolt.cli"), false)? {
-            bail!("the new deadbolt is not signed by Deadbolt's Developer ID; nothing was changed");
+        if !satisfies(CODESIGN, &new, &requirement("dev.shuv.shuvbolt.cli"), false)? {
+            bail!("the new shuvbolt is not signed by Shuvbolt's Developer ID; nothing was changed");
         }
         if let Some(enclave) = &enclave
             && !satisfies(
                 CODESIGN,
                 enclave,
-                &requirement("anomaly.deadbolt.enclave"),
+                &requirement("dev.shuv.shuvbolt.enclave"),
                 false,
             )?
         {
             bail!(
-                "the new deadbolt-enclave is not signed by Deadbolt's Developer ID; nothing was changed"
+                "the new deadbolt-enclave is not signed by Shuvbolt's Developer ID; nothing was changed"
             );
         }
     }
     // The app beside it, when the release has one (glibc Linux).
-    let ui = unpacked.join("deadbolt-ui");
+    let ui = unpacked.join("shuvbolt-ui");
     let ui = ui.is_file().then_some(ui);
     let ours = daemon_runs(paths, |p| p == exe).await;
     let mut files = Vec::new();
@@ -330,12 +330,12 @@ pub(super) async fn update_cli(
         use std::os::unix::fs::PermissionsExt;
         std::fs::set_permissions(file, std::fs::Permissions::from_mode(0o755))?;
     }
-    // The helper first: the new deadbolt pins it, the old one checks before use.
+    // The helper first: the new shuvbolt pins it, the old one checks before use.
     if let Some(enclave) = &enclave {
         files.push((enclave.clone(), installed_enclave));
     }
     if let Some(ui) = &ui {
-        files.push((ui.clone(), dir.join("deadbolt-ui")));
+        files.push((ui.clone(), dir.join("shuvbolt-ui")));
     }
     files.push((new, exe.to_path_buf()));
     swap(&files, &stage.path().join("old"))?;
@@ -375,7 +375,7 @@ pub(super) fn link_inside(parent: &Path, target: &Path) -> bool {
 /// The most an app zip may unpack to.
 const APP_ZIP_LIMIT: u64 = 2 << 30;
 
-/// Checks the app zip before `ditto` unpacks it: only `Deadbolt.app/…` and
+/// Checks the app zip before `ditto` unpacks it: only `Shuvbolt.app/…` and
 /// `__MACOSX/…` (ditto's sequestered resource forks), every symlink inside
 /// the bundle, and nothing written through one.
 pub(super) fn check_app_zip(archive: &Path) -> Result<()> {
@@ -391,8 +391,8 @@ pub(super) fn check_app_zip(archive: &Path) -> Result<()> {
             .with_context(|| format!("the app zip has an unsafe path {:?}", entry.name()))?;
         let first = name.components().next().map(|c| c.as_os_str().to_owned());
         let sequestered = first.as_deref() == Some("__MACOSX".as_ref());
-        if first.as_deref() != Some("Deadbolt.app".as_ref()) && !sequestered {
-            bail!("the app zip holds {} outside Deadbolt.app", name.display());
+        if first.as_deref() != Some("Shuvbolt.app".as_ref()) && !sequestered {
+            bail!("the app zip holds {} outside Shuvbolt.app", name.display());
         }
         total = total.saturating_add(entry.size());
         if total > APP_ZIP_LIMIT {
@@ -441,7 +441,7 @@ fn check_bundle_links(bundle: &Path) -> Result<()> {
     Ok(())
 }
 
-/// Replaces `bundle` with the release's Deadbolt.app.
+/// Replaces `bundle` with the release's Shuvbolt.app.
 pub(super) async fn update_app(
     paths: &Paths,
     service: &Service,
@@ -452,7 +452,7 @@ pub(super) async fn update_app(
     quiet: bool,
 ) -> Result<()> {
     let stage = stage_beside(bundle)?;
-    let archive = stage.path().join("Deadbolt.zip");
+    let archive = stage.path().join("Shuvbolt.zip");
     service.download(manifest, target, &archive).await?;
     check_app_zip(&archive)?;
     let unpacked = stage.path().join("unpacked");
@@ -463,9 +463,9 @@ pub(super) async fn update_app(
             .arg(&unpacked),
         "ditto",
     )?;
-    let new = unpacked.join("Deadbolt.app");
-    if !new.join("Contents/Helpers/deadbolt").is_file() {
-        bail!("the release has no Deadbolt.app");
+    let new = unpacked.join("Shuvbolt.app");
+    if !new.join("Contents/Helpers/shuvbolt").is_file() {
+        bail!("the release has no Shuvbolt.app");
     }
     check_bundle_links(&new)?;
     let quarantined = Command::new(XATTR)
@@ -478,13 +478,13 @@ pub(super) async fn update_app(
         .with_context(|| format!("running {XATTR}"))?
         .success();
     if !satisfies(CODESIGN, &new, APP_REQUIREMENT.trim(), true)? {
-        bail!("the new Deadbolt.app is not signed and notarized as Deadbolt; nothing was changed");
+        bail!("the new Shuvbolt.app is not signed and notarized as Shuvbolt; nothing was changed");
     }
     run_tool(
         Command::new(SPCTL)
             .args(["--assess", "--type", "execute"])
             .arg(&new),
-        "Gatekeeper's check of the new Deadbolt.app",
+        "Gatekeeper's check of the new Shuvbolt.app",
     )?;
     if quarantined {
         run_tool(
@@ -508,7 +508,7 @@ pub(super) async fn update_app(
             })
         });
     // Whichever app is in place now, its daemon comes back.
-    restart_daemon(paths, bundle.join("Contents/Helpers/deadbolt"), quiet).await;
+    restart_daemon(paths, bundle.join("Contents/Helpers/shuvbolt"), quiet).await;
     let reopen = || {
         if app_ran && let Err(error) = Command::new(OPEN).arg(bundle).status() {
             eprintln!("warning: couldn't reopen {}: {error}", bundle.display());
@@ -518,7 +518,7 @@ pub(super) async fn update_app(
         reopen();
         return Err(error);
     }
-    let trashed = trash(&old, &format!("Deadbolt-{VERSION}"));
+    let trashed = trash(&old, &format!("Shuvbolt-{VERSION}"));
     if !quiet {
         println!("Updated {} to {version}", bundle.display());
     }
@@ -533,17 +533,17 @@ pub(super) async fn update_app(
     Ok(())
 }
 
-/// Quits Deadbolt.app if it runs, and says whether it did.
+/// Quits Shuvbolt.app if it runs, and says whether it did.
 fn quit_app() -> Result<bool> {
     let running = Command::new(OSASCRIPT)
-        .args(["-e", "application id \"anomaly.deadbolt\" is running"])
+        .args(["-e", "application id \"dev.shuv.shuvbolt\" is running"])
         .stdin(Stdio::null())
         .output()
         .with_context(|| format!("running {OSASCRIPT}"))?;
     let running = String::from_utf8_lossy(&running.stdout).trim() == "true";
     if running {
         Command::new(OSASCRIPT)
-            .args(["-e", "tell application id \"anomaly.deadbolt\" to quit"])
+            .args(["-e", "tell application id \"dev.shuv.shuvbolt\" to quit"])
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null())

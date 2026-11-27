@@ -57,7 +57,7 @@ impl Device {
             .stdout(Stdio::null())
             .status()
             .unwrap();
-        assert!(status.success(), "deadbolt {args:?} failed");
+        assert!(status.success(), "shuvbolt {args:?} failed");
     }
 
     pub fn output(&self, args: &[&str]) -> String {
@@ -69,7 +69,7 @@ impl Device {
             .stdin(Stdio::null())
             .output()
             .unwrap();
-        assert!(out.status.success(), "deadbolt {args:?} failed");
+        assert!(out.status.success(), "shuvbolt {args:?} failed");
         String::from_utf8(out.stdout).unwrap()
     }
 
@@ -100,7 +100,7 @@ impl Device {
         deadbolt_client::set_daemon_check(Box::new(move |socket| {
             deadbolt_client::peer::check(&socket, &bin).map(drop)
         }));
-        let script = self._dir.path().join("deadbolt");
+        let script = self._dir.path().join("shuvbolt");
         let mut body = String::from("#!/bin/sh\nexec env");
         for (name, value) in &self.vars {
             body.push_str(&format!(" {name}='{}'", value.to_string_lossy()));

@@ -184,7 +184,7 @@ impl Daemon {
                 Err(fail(
                     ErrorCode::Version,
                     format!(
-                        "the daemon speaks protocol {}, not {}; run `deadbolt debug daemon stop`",
+                        "the daemon speaks protocol {}, not {}; run `shuvbolt debug daemon stop`",
                         protocol(),
                         request.v
                     ),

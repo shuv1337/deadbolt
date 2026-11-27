@@ -59,7 +59,7 @@ export class Host implements VaultBackend {
       port.onMessage.addListener((raw) => this.received(raw))
       port.onDisconnect.addListener(() => {
         if (this.port !== port) return
-        this.disconnected(chrome.runtime.lastError?.message ?? "Deadbolt's browser helper stopped.")
+        this.disconnected(chrome.runtime.lastError?.message ?? "Shuvbolt's browser helper stopped.")
         resolve()
       })
       void this.hello().finally(resolve)
@@ -74,7 +74,7 @@ export class Host implements VaultBackend {
       this.attempt = 0
       this.capabilities = reply.capabilities
       if (reply.protocol !== PROTOCOL) {
-        const detail = `This extension speaks protocol ${PROTOCOL}, but Deadbolt speaks ${reply.protocol}. Update both.`
+        const detail = `This extension speaks protocol ${PROTOCOL}, but Shuvbolt speaks ${reply.protocol}. Update both.`
         this.setStatus({ state: "unavailable", detail }, change)
       } else if (reply.status === "ready") this.setStatus({ state: "ready", version: reply.version }, change)
       else this.setStatus({ state: reply.status, detail: reply.detail }, change)
@@ -101,7 +101,7 @@ export class Host implements VaultBackend {
     const reply = await new Promise<Reply>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id)
-        reject(new HostError("timeout", "Deadbolt didn't answer in time."))
+        reject(new HostError("timeout", "Shuvbolt didn't answer in time."))
       }, timeout)
       this.pending.set(id, { resolve, reject, timer })
       try {
@@ -138,13 +138,13 @@ export class Host implements VaultBackend {
   private changed(change: Change) {
     switch (change) {
       case "locked":
-        this.setStatus({ state: "locked", detail: "Unlock Deadbolt to fill passwords" }, change)
+        this.setStatus({ state: "locked", detail: "Unlock Shuvbolt to fill passwords" }, change)
         break
       case "stopped":
         // Hello would start the daemon again; wait for `started`, which the
         // host sends once a daemon runs again. A host that couldn't watch the
         // daemon never says `stopped`; a `locked` error then asks hello (send).
-        this.setStatus({ state: "locked", detail: "Deadbolt isn't running" }, change)
+        this.setStatus({ state: "locked", detail: "Shuvbolt isn't running" }, change)
         break
       case "unlocked":
       case "started":
@@ -179,7 +179,7 @@ export class Host implements VaultBackend {
 }
 
 export function disconnectedMessage(status: Status): string {
-  if (status.state === "not-installed") return "Deadbolt's browser helper isn't installed."
+  if (status.state === "not-installed") return "Shuvbolt's browser helper isn't installed."
   if (status.state === "disconnected") return status.message
-  return "Deadbolt isn't connected."
+  return "Shuvbolt isn't connected."
 }

@@ -54,8 +54,8 @@ public final class AutoFillControllerModel {
     private let pollIntervalsMS: [UInt64]
 
     public private(set) var mode: Mode = .idle
-    public private(set) var screen: Screen = .connecting("Starting Deadbolt…")
-    public private(set) var contextLabel: String = "Deadbolt"
+    public private(set) var screen: Screen = .connecting("Starting Shuvbolt…")
+    public private(set) var contextLabel: String = "Shuvbolt"
 
     public private(set) var allLogins: [SiteLogin] = []
     public private(set) var filteredLogins: [SiteLogin] = []
@@ -177,7 +177,7 @@ public final class AutoFillControllerModel {
             fallbackUsername: fallbackUsername,
             service: service
         )
-        setScreen(.connecting("Connecting to Deadbolt…"))
+        setScreen(.connecting("Connecting to Shuvbolt…"))
         runTask { [weak self] in
             await self?.driveDirectPasswordFill(
                 login: loginRef,
@@ -203,7 +203,7 @@ public final class AutoFillControllerModel {
         unassociated = false
         pickerError = nil
         pendingPickerFill = nil
-        setScreen(.connecting("Connecting to Deadbolt…"))
+        setScreen(.connecting("Connecting to Shuvbolt…"))
         runTask { [weak self] in
             await self?.driveCredentialList(services: services)
         }
@@ -214,7 +214,7 @@ public final class AutoFillControllerModel {
         finished = false
         mode = .configuration
         contextLabel = "AutoFill Setup"
-        setScreen(.connecting("Connecting to Deadbolt…"))
+        setScreen(.connecting("Connecting to Shuvbolt…"))
         runTask { [weak self] in
             await self?.driveExtensionConfiguration()
         }
@@ -457,7 +457,7 @@ public final class AutoFillControllerModel {
             }
         } catch {
             touchIdInFlight = false
-            setScreen(.failed("Could not fill password from Deadbolt."))
+            setScreen(.failed("Could not fill password from Shuvbolt."))
         }
     }
 
@@ -549,7 +549,7 @@ public final class AutoFillControllerModel {
                 timeout: Self.statusTimeout
             )
             guard case let .autofillList(list) = reply else {
-                setScreen(.failed("Unexpected response from Deadbolt."))
+                setScreen(.failed("Unexpected response from Shuvbolt."))
                 return
             }
             allLogins = list.logins
@@ -571,7 +571,7 @@ public final class AutoFillControllerModel {
             }
             setScreen(.failed(err.userFacingUnlockMessage))
         } catch {
-            setScreen(.failed("Could not load logins from Deadbolt."))
+            setScreen(.failed("Could not load logins from Shuvbolt."))
         }
     }
 
@@ -648,7 +648,7 @@ public final class AutoFillControllerModel {
                 return nil
             }
             if case .daemonUnavailable = err {
-                setScreen(.connecting("Starting Deadbolt…"))
+                setScreen(.connecting("Starting Shuvbolt…"))
                 _ = await launcher.startInBackground()
                 for waitMS in pollIntervalsMS {
                     if Task.isCancelled || finished {
@@ -665,17 +665,17 @@ public final class AutoFillControllerModel {
                     }
                 }
                 setScreen(
-                    .failed("Can't reach Deadbolt. Open Deadbolt to start its background daemon.")
+                    .failed("Can't reach Shuvbolt. Open Shuvbolt to start its background daemon.")
                 )
                 return nil
             }
             setScreen(.failed(err.userFacingUnlockMessage))
             return nil
         } catch {
-            setScreen(.failed("Can't reach Deadbolt."))
+            setScreen(.failed("Can't reach Shuvbolt."))
             return nil
         }
-        setScreen(.failed("Unexpected status reply from Deadbolt."))
+        setScreen(.failed("Unexpected status reply from Shuvbolt."))
         return nil
     }
 

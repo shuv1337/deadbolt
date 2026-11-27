@@ -260,12 +260,12 @@ export function renderOffer(o: OfferHost, offer: Extract<MenuLoadReply, { kind: 
   say("")
   // It shows in the corner, away from where the user is: a screen reader hears it came.
   // An update names what it changes: "Update phone for Alex Mercer?".
-  o.announce(`${title.slice(0, -1)} for ${offer.what && offer.update ? offer.username : offer.site}? Deadbolt's offer is at the end of the page, and in the toolbar button.`)
+  o.announce(`${title.slice(0, -1)} for ${offer.what && offer.update ? offer.username : offer.site}? Shuvbolt's offer is at the end of the page, and in the toolbar button.`)
   const answer = async (choice: OfferChoice, e: MouseEvent) => {
     // Real presses only.
     if (!e.isTrusted || o.isBusy() || offerState === "dot") return
     // Enter or Space count only once the user came into the surface themselves (see Entry): say where else to answer.
-    if (e.detail === 0 && !o.entry.entered) return say("Click to answer here, or answer in Deadbolt's toolbar button.")
+    if (e.detail === 0 && !o.entry.entered) return say("Click to answer here, or answer in Shuvbolt's toolbar button.")
     if (!o.isPressedScale() || !o.dwell.settled(o.getPressedAt())) {
       o.relax()
       shape("open")

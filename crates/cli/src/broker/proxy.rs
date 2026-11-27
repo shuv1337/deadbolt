@@ -64,7 +64,7 @@ impl Refusal {
     }
 
     fn response(&self) -> Response<Body> {
-        let text = format!("deadbolt broker: {}\n", self.why);
+        let text = format!("shuvbolt broker: {}\n", self.why);
         let mut response = Response::new(
             Full::new(Bytes::from(text))
                 .map_err(|never| match never {})
@@ -278,7 +278,7 @@ impl Broker {
                 redactor,
             });
         }
-        // reqwest takes the process's rustls provider; Deadbolt's is ring.
+        // reqwest takes the process's rustls provider; Shuvbolt's is ring.
         rustls::crypto::ring::default_provider()
             .install_default()
             .ok();
@@ -397,7 +397,7 @@ impl Broker {
     ) -> Result<Response<Body>, Refusal> {
         if !allowed {
             return Err(Refusal::forbidden(
-                "this process isn't part of the deadbolt run the broker serves",
+                "this process isn't part of the shuvbolt run the broker serves",
             ));
         }
         let (route, rest) = self.route(&request)?;

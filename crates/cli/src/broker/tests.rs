@@ -532,7 +532,7 @@ async fn a_process_outside_the_run_is_refused() {
             .text()
             .await
             .unwrap()
-            .contains("isn't part of the deadbolt run")
+            .contains("isn't part of the shuvbolt run")
     );
     assert!(up.seen().is_empty());
     outsider.kill().unwrap();

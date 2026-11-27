@@ -5,11 +5,11 @@ const REF = `${"a".repeat(64)}:${"b".repeat(32)}`
 
 describe("parseHostMessage", () => {
   test("hello", () => {
-    const m = parseHostMessage({ id: 1, type: "hello", protocol: 1, version: "0.4.0", status: "locked", detail: "Unlock Deadbolt", capabilities: ["list", "fill", "check", "save"] })
+    const m = parseHostMessage({ id: 1, type: "hello", protocol: 1, version: "0.4.0", status: "locked", detail: "Unlock Shuvbolt", capabilities: ["list", "fill", "check", "save"] })
     expect(m).toEqual({
       kind: "reply",
       id: 1,
-      reply: { type: "hello", protocol: 1, version: "0.4.0", status: "locked", detail: "Unlock Deadbolt", capabilities: ["list", "fill", "check", "save"] },
+      reply: { type: "hello", protocol: 1, version: "0.4.0", status: "locked", detail: "Unlock Shuvbolt", capabilities: ["list", "fill", "check", "save"] },
     })
   })
 

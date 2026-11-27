@@ -21,7 +21,7 @@ use super::host::{
 use crate::paths::Paths;
 use crate::protocol::{Command, Reply};
 
-/// Ceremonies a user starts from Deadbolt's own prompt: a burst, then one a
+/// Ceremonies a user starts from Shuvbolt's own prompt: a burst, then one a
 /// second.
 pub const CEREMONIES: (u32, Duration) = (10, Duration::from_secs(1));
 /// Ceremonies waiting at once; each holds a Touch ID prompt or is about to.

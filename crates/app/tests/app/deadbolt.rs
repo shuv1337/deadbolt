@@ -1,16 +1,16 @@
-//! The binaries the tests run: the app itself, `deadbolt-ui`, headless, and
-//! `deadbolt` for a real daemon (`support`).
+//! The binaries the tests run: the app itself, `shuvbolt-ui`, headless, and
+//! `shuvbolt` for a real daemon (`support`).
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::OnceLock;
 
-/// `deadbolt-ui`: the app in its own process, taking Rune's flags.
+/// `shuvbolt-ui`: the app in its own process, taking Rune's flags.
 pub fn ui() -> Command {
-    Command::new(env!("CARGO_BIN_EXE_deadbolt-ui"))
+    Command::new(env!("CARGO_BIN_EXE_shuvbolt-ui"))
 }
 
-/// `DEADBOLT_BIN`, else the `deadbolt` cargo already built next to this test
+/// `DEADBOLT_BIN`, else the `shuvbolt` cargo already built next to this test
 /// (`cargo test --workspace` builds it for the CLI's own tests), else one
 /// built here into the test's own target dir, which doesn't wait on the outer
 /// build's lock but compiles the CLI from scratch.
@@ -25,7 +25,7 @@ fn find_deadbolt() -> PathBuf {
     }
     let sibling = std::env::current_exe()
         .ok()
-        .and_then(|exe| Some(exe.parent()?.parent()?.join("deadbolt")));
+        .and_then(|exe| Some(exe.parent()?.parent()?.join("shuvbolt")));
     if let Some(bin) = sibling.filter(|bin| bin.is_file()) {
         return bin;
     }
@@ -37,6 +37,8 @@ fn find_deadbolt() -> PathBuf {
             "--quiet",
             "-p",
             "deadbolt-cli",
+            "--bin",
+            "shuvbolt",
             "--message-format=json",
         ])
         .arg("--manifest-path")
@@ -50,10 +52,10 @@ fn find_deadbolt() -> PathBuf {
     String::from_utf8(out.stdout)
         .unwrap()
         .lines()
-        .filter(|l| l.contains("\"executable\"") && l.contains("\"name\":\"deadbolt\""))
+        .filter(|l| l.contains("\"executable\"") && l.contains("\"name\":\"shuvbolt\""))
         .find_map(|l| {
             let at = l.find("\"executable\":\"")? + "\"executable\":\"".len();
             Some(PathBuf::from(&l[at..at + l[at..].find('"')?]))
         })
-        .expect("cargo reported no deadbolt executable")
+        .expect("cargo reported no shuvbolt executable")
 }

@@ -105,7 +105,7 @@ impl App {
     /// reveal. The quick panel saves nothing: it hides on the dialog.
     pub fn save_file(&mut self, field: &str, tx: &mut Tx) {
         if self.panel.is_some() {
-            self.notice = Some("Save files from Deadbolt's main window".into());
+            self.notice = Some("Save files from Shuvbolt's main window".into());
             return;
         }
         let Some(item) = &self.detail else { return };

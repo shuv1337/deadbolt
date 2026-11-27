@@ -76,7 +76,7 @@ fn every_state_renders_in_both_appearances() {
     let states: &[(&str, &[&str])] = &[
         (
             "welcome",
-            &["Deadbolt", "Create a vault", "Join from another device"],
+            &["Shuvbolt", "Create a vault", "Join from another device"],
         ),
         ("welcome-set-up", &["holds no vault yet"]),
         (
@@ -110,7 +110,7 @@ fn every_state_renders_in_both_appearances() {
             &[
                 "Approve from your other device",
                 "violin garden tiger lamp zoo",
-                "deadbolt approve violin-garden-tiger-lamp-zoo",
+                "shuvbolt approve violin-garden-tiger-lamp-zoo",
                 "Copy command",
                 "On a device with your vault, run:",
             ],
@@ -135,9 +135,9 @@ fn every_state_renders_in_both_appearances() {
         ),
         (
             "import-error",
-            &["Passwords.json isn't an export Deadbolt can read"],
+            &["Passwords.json isn't an export Shuvbolt can read"],
         ),
-        ("locked", &["Deadbolt", "Locked"]),
+        ("locked", &["Shuvbolt", "Locked"]),
     ];
     for dark in [true, false] {
         for (scene, texts) in states {
@@ -257,7 +257,7 @@ fn a_created_vault_holds_its_recovery_words_until_they_are_saved() {
     assert_eq!(recovery.id, "b3f9c21a");
     assert_eq!(recovery.words(), WORDS.split(' ').collect::<Vec<_>>());
     assert!(shows(&rt, "Save your recovery kit"));
-    assert!(shows(&rt, "Deadbolt won’t show them again"));
+    assert!(shows(&rt, "Shuvbolt won’t show them again"));
     for n in 1..=24 {
         let word = find(&rt, &format!("word-{n}")).unwrap_or_else(|| panic!("word {n} shows"));
         assert!(word.opacity > 0.99, "word {n} is visible");
@@ -610,7 +610,7 @@ fn code_copied() -> (Runtime<App>, MemoryClipboard) {
     rt.frame(FRAME);
     assert_eq!(
         board(&clipboard).as_deref(),
-        Some("deadbolt approve violin-garden-tiger-lamp-zoo"),
+        Some("shuvbolt approve violin-garden-tiger-lamp-zoo"),
         "the whole command is on the clipboard"
     );
     (rt, clipboard)
@@ -631,7 +631,7 @@ fn copied_command_survives_a_stale_clock() {
     settle(&mut rt, 0.1);
     rt.update(|s, tx| {
         s.clock = 0.0;
-        s.copy_command("deadbolt daemon", tx);
+        s.copy_command("shuvbolt daemon", tx);
     });
     rt.frame(FRAME);
     assert!(

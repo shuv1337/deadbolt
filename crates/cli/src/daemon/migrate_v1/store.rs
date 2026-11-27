@@ -73,7 +73,7 @@ pub(super) fn read(path: &Path, copy: &Path, passphrase: &[u8]) -> Result<V1Stor
         let file = File::open(path).with_context(|| format!("opening {}", path.display()))?;
         file.try_lock_shared().map_err(|_| {
             anyhow!(
-                "{} is open in another Deadbolt: quit it and try again",
+                "{} is open in another Shuvbolt: quit it and try again",
                 path.display()
             )
         })?;

@@ -197,7 +197,7 @@ describe("frames", () => {
     expect(h.requests).toEqual([])
   })
 
-  test("a same-origin frame is Deadbolt's", async () => {
+  test("a same-origin frame is Shuvbolt's", async () => {
     const reply = call("create", pageSender({ frameId: 3, url: "https://www.example.com/frame", documentId: "frame-doc" }), 1, create())
     passkeys.choose(1, (await prompted()).id, { action: "save" })
     expect(await reply).toMatchObject({ credential: { credentialId: "bmV3" } })
@@ -294,7 +294,7 @@ describe("registration", () => {
     expect(kinds()).toEqual(["passkey-list"])
   })
 
-  test("an algorithm list Deadbolt can't read whole is the browser's", async () => {
+  test("an algorithm list Shuvbolt can't read whole is the browser's", async () => {
     expect(await call("create", pageSender(), 1, create({ algorithms: [-7, null] }))).toEqual({ fallback: true })
     expect(await call("create", pageSender(), 2, create({ algorithms: undefined }))).toEqual({ fallback: true })
     expect(h.requests).toEqual([])
@@ -333,7 +333,7 @@ describe("sign-in", () => {
     expect(await call("get", pageSender(), 1, get({ allow: ["b3RoZXI"] }))).toEqual({ fallback: true })
   })
 
-  test("an allow list with anything Deadbolt can't read is the browser's, never allow-all", async () => {
+  test("an allow list with anything Shuvbolt can't read is the browser's, never allow-all", async () => {
     for (const allow of [[null], ["Y3JlZA", null], Array.from({ length: 65 }, () => "Y3JlZA")]) expect(await call("get", pageSender(), 1, get({ allow }))).toEqual({ fallback: true })
     expect(h.requests).toEqual([])
     expect(passkeys.prompt(1)).toBeUndefined()
@@ -369,7 +369,7 @@ describe("aborts", () => {
     expect(h.requests.at(-1)).toEqual({ type: "passkey-cancel", request: 42 })
   })
 
-  test("an abort while Deadbolt is still getting ready ends the call there", async () => {
+  test("an abort while Shuvbolt is still getting ready ends the call there", async () => {
     const connected = gate()
     h.gates.connect = connected.wait
     const reply = call("get", pageSender(), 9, get())

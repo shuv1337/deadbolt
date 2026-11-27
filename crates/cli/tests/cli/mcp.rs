@@ -1,4 +1,4 @@
-//! `deadbolt mcp` against a real daemon holding real values: every tool it
+//! `shuvbolt mcp` against a real daemon holding real values: every tool it
 //! lists, unlocked and locked, and not one value in anything it writes.
 
 use serde_json::{Value, json};
@@ -10,12 +10,12 @@ const NOTE: &str = "NOTE-SECRET-XYZ";
 const OTP_SECRET: &str = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
 const API_KEY: &str = "sk-live-API-KEY-NEVER-LEAK-4242";
 
-/// Runs `deadbolt mcp` with `requests` on stdin, one per line; returns its
+/// Runs `shuvbolt mcp` with `requests` on stdin, one per line; returns its
 /// raw stdout and stderr and the replies.
 fn mcp(device: &Device, requests: &[Value]) -> (String, String, Vec<Value>) {
     let input: String = requests.iter().map(|r| format!("{r}\n")).collect();
     let out = device.with_stdin(device.cmd(&["mcp"]), &input);
-    assert!(out.status.success(), "deadbolt mcp failed");
+    assert!(out.status.success(), "shuvbolt mcp failed");
     let stdout = String::from_utf8(out.stdout).unwrap();
     let stderr = String::from_utf8(out.stderr).unwrap();
     let replies = stdout
@@ -198,7 +198,7 @@ fn mcp_tools_show_metadata_and_never_a_value() {
     let openai = &result(&calls, &replies, "deadbolt_broker_hint", 0)["structuredContent"];
     assert_eq!(
         openai["command"],
-        "deadbolt run --broker --route 'openai=https://api.openai.com/v1,bearer=deadbolt://personal/OpenAI/credential,env=OPENAI_API_KEY,base-env=OPENAI_BASE_URL' -- python app.py",
+        "shuvbolt run --broker --route 'openai=https://api.openai.com/v1,bearer=deadbolt://personal/OpenAI/credential,env=OPENAI_API_KEY,base-env=OPENAI_BASE_URL' -- python app.py",
         "{openai}"
     );
     assert_eq!(openai["item"]["title"], "OpenAI");
@@ -239,7 +239,7 @@ fn mcp_tools_show_metadata_and_never_a_value() {
                     structured["command"]
                         .as_str()
                         .unwrap()
-                        .starts_with("deadbolt run --broker --route '")
+                        .starts_with("shuvbolt run --broker --route '")
                 );
                 assert!(
                     structured["warnings"][0]

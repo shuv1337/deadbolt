@@ -614,7 +614,7 @@ fn update_json_report_matches_expected_schema() {
     assert_eq!(apply_report.action, "updated");
     assert!(apply_report.available);
 
-    // 3. Managed notify on --check --json includes command and notes_url.
+    // 3. Managed notify preserves notes but never offers the upstream tap.
     let notify = Decision::Notify {
         reason: Reason::Update,
         version: "2.5.0".into(),
@@ -641,7 +641,7 @@ fn update_json_report_matches_expected_schema() {
             "method": "brew",
             "action": "notify",
             "reason": "update",
-            "command": "brew upgrade anomalyco/tap/deadbolt",
+            "command": "rebuild Shuvbolt from the fork source",
             "notes_url": "https://anoma.ly/deadbolt/releases/2.5.0",
         })
     );
@@ -654,7 +654,7 @@ fn update_json_report_matches_expected_schema() {
         false,
         false,
     );
-    assert_eq!(brew_apply.action, "updated");
+    assert_eq!(brew_apply.action, "notify");
 
     // 4. Manual manager stays notify even without --check.
     let nix_apply = build_report(

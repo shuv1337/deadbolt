@@ -242,7 +242,7 @@ pub enum DaemonCallError {
     TimedOut,
     /// The call's [`crate::CallHandle`] was cancelled.
     Cancelled,
-    /// The socket's peer isn't Deadbolt's daemon, so nothing was sent.
+    /// The socket's peer isn't Shuvbolt's daemon, so nothing was sent.
     PeerRejected {
         reason: String,
     },
@@ -534,7 +534,7 @@ pub fn autofill_socket_name() -> String {
     proto::AUTOFILL_SOCKET.to_owned()
 }
 
-/// This process's Deadbolt App Group (`<team>.anomaly.deadbolt`), when its
+/// This process's Shuvbolt App Group (`<team>.dev.shuv.shuvbolt`), when its
 /// own Apple-anchored signature is entitled to it; `None` for an ad-hoc
 /// build, whose container macOS would prompt for.
 #[uniffi::export]

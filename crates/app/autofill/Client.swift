@@ -1,5 +1,5 @@
 // `DeadboltAutoFill.appex`'s daemon client, the part that needs AppKit or
-// Foundation: where Deadbolt.app and its App Group container are, launching
+// Foundation: where Shuvbolt.app and its App Group container are, launching
 // the app, and an async face on `deadbolt-ffi`'s blocking `autofillCall`.
 // The socket, the protocol and the check of the daemon's code signature
 // are Rust's (`crates/ffi`).
@@ -29,7 +29,7 @@ public struct ContainingBundle: Equatable, Sendable {
         self.daemonBinaryURL = daemonBinaryURL
     }
 
-    /// Resolves `Deadbolt.app` and `Contents/Helpers/deadbolt` from the
+    /// Resolves `Shuvbolt.app` and `Contents/Helpers/shuvbolt` from the
     /// running `DeadboltAutoFill.appex` bundle path, resolving symlinks first
     /// so separate installations never cross.
     public static func locate(from extensionBundleURL: URL = Bundle.main.bundleURL) -> ContainingBundle? {
@@ -46,13 +46,13 @@ public struct ContainingBundle: Equatable, Sendable {
         else {
             return nil
         }
-        let daemon = contents.appendingPathComponent("Helpers/deadbolt").resolvingSymlinksInPath()
+        let daemon = contents.appendingPathComponent("Helpers/shuvbolt").resolvingSymlinksInPath()
         return ContainingBundle(appURL: app, daemonBinaryURL: daemon)
     }
 }
 
 public enum AppGroupContainer {
-    /// The AutoFill socket in Deadbolt's App Group container. `ownAppGroup`
+    /// The AutoFill socket in Shuvbolt's App Group container. `ownAppGroup`
     /// checks this process's signature and entitlements first, so an ad-hoc
     /// build never asks macOS for a container and never prompts.
     public static func socketURL() -> URL? {
@@ -104,7 +104,7 @@ public struct WorkspaceDaemonLauncher: DaemonLaunching {
 public struct UnixSocketDaemonClient: AutofillDaemonClient {
     public let socketPathProvider: @Sendable () -> String?
     /// The daemon binary the socket's peer must run, by code signature,
-    /// before anything is sent (`Contents/Helpers/deadbolt`). Without one,
+    /// before anything is sent (`Contents/Helpers/shuvbolt`). Without one,
     /// the passphrase never is.
     public let daemonBinary: String?
 
@@ -132,7 +132,7 @@ public struct UnixSocketDaemonClient: AutofillDaemonClient {
     ) async throws -> AutofillReply {
         guard let socketPath = socketPathProvider(), !socketPath.isEmpty else {
             throw DaemonCallError.daemonUnavailable(
-                reason: "Deadbolt's macOS AutoFill App Group container is unavailable on an unsigned build."
+                reason: "Shuvbolt's macOS AutoFill App Group container is unavailable on an unsigned build."
             )
         }
         let daemon = daemonBinary

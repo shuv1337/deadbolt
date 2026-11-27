@@ -51,7 +51,7 @@ export function recordControl(tab: () => number | undefined, announce: (text: st
     b.disabled = true
     const reply = await send<LearnReply | RecordedReply>({ ...(message as object), tabId })
     b.disabled = false
-    if (!reply?.ok) return fail(reply && "message" in reply && reply.message ? reply.message : "Deadbolt didn't answer. Try again.")
+    if (!reply?.ok) return fail(reply && "message" in reply && reply.message ? reply.message : "Shuvbolt didn't answer. Try again.")
     then?.(reply as Extract<RecordedReply, { ok: true }>)
     await refresh()
   }

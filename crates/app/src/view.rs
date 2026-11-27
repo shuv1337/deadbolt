@@ -131,7 +131,7 @@ fn muted(k: &Kit, key: &str, s: impl Into<String>) -> El {
 
 fn connecting(k: &Kit) -> El {
     col().key("connecting").center().child(
-        text("Starting Deadbolt…")
+        text("Starting Shuvbolt…")
             .font(k.ty.text_small)
             .color(k.c.text_faint),
     )
@@ -142,7 +142,7 @@ fn failed(k: &Kit, message: &str) -> El {
         "failed",
         k,
         k.glyph.lock,
-        "Can't reach Deadbolt",
+        "Can't reach Shuvbolt",
         col()
             .key("body")
             .w_full()

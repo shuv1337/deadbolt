@@ -1,8 +1,8 @@
-//! `deadbolt-ui`, Deadbolt's desktop app: a client of the daemon the
-//! headless `deadbolt` runs (docs/app.md). It takes Rune's flags (`--scene`,
-//! `--snap`, `--list-scenes`, `--theme`, `--panel`, …). Deadbolt.app's
-//! `Contents/MacOS/Deadbolt` is this program; `deadbolt app` and
-//! `deadbolt ui` find and start it.
+//! `shuvbolt-ui`, Shuvbolt's desktop app: a client of the daemon the
+//! headless `shuvbolt` runs (docs/app.md). It takes Rune's flags (`--scene`,
+//! `--snap`, `--list-scenes`, `--theme`, `--panel`, …). Shuvbolt.app's
+//! `Contents/MacOS/Shuvbolt` is this program; `shuvbolt app` and
+//! `shuvbolt ui` find and start it.
 
 /// Counts the heap in dev builds, so `procwatch`'s lines say how much of
 /// the footprint is Rust's own.
@@ -15,7 +15,7 @@ fn main() {
     // Traces to a local OpenTelemetry collector, only when asked for.
     let endpoint = std::env::var_os("OTEL_EXPORTER_OTLP_ENDPOINT");
     telemetry::start(
-        "deadbolt-ui",
+        "shuvbolt-ui",
         env!("CARGO_PKG_VERSION"),
         endpoint
             .as_deref()

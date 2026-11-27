@@ -50,14 +50,14 @@ impl Daemon {
             && let Some(file) = found.iter().find(|f| f.file)
         {
             let use_ = if purpose == Purpose::Run {
-                "`deadbolt run` puts values in the environment, which can't hold a file"
+                "`shuvbolt run` puts values in the environment, which can't hold a file"
             } else {
-                "`deadbolt read` (and `inject` to stdout) print text"
+                "`shuvbolt read` (and `inject` to stdout) print text"
             };
             return Err(fail(
                 ErrorCode::Failed,
                 format!(
-                    "{} is a file: {use_}. Write it out with `deadbolt inject -o FILE` from a template that is only {{{{ {} }}}}, or `deadbolt get -o FILE`",
+                    "{} is a file: {use_}. Write it out with `shuvbolt inject -o FILE` from a template that is only {{{{ {} }}}}, or `shuvbolt get -o FILE`",
                     named(file),
                     reference_of(file)
                 ),

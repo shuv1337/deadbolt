@@ -208,7 +208,7 @@ export class Passkeys {
   private frameOf(sender: chrome.runtime.MessageSender): FrameTarget | HookReply {
     const tabId = sender.tab?.id
     if (tabId === undefined || sender.tab?.incognito || sender.id !== chrome.runtime.id || !sender.documentId) return FALLBACK
-    if (sender.origin === "null") return fail("NotAllowedError", "Deadbolt offers no passkeys to sandboxed frames.")
+    if (sender.origin === "null") return fail("NotAllowedError", "Shuvbolt offers no passkeys to sandboxed frames.")
     const url = senderOrigin(sender)
     if (!url || !fillableOrigin(url)) return FALLBACK
     return { tabId, frameId: sender.frameId ?? 0, documentId: sender.documentId, origin: url.origin }

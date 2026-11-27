@@ -72,7 +72,7 @@ pub fn running(token: &[u32; 8]) -> Option<CodeSignature> {
     Some(found)
 }
 
-/// This process's own Deadbolt App Group (`<team>.anomaly.deadbolt`), by
+/// This process's own Shuvbolt App Group (`<team>.dev.shuv.shuvbolt`), by
 /// its running code: its signature valid and chaining to Apple for its
 /// team, and its entitlements naming the group (or `<team>.*`). `None` for
 /// an ad-hoc build, which has no team: asking macOS for a container the
@@ -92,7 +92,7 @@ pub fn own_app_group() -> Option<String> {
 }
 
 /// The signature on disk at `path`, its slice for this process's own
-/// architecture (the one Deadbolt's binaries run as). `None` for what
+/// architecture (the one Shuvbolt's binaries run as). `None` for what
 /// Security.framework can't read as code.
 pub fn file_signature(path: &Path) -> Option<CodeSignature> {
     let file = code::file_code(path)?;

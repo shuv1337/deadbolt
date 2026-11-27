@@ -157,7 +157,7 @@ extension DaemonCallError: Error {
         case let .peerRejected(reason), let .daemonUnavailable(reason), let .invalidResponse(reason):
             return reason
         case .timedOut:
-            return "Deadbolt took too long to respond."
+            return "Shuvbolt took too long to respond."
         case .cancelled:
             return "Cancelled."
         }

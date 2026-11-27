@@ -184,7 +184,7 @@ fn send(
         .checked_add(timeout)
         .ok_or(DaemonCallError::TimedOut)?;
     let stream =
-        UnixStream::connect(path).map_err(|_| unavailable("Deadbolt's daemon is not running"))?;
+        UnixStream::connect(path).map_err(|_| unavailable("Shuvbolt's daemon is not running"))?;
     // A write to a daemon that hung up fails with EPIPE rather than killing
     // the extension with SIGPIPE, which Swift doesn't ignore.
     #[cfg(target_vendor = "apple")]
@@ -203,7 +203,7 @@ fn send(
         }
         None if command.carries_client_secret() => {
             return Err(DaemonCallError::PeerRejected {
-                reason: "refusing to send a secret without verifying Deadbolt's daemon signature"
+                reason: "refusing to send a secret without verifying Shuvbolt's daemon signature"
                     .into(),
             });
         }
@@ -269,7 +269,7 @@ fn write_all(
     deadline: Instant,
     call: &Attached<'_>,
 ) -> Result<(), DaemonCallError> {
-    const WHAT: &str = "writing to Deadbolt's daemon failed";
+    const WHAT: &str = "writing to Shuvbolt's daemon failed";
     while !bytes.is_empty() {
         if call.cancelled() {
             return Err(DaemonCallError::Cancelled);
@@ -295,7 +295,7 @@ fn read_line(
     deadline: Instant,
     call: &Attached<'_>,
 ) -> Result<Zeroizing<Vec<u8>>, DaemonCallError> {
-    const WHAT: &str = "reading from Deadbolt's daemon failed";
+    const WHAT: &str = "reading from Shuvbolt's daemon failed";
     let too_long = || DaemonCallError::InvalidResponse {
         reason: "daemon reply exceeded max line size".into(),
     };
@@ -319,7 +319,7 @@ fn read_line(
                 return Err(DaemonCallError::Cancelled);
             }
             if line.is_empty() {
-                return Err(unavailable("Deadbolt's daemon closed the connection"));
+                return Err(unavailable("Shuvbolt's daemon closed the connection"));
             }
             return Ok(line);
         }
@@ -342,16 +342,16 @@ fn decode(line: &[u8]) -> Result<AutofillReply, DaemonCallError> {
     let invalid = |reason: String| DaemonCallError::InvalidResponse { reason };
     match serde_json::from_slice::<Message>(line) {
         Ok(Message::Ok { reply }) => autofill::reply(reply)
-            .ok_or_else(|| invalid("unexpected reply from Deadbolt's daemon".into())),
+            .ok_or_else(|| invalid("unexpected reply from Shuvbolt's daemon".into())),
         Ok(Message::Error { code, message }) => Err(DaemonCallError::DaemonError {
             code: code.into(),
             message,
         }),
         Ok(Message::Event { .. } | Message::Change { .. }) => {
-            Err(invalid("unexpected message from Deadbolt's daemon".into()))
+            Err(invalid("unexpected message from Shuvbolt's daemon".into()))
         }
         Err(e) => Err(invalid(format!(
-            "malformed reply from Deadbolt's daemon (line {}, column {})",
+            "malformed reply from Shuvbolt's daemon (line {}, column {})",
             e.line(),
             e.column()
         ))),

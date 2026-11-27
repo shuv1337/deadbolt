@@ -10,7 +10,7 @@ rust-version.workspace = true
 workspace = true
 
 [[bin]]
-name = "deadbolt"
+name = "shuvbolt"
 path = "src/main.rs"
 
 [features]
@@ -18,8 +18,10 @@ default = ["v1-migrate"]
 # DELETABLE(v1-migrate): remove once existing v1 users have migrated to v2,
 # with src/daemon/migrate_v1.rs, src/daemon/migrate_v1/, src/daemon/upgrade.rs,
 # src/migrate.rs and tests/cli/migrate_v1.rs.
-# `deadbolt migrate`: reads a v1 store.redb and moves its vaults to v2.
+# `shuvbolt migrate`: reads a v1 store.redb and moves its vaults to v2.
 v1-migrate = ["dep:redb", "dep:chacha20poly1305"]
+# Exercises the retained upstream updater against local fixtures only.
+upstream-update-fixtures = []
 
 [dependencies]
 anyhow = "1.0.104"

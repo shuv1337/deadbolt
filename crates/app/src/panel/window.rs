@@ -2,7 +2,7 @@
 //! Quick Panel", `--panel`, the main window's hint off macOS) and how its
 //! window opens, closes and is placed.
 //! The window is Rune's launcher panel: it takes keys without activating
-//! Deadbolt, opens under the pointer, and clicking away dismisses it. The
+//! Shuvbolt, opens under the pointer, and clicking away dismisses it. The
 //! shortcut itself is `crate::shortcut`.
 
 use rune::{
@@ -29,7 +29,7 @@ pub const PLACE: (DisplayTarget, OverlayPlacement) = (
 /// `deadbolt-ui --panel` starts with the panel instead of the main window.
 pub const FLAG: &str = "--panel";
 
-/// The default shortcut pressed inside Deadbolt: ⇧⌘Space (Ctrl+Shift+Space
+/// The default shortcut pressed inside Shuvbolt: ⇧⌘Space (Ctrl+Shift+Space
 /// off macOS). Only while it isn't registered globally (`App::shortcut_fallback`).
 pub fn is_shortcut(ev: &KeyEvent) -> bool {
     ev.key == Key::Text(" ".into()) && ev.mods.cmd && ev.mods.shift && !ev.mods.alt

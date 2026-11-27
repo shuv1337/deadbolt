@@ -1,8 +1,8 @@
 //! macOS AutoFill Credential Provider backend (`docs/autofill.md`).
 //!
-//! Serves `DeadboltAutoFill.appex` (`anomaly.deadbolt.autofill`) over a
+//! Serves `DeadboltAutoFill.appex` (`dev.shuv.shuvbolt.autofill`) over a
 //! dedicated Unix socket (`s`, mode 0600) in the shared Team-ID App Group
-//! container (`~/Library/Group Containers/<TEAM_ID>.anomaly.deadbolt`). The daemon
+//! container (`~/Library/Group Containers/<TEAM_ID>.dev.shuv.shuvbolt`). The daemon
 //! remains the only process that opens the sealed store or holds vault keys.
 
 mod identities;
@@ -132,13 +132,13 @@ pub fn check_access(socket: SocketKind, caller: &CallerInfo, command: &Command) 
     if socket == SocketKind::AutoFill && caller.class != CallerClass::AutoFill {
         return Err(fail(
             ErrorCode::Forbidden,
-            "only Deadbolt's macOS AutoFill extension may use this socket",
+            "only Shuvbolt's macOS AutoFill extension may use this socket",
         ));
     }
     if is_autofill_command(command) && caller.class != CallerClass::AutoFill {
         return Err(fail(
             ErrorCode::Forbidden,
-            "only Deadbolt's macOS AutoFill extension may run macOS AutoFill commands",
+            "only Shuvbolt's macOS AutoFill extension may run macOS AutoFill commands",
         ));
     }
     if caller.class == CallerClass::AutoFill {
@@ -183,7 +183,7 @@ impl Daemon {
         {
             return Err(fail(
                 ErrorCode::Locked,
-                "open Deadbolt and unlock it once to upgrade to v2",
+                "open Shuvbolt and unlock it once to upgrade to v2",
             ));
         }
         Ok(())
@@ -300,12 +300,12 @@ impl Daemon {
         if !super::set_up(&self.paths.data) {
             return Err(fail(
                 ErrorCode::NotInitialized,
-                "this device is not set up; open Deadbolt to set it up",
+                "this device is not set up; open Shuvbolt to set it up",
             ));
         }
         let st = self.status();
         if !interactive || !st.touch_id_ready {
-            return Err(fail(ErrorCode::Locked, "locked: unlock Deadbolt to fill"));
+            return Err(fail(ErrorCode::Locked, "locked: unlock Shuvbolt to fill"));
         }
         let outcome = tokio::select! {
             res = self.unlock_biometric_with_reason(None, reason) => res,
@@ -407,8 +407,8 @@ impl Daemon {
                 };
                 self.take_autofill_fill_rate()?;
                 let unlock_reason = match &resolved {
-                    Some((site, _)) => format!("unlock Deadbolt and fill on {}", site.domain),
-                    None => "unlock Deadbolt and fill in an app".to_string(),
+                    Some((site, _)) => format!("unlock Shuvbolt and fill on {}", site.domain),
+                    None => "unlock Shuvbolt and fill in an app".to_string(),
                 };
                 let unlocked_by_touch_id = self
                     .ensure_unlocked_for_ceremony(conv, interactive, &unlock_reason)
@@ -507,7 +507,7 @@ impl Daemon {
                     });
                 }
 
-                let unlock_reason = format!("unlock Deadbolt and sign in to {rp} with a passkey");
+                let unlock_reason = format!("unlock Shuvbolt and sign in to {rp} with a passkey");
                 let unlocked_by_touch_id = self
                     .ensure_unlocked_for_ceremony(conv, true, &unlock_reason)
                     .await?;
@@ -618,7 +618,7 @@ impl Daemon {
                     });
                 }
 
-                let unlock_reason = format!("unlock Deadbolt and save a passkey for {}", new.rp_id);
+                let unlock_reason = format!("unlock Shuvbolt and save a passkey for {}", new.rp_id);
                 let unlocked_by_touch_id = self
                     .ensure_unlocked_for_ceremony(conv, true, &unlock_reason)
                     .await?;

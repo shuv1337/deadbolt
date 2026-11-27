@@ -151,7 +151,7 @@ fn preview(s: &App, k: &Kit, p: &Preview, importing: bool) -> El {
         );
         if report.duplicates > 0 {
             counts = counts.child(
-                text(format!("{} already in Deadbolt", report.duplicates))
+                text(format!("{} already in Shuvbolt", report.duplicates))
                     .key("duplicates")
                     .font(tnum(k.ty.text_small))
                     .color(k.c.text_muted),

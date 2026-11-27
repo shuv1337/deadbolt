@@ -43,7 +43,7 @@ private enum Palette {
     static let errorText = NSColor.systemRed
 }
 
-/// Draws Deadbolt's signature red keyhole badge (`crates/app/scripts/icon.swift`).
+/// Draws Shuvbolt's signature red keyhole badge (`crates/app/scripts/icon.swift`).
 private final class KeyholeBadgeView: NSView {
     override var intrinsicContentSize: NSSize {
         NSSize(width: 28, height: 28)
@@ -229,7 +229,7 @@ public final class AutoFillRootView: NSView, NSSearchFieldDelegate, NSTextFieldD
         let badge = KeyholeBadgeView()
         badge.translatesAutoresizingMaskIntoConstraints = false
 
-        let brandField = NSTextField(labelWithString: "Deadbolt")
+        let brandField = NSTextField(labelWithString: "Shuvbolt")
         brandField.font = .systemFont(ofSize: 13.5, weight: .semibold)
         brandField.textColor = .labelColor
 
@@ -296,14 +296,14 @@ public final class AutoFillRootView: NSView, NSSearchFieldDelegate, NSTextFieldD
             )
         case .notInitialized:
             buildStatusScreen(
-                title: "Deadbolt isn't set up yet",
-                detail: "Open Deadbolt to create a vault or join an existing device.",
-                primaryTitle: "Open Deadbolt",
+                title: "Shuvbolt isn't set up yet",
+                detail: "Open Shuvbolt to create a vault or join an existing device.",
+                primaryTitle: "Open Shuvbolt",
                 primaryAction: #selector(handleOpenDeadbolt)
             )
         case let .failed(message):
             buildStatusScreen(
-                title: "Can't reach Deadbolt",
+                title: "Can't reach Shuvbolt",
                 detail: message,
                 primaryTitle: "Try Again",
                 primaryAction: #selector(handleRetry)
@@ -397,9 +397,9 @@ public final class AutoFillRootView: NSView, NSSearchFieldDelegate, NSTextFieldD
     ) {
         let titleText: String = {
             if touchIdInFlight {
-                return "Touch ID to unlock Deadbolt"
+                return "Touch ID to unlock Shuvbolt"
             }
-            return "Deadbolt is locked"
+            return "Shuvbolt is locked"
         }()
         let titleLabel = NSTextField(labelWithString: titleText)
         titleLabel.font = .systemFont(ofSize: 14, weight: .semibold)

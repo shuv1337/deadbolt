@@ -1,6 +1,6 @@
-//! `deadbolt desktop install`: a Linux desktop entry, so app launchers list
-//! Deadbolt and open it with `deadbolt app`. The app's first opening writes
-//! it too (`ensure`). On macOS, Deadbolt.app is that.
+//! `shuvbolt desktop install`: a Linux desktop entry, so app launchers list
+//! Shuvbolt and open it with `shuvbolt app`. The app's first opening writes
+//! it too (`ensure`). On macOS, Shuvbolt.app is that.
 
 use std::path::{Path, PathBuf};
 
@@ -10,12 +10,12 @@ use crate::browser::write_atomic;
 
 /// The entry's and icon's name, and the app's Wayland app id and X11
 /// `WM_CLASS` (`rune::set_app_id` in `crates/app`), which desktops match.
-pub const ID: &str = "anomaly.deadbolt";
+pub const ID: &str = "dev.shuv.shuvbolt";
 /// The red keyhole of `crates/app/scripts/icon.swift`.
 const ICON: &str = include_str!("../assets/deadbolt.svg");
 
-const MACOS: &str = "On macOS, Deadbolt.app is the launcher: open it from Applications, \
-Spotlight or the Dock, or run `deadbolt app`.";
+const MACOS: &str = "On macOS, Shuvbolt.app is the launcher: open it from Applications, \
+Spotlight or the Dock, or run `shuvbolt app`.";
 
 struct Files {
     entry: PathBuf,
@@ -80,9 +80,9 @@ fn entry(program: &Path) -> Result<String> {
     Ok(format!(
         "[Desktop Entry]\n\
          Type=Application\n\
-         Name=Deadbolt\n\
+         Name=Shuvbolt\n\
          GenericName=Password Manager\n\
-         Comment=A decentralized password manager\n\
+         Comment=A decentralized password manager (Shuvbolt)\n\
          Exec={} app\n\
          Icon={ID}\n\
          Terminal=false\n\
@@ -116,8 +116,8 @@ fn exec_arg(arg: &str) -> String {
 
 /// The command a launcher entry runs for `exe` (symlinks resolved): the
 /// package manager's own link to it when npm or bun installed it
-/// (`<prefix>/bin/deadbolt`, bun's `~/.bun/bin/deadbolt`, or
-/// `node_modules/.bin/deadbolt`), which stays put when an update or a
+/// (`<prefix>/bin/shuvbolt`, bun's `~/.bun/bin/shuvbolt`, or
+/// `node_modules/.bin/shuvbolt`), which stays put when an update or a
 /// fallback moves the platform package; else `exe`.
 pub fn launcher_program(exe: &Path) -> PathBuf {
     // npm nests the platform package under the wrapper's own node_modules,
@@ -130,14 +130,14 @@ pub fn launcher_program(exe: &Path) -> PathBuf {
     let global = modules.iter().filter_map(|m| {
         let lib = m.parent()?;
         if lib.file_name()? == "lib" {
-            return lib.parent().map(|p| p.join("bin/deadbolt"));
+            return lib.parent().map(|p| p.join("bin/shuvbolt"));
         }
         // bun: `<BUN_INSTALL>/install/global/node_modules`, linked from
         // `<BUN_INSTALL>/bin`.
         m.ends_with("install/global/node_modules")
-            .then(|| m.ancestors().nth(3).map(|root| root.join("bin/deadbolt")))?
+            .then(|| m.ancestors().nth(3).map(|root| root.join("bin/shuvbolt")))?
     });
-    let local = modules.iter().map(|m| m.join(".bin/deadbolt"));
+    let local = modules.iter().map(|m| m.join(".bin/shuvbolt"));
     global
         .chain(local)
         .find(|link| link.canonicalize().is_ok_and(|real| real == exe))
@@ -156,7 +156,7 @@ pub fn install() -> Result<()> {
     println!("Wrote {}", files.entry.display());
     println!("Wrote {}", files.icon.display());
     println!(
-        "Deadbolt is in your app launcher; it opens with `{} app`.\n\
+        "Shuvbolt is in your app launcher; it opens with `{} app`.\n\
          Run this again if you move that binary.",
         program.display()
     );
@@ -174,10 +174,10 @@ pub fn ensure(program: &Path) {
     }
     match files.write(program) {
         Ok(()) => eprintln!(
-            "Added Deadbolt to your app launcher ({}); `deadbolt desktop uninstall` removes it.",
+            "Added Shuvbolt to your app launcher ({}); `shuvbolt desktop uninstall` removes it.",
             files.entry.display()
         ),
-        Err(error) => tracing::warn!("adding Deadbolt to the app launcher: {error:#}"),
+        Err(error) => tracing::warn!("adding Shuvbolt to the app launcher: {error:#}"),
     }
 }
 
@@ -193,7 +193,7 @@ pub fn uninstall() -> Result<()> {
         println!("Removed {}", path.display());
     }
     if removed.is_empty() {
-        println!("Deadbolt had no desktop entry.");
+        println!("Shuvbolt had no desktop entry.");
     }
     Ok(())
 }
@@ -205,33 +205,33 @@ mod tests {
     #[test]
     fn the_entry_opens_this_binarys_app_from_the_launcher() {
         assert_eq!(
-            entry(Path::new("/home/alex/.local/bin/deadbolt")).unwrap(),
+            entry(Path::new("/home/alex/.local/bin/shuvbolt")).unwrap(),
             "[Desktop Entry]\n\
              Type=Application\n\
-             Name=Deadbolt\n\
+             Name=Shuvbolt\n\
              GenericName=Password Manager\n\
-             Comment=A decentralized password manager\n\
-             Exec=/home/alex/.local/bin/deadbolt app\n\
-             Icon=anomaly.deadbolt\n\
+             Comment=A decentralized password manager (Shuvbolt)\n\
+             Exec=/home/alex/.local/bin/shuvbolt app\n\
+             Icon=dev.shuv.shuvbolt\n\
              Terminal=false\n\
              Categories=Utility;Security;\n\
              Keywords=password;passwords;passkey;vault;\n\
              StartupNotify=true\n\
-             StartupWMClass=anomaly.deadbolt\n"
+             StartupWMClass=dev.shuv.shuvbolt\n"
         );
         assert!(entry(Path::new("/bin/dead\nbolt")).is_err());
     }
 
     #[test]
     fn exec_paths_are_quoted_and_escaped() {
-        assert_eq!(exec_arg("/usr/bin/deadbolt"), "/usr/bin/deadbolt");
+        assert_eq!(exec_arg("/usr/bin/shuvbolt"), "/usr/bin/shuvbolt");
         assert_eq!(
-            exec_arg("/opt/my apps/deadbolt"),
-            "\"/opt/my apps/deadbolt\""
+            exec_arg("/opt/my apps/shuvbolt"),
+            "\"/opt/my apps/shuvbolt\""
         );
-        assert_eq!(exec_arg("/opt/100%/deadbolt"), "/opt/100%%/deadbolt");
+        assert_eq!(exec_arg("/opt/100%/shuvbolt"), "/opt/100%%/shuvbolt");
         // `$` is escaped inside the quotes, then the backslash as a string value.
-        assert_eq!(exec_arg("/opt/$x/deadbolt"), "\"/opt/\\\\$x/deadbolt\"");
+        assert_eq!(exec_arg("/opt/$x/shuvbolt"), "\"/opt/\\\\$x/shuvbolt\"");
     }
 
     #[test]
@@ -243,11 +243,11 @@ mod tests {
         .unwrap();
         assert_eq!(
             files.entry,
-            Path::new("/home/alex/.local/share/applications/anomaly.deadbolt.desktop")
+            Path::new("/home/alex/.local/share/applications/dev.shuv.shuvbolt.desktop")
         );
         assert_eq!(
             files.icon,
-            Path::new("/home/alex/.local/share/icons/hicolor/scalable/apps/anomaly.deadbolt.svg")
+            Path::new("/home/alex/.local/share/icons/hicolor/scalable/apps/dev.shuv.shuvbolt.svg")
         );
         let xdg = Files::from_vars(|name| match name {
             "HOME" => Some("/home/alex".into()),
@@ -257,7 +257,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             xdg.entry,
-            Path::new("/data/applications/anomaly.deadbolt.desktop")
+            Path::new("/data/applications/dev.shuv.shuvbolt.desktop")
         );
     }
 
@@ -267,7 +267,7 @@ mod tests {
         let data = dir.path().to_str().unwrap().to_owned();
         let files =
             Files::from_vars(|name| (name == "XDG_DATA_HOME").then(|| data.clone())).unwrap();
-        let program = Path::new("/usr/bin/deadbolt");
+        let program = Path::new("/usr/bin/shuvbolt");
         files.write(program).unwrap();
         files.write(program).unwrap();
         assert_eq!(
@@ -289,7 +289,7 @@ mod tests {
         let files =
             Files::from_vars(|name| (name == "XDG_DATA_HOME").then(|| data.clone())).unwrap();
         assert!(files.missing());
-        files.write(Path::new("/opt/other/deadbolt")).unwrap();
+        files.write(Path::new("/opt/other/shuvbolt")).unwrap();
         assert!(!files.missing());
     }
 
@@ -298,23 +298,23 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path().canonicalize().unwrap();
         let exe = root.join(
-            "lib/node_modules/@deadbolt/cli/node_modules/@deadbolt/cli-linux-x64/bin/deadbolt",
+            "lib/node_modules/@deadbolt/cli/node_modules/@deadbolt/cli-linux-x64/bin/shuvbolt",
         );
         std::fs::create_dir_all(exe.parent().unwrap()).unwrap();
         std::fs::write(&exe, "").unwrap();
         // Before npm links it, and outside npm: the binary itself.
         assert_eq!(launcher_program(&exe), exe);
-        let elsewhere = root.join("opt/deadbolt");
+        let elsewhere = root.join("opt/shuvbolt");
         assert_eq!(launcher_program(&elsewhere), elsewhere);
-        let wrapper = root.join("lib/node_modules/@deadbolt/cli/bin/deadbolt");
+        let wrapper = root.join("lib/node_modules/@deadbolt/cli/bin/shuvbolt");
         std::fs::create_dir_all(wrapper.parent().unwrap()).unwrap();
         std::os::unix::fs::symlink(&exe, &wrapper).unwrap();
-        let bin = root.join("bin/deadbolt");
+        let bin = root.join("bin/shuvbolt");
         std::fs::create_dir_all(bin.parent().unwrap()).unwrap();
         std::os::unix::fs::symlink(&wrapper, &bin).unwrap();
         assert_eq!(launcher_program(&exe), bin);
-        // A link to another deadbolt isn't this one's.
-        let other = root.join("lib/node_modules/@deadbolt/cli-linux-x64-musl/bin/deadbolt");
+        // A link to another shuvbolt isn't this one's.
+        let other = root.join("lib/node_modules/@deadbolt/cli-linux-x64-musl/bin/shuvbolt");
         std::fs::create_dir_all(other.parent().unwrap()).unwrap();
         std::fs::write(&other, "").unwrap();
         assert_eq!(launcher_program(&other), other);
@@ -324,14 +324,14 @@ mod tests {
     fn a_bun_install_launches_through_buns_link() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path().canonicalize().unwrap();
-        let exe = root.join("install/global/node_modules/@deadbolt/cli-linux-x64/bin/deadbolt");
+        let exe = root.join("install/global/node_modules/@deadbolt/cli-linux-x64/bin/shuvbolt");
         std::fs::create_dir_all(exe.parent().unwrap()).unwrap();
         std::fs::write(&exe, "").unwrap();
         assert_eq!(launcher_program(&exe), exe);
-        let wrapper = root.join("install/global/node_modules/@deadbolt/cli/bin/deadbolt");
+        let wrapper = root.join("install/global/node_modules/@deadbolt/cli/bin/shuvbolt");
         std::fs::create_dir_all(wrapper.parent().unwrap()).unwrap();
         std::os::unix::fs::symlink(&exe, &wrapper).unwrap();
-        let bin = root.join("bin/deadbolt");
+        let bin = root.join("bin/shuvbolt");
         std::fs::create_dir_all(bin.parent().unwrap()).unwrap();
         std::os::unix::fs::symlink(&wrapper, &bin).unwrap();
         assert_eq!(launcher_program(&exe), bin);
