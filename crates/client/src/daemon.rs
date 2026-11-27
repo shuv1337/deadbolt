@@ -785,7 +785,7 @@ mod tests {
                 "/opt/homebrew/bin/deadbolt",
                 "another-build",
                 "pid 41",
-                "deadbolt debug daemon stop",
+                "shuvbolt debug daemon stop",
             ] {
                 assert!(message.contains(part), "{message}");
             }

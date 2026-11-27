@@ -1,9 +1,9 @@
-# Deadbolt for Chromium
+# Shuvbolt for Chromium
 
-Deadbolt's browser extension for Chrome, Brave, Arc and Edge (Manifest V3). It
+Shuvbolt's browser extension for Chrome, Brave, Arc and Edge (Manifest V3). It
 fills and saves logins, and makes and signs in with passkeys, through
-`deadbolt browser-host`, the native messaging host, which passes each request
-to the Deadbolt daemon. The daemon decides which logins a page gets and signs
+`shuvbolt browser-host`, the native messaging host, which passes each request
+to the Shuvbolt daemon. The daemon decides which logins a page gets and signs
 with passkeys; the extension never holds the vault, a private key, or the
 passphrase.
 
@@ -21,9 +21,10 @@ bun run check      # typecheck and unit tests
 
 Load `dist/` with **Load unpacked** on `brave://extensions` (or
 `chrome://extensions`) with Developer mode on, and run
-`deadbolt browser install` once so the browser can start the host. The build
+`shuvbolt browser install` once so the browser can start the host. The build
 writes `manifest-key.txt` into the manifest's `key`, which fixes the id at
-`jhocodkhpifjndffenppfmdkmiolngal`.
+`jhocodkhpifjndffenppfmdkmiolngal`. The upstream extension shares this ID.
+Build and reload `dist/` yourself after updating the checkout.
 
 ## Layout
 
@@ -70,8 +71,8 @@ which e2e/run.ts makes for itself) in headless Chromium with fresh
 profiles and `e2e/fake-host.py` as the host. `--only security` runs the
 hidden, covered, swapped and navigated cases first in CI; `--stills <dir>`
 saves screenshots, and `--video <dir>` records the `film` run (menu, fill,
-sign-in, save offer in the page). `--only passkeys --deadbolt <path to deadbolt>` runs the
-passkey cases against the real `deadbolt browser-host` and a throwaway store,
+sign-in, save offer in the page). `--only passkeys --deadbolt <path to shuvbolt>` runs the
+passkey cases against the real `shuvbolt browser-host` and a throwaway store,
 and checks every registration and assertion with `@simplewebauthn/server`.
 `--shard <i>/<n>` runs one of n balanced slices (`--list` shows them); CI runs
 the whole suite as four. `bun run e2e:parallel [--jobs <n>]` builds once and
@@ -79,8 +80,8 @@ runs the slices side by side (about 2 minutes instead of about 12).
 
 ## Not here
 
-- **Opening the app.** Deadbolt has no URL scheme and the host no message for
-  it, so "Open Deadbolt" in the popup says where to find the app.
+- **Opening the app.** Shuvbolt has no URL scheme and the host no message for
+  it, so "Open Shuvbolt" in the popup says where to find the app.
 - "Sign in with…" memory, Firefox and Safari.
 
 ## Credit

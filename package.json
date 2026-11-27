@@ -8,9 +8,10 @@
     "test": "cargo test --workspace",
     "gen:proto": "cargo run -q -p deadbolt-proto --bin gen-ts --locked -- extension/src/gen/proto.ts",
     "check:proto": "bun run gen:proto && git diff --exit-code extension/src/gen/proto.ts",
+    "check:fork": "python3 scripts/check-fork-boundary.py",
     "check:extension": "cd extension && bun install --frozen-lockfile && bun run check && bun run build",
     "check:wasm": "cargo +stable clippy -p deadbolt-pack -p deadbolt-engine -p deadbolt-proto -p deadbolt-core -p deadbolt-send -p deadbolt-send-web --target wasm32-unknown-unknown --locked -- -D warnings && cargo +stable clippy -p deadbolt-remote --no-default-features --target wasm32-unknown-unknown --locked -- -D warnings",
-    "check": "bun run check:extension && bash scripts/file-size.sh && cargo +stable fmt --all -- --check && cargo +stable clippy --workspace --all-targets --locked -j 2 -- -D warnings && bun run check:wasm && cargo +stable test --workspace --locked -j 2 && cargo +stable deny check && cargo machete"
+    "check": "bun run check:fork && bun run check:extension && python3 scripts/check-fork-boundary.py --dist extension/dist && bash scripts/file-size.sh && cargo +stable fmt --all -- --check && cargo +stable clippy --workspace --all-targets --locked -j 2 -- -D warnings && bun run check:wasm && cargo +stable test --workspace --locked -j 2 -- --test-threads=4 && cargo +stable deny check && cargo machete"
   },
   "engines": {
     "bun": ">=1.4.0"

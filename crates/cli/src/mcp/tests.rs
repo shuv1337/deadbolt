@@ -194,6 +194,7 @@ async fn speaks_json_rpc_and_refuses_unknown_tools() {
     let init = &replies[0]["result"];
     assert_eq!(init["protocolVersion"], "2025-03-26");
     assert_eq!(init["serverInfo"]["name"], "deadbolt");
+    assert_eq!(init["serverInfo"]["title"], "Shuvbolt");
     assert!(init["capabilities"]["tools"].is_object());
     assert!(init["capabilities"].get("resources").is_none());
     assert_eq!(replies[1]["result"], json!({}));

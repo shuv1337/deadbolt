@@ -1009,7 +1009,7 @@ fn unpacks_only_the_cli_from_its_tarball() {
         .map(|e| e.unwrap().file_name().into_string().unwrap())
         .collect();
     names.sort();
-    assert_eq!(names, ["shuvbolt", "deadbolt-enclave", "shuvbolt-ui"]);
+    assert_eq!(names, ["deadbolt-enclave", "shuvbolt", "shuvbolt-ui"]);
     assert_eq!(
         std::fs::read_to_string(out.join("shuvbolt")).unwrap(),
         "cli"
