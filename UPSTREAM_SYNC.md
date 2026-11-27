@@ -6,7 +6,7 @@ it. The fork base was `anomalyco/deadbolt` at `9e76cf2`; preserve `74b0257` in
 fork ancestry even if upstream later takes an equivalent fix.
 
 Start clean with ordinary Git. `upstream` points to `anomalyco/deadbolt`,
-`origin` to `shuv1337/deadbolt`:
+`origin` to `shuv1337/shuvbolt`:
 
 ```sh
 git fetch upstream dev
@@ -34,12 +34,12 @@ cargo +stable clippy -p deadbolt-cli --features upstream-update-fixtures --all-t
 cargo +stable test -p deadbolt-cli --features upstream-update-fixtures --test cli --locked -- updates
 cargo +stable check -p deadbolt-net --features private-relay-fixture --locked
 cargo +stable test -p deadbolt-net --test net a_handshake_raced_over_two_paths_connects --locked
-gh workflow list --all --repo shuv1337/deadbolt
+gh workflow list --all --repo shuv1337/shuvbolt
 ```
 
 Verify **Deploy site (dev)** (`431984918`) and **Release** (`431984919`) are
 disabled in the fork as well as guarded in YAML. Run the fork smoke tests in
 disposable XDG and `DEADBOLT_HOME` directories; never use a live vault or daemon.
-Push only the sync branch for a PR to `shuv/dev` on `shuv1337/deadbolt`. Merge
+Push only the sync branch for a PR to `shuv/dev` on `shuv1337/shuvbolt`. Merge
 with a merge commit after review, not by squashing or rebasing. Never push to
 `upstream`.

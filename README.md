@@ -9,7 +9,7 @@ from one you already have. See the [fork contract](FORK_CONTRACT.md) and
 ## Build and install
 
 Shuvbolt has no hosted installer, release channel, or self-update. Clone
-`shuv1337/deadbolt`, check out `shuv/dev`, and use stable Rust. Before switching
+`shuv1337/shuvbolt`, check out `shuv/dev`, and use stable Rust. Before switching
 an existing installation, see [the transition notes](FORK_CONTRACT.md#client-transition).
 
 ### Linux
@@ -87,4 +87,4 @@ works without a vault or daemon.
 
 The reference docs describe upstream design and may show upstream commands.
 Do not use upstream distribution channels to install or update Shuvbolt.
-[Report fork issues here](https://github.com/shuv1337/deadbolt/issues).
+[Report fork issues here](https://github.com/shuv1337/shuvbolt/issues).

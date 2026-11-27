@@ -25,6 +25,9 @@ def job_field(body, key):
 def job_condition(body):
     condition = job_field(body, "if")
     condition = re.sub(r"^[>|][-+]?\s+", "", condition)
+    if len(condition) >= 2 and condition[0] == condition[-1] and condition[0] in ("'", '"'):
+        quote = condition[0]
+        condition = condition[1:-1].replace("''", "'") if quote == "'" else condition[1:-1]
     condition = condition.removeprefix("${{").removesuffix("}}").strip()
     # Keep quoted strings whole: parentheses and || inside them are not operators.
     return re.findall(r"'(?:[^']|'')*'|==|&&|\|\||[\w.-]+|[^\s]", condition)
@@ -261,7 +264,7 @@ def release_boundary(c):
     start = (ROOT / installer).read_text().splitlines()[:3]
     c.require(
         len(start) == 3 and start[0] == "#!/bin/sh" and start[1].startswith("printf ")
-        and "https://github.com/shuv1337/deadbolt" in start[1] and start[2] == "exit 1",
+        and "https://github.com/shuv1337/shuvbolt" in start[1] and start[2] == "exit 1",
         installer, "must refuse installation before the upstream script runs",
     )
 

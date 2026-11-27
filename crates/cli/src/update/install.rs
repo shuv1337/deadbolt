@@ -330,7 +330,7 @@ pub async fn run(paths: &Paths, args: UpdateArgs) -> Result<ExitCode> {
             return Ok(ExitCode::FAILURE);
         }
         bail!(
-            "Shuvbolt self-update is disabled; rebuild from https://github.com/shuv1337/deadbolt"
+            "Shuvbolt self-update is disabled; rebuild from https://github.com/shuv1337/shuvbolt"
         );
     }
     let built = build_channel();

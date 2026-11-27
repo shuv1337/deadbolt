@@ -33,7 +33,7 @@ const NO_UI: &str = "DEADBOLT_NO_UI";
 const ACTIVATE_TIMEOUT: Duration = Duration::from_secs(10);
 /// What `shuvbolt app` and `shuvbolt ui` say when there's no app to open.
 const NOT_INSTALLED: &str = "Shuvbolt's desktop app (shuvbolt-ui) isn't installed here. \
-Build it from https://github.com/shuv1337/deadbolt. On macOS install Shuvbolt.app; \
+Build it from https://github.com/shuv1337/shuvbolt. On macOS install Shuvbolt.app; \
 on Linux put shuvbolt-ui beside shuvbolt. DEADBOLT_UI_BIN names one anywhere else";
 
 /// The token a launcher gave this process for the window it opens:

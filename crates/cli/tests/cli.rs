@@ -3811,7 +3811,7 @@ fn updates_are_disabled_without_network_or_state() {
                 stderr.contains("Shuvbolt self-update is disabled"),
                 "{stderr}"
             );
-            assert!(stderr.contains("https://github.com/shuv1337/deadbolt"));
+            assert!(stderr.contains("https://github.com/shuv1337/shuvbolt"));
         }
     }
     assert!(matches!(listener.accept(), Err(e) if e.kind() == std::io::ErrorKind::WouldBlock));
