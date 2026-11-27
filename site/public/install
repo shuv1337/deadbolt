@@ -1,5 +1,5 @@
 #!/bin/sh
-printf '%s\n' 'Shuvbolt has no hosted installer. Build from https://github.com/shuv1337/deadbolt.' >&2
+printf '%s\n' 'Shuvbolt has no hosted installer. Build from https://github.com/shuv1337/shuvbolt.' >&2
 exit 1
 
 # Installs deadbolt: the CLI and daemon, and on a Linux desktop the app beside

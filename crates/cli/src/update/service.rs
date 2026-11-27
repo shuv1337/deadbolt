@@ -20,7 +20,7 @@ const REGISTRY: Option<&str> = None;
 pub(super) const SERVICE_OVERRIDE: &str = "DEADBOLT_RELEASE_URL";
 const REGISTRY_OVERRIDE: &str = "DEADBOLT_NPM_REGISTRY_URL";
 const DISABLED: &str =
-    "self-update is disabled in Shuvbolt; rebuild from https://github.com/shuv1337/deadbolt";
+    "self-update is disabled in Shuvbolt; rebuild from https://github.com/shuv1337/shuvbolt";
 
 /// The largest manifest read.
 const MANIFEST_LIMIT: usize = 1 << 20;
