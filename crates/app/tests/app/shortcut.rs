@@ -63,6 +63,8 @@ fn physical(rt: &mut Runtime<App>, key: PhysicalKeyCode, mods: Mods) {
             mods,
             pressed,
             repeat: false,
+            text: None,
+            consumed_mods: Mods::default(),
         });
         rt.frame(FRAME);
     }

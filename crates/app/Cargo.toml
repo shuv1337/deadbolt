@@ -31,11 +31,11 @@ deadbolt-core = { path = "../core" }
 deadbolt-enclave = { path = "../enclave" }
 deadbolt-proto = { path = "../proto" }
 # Rune is pinned to a rev and bumped deliberately; procwatch comes from the same rev.
-procwatch = { git = "https://github.com/anomalyco/rune", rev = "ac452a9c2b75c462c5eb1659024178f1fbbd416a" }
+procwatch = { git = "https://github.com/anomalyco/rune", rev = "f1b079ccad541008073e73d0987b876f4c99c322" }
 # `tooling` stays on so release scripts (`snap.sh`, `bundle.sh`, `verify-macos-release.sh`) can run `--snap` / `--list-scenes`.
-rune = { git = "https://github.com/anomalyco/rune", rev = "ac452a9c2b75c462c5eb1659024178f1fbbd416a", features = ["native-file-dialog", "metal-backend", "tooling"] }
-rune-kit = { git = "https://github.com/anomalyco/rune", rev = "ac452a9c2b75c462c5eb1659024178f1fbbd416a" }
-rune-theme-opencode = { git = "https://github.com/anomalyco/rune", rev = "ac452a9c2b75c462c5eb1659024178f1fbbd416a" }
+rune = { git = "https://github.com/anomalyco/rune", rev = "f1b079ccad541008073e73d0987b876f4c99c322", features = ["native-file-dialog", "metal-backend", "tooling"] }
+rune-kit = { git = "https://github.com/anomalyco/rune", rev = "f1b079ccad541008073e73d0987b876f4c99c322" }
+rune-theme-opencode = { git = "https://github.com/anomalyco/rune", rev = "f1b079ccad541008073e73d0987b876f4c99c322" }
 rustix = { version = "1.1.5", default-features = false, features = ["system", "fs", "std"] }
 serde_json = "1.0.151"
 thiserror = "2.0.21"

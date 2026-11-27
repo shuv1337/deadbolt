@@ -63,7 +63,7 @@ tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 zeroize = { version = "1.9", features = ["serde"] }
 csv = "1.4"
 # Its own memory and CPU (the daemon), and a counting allocator in dev builds.
-procwatch = { git = "https://github.com/anomalyco/rune", rev = "ac452a9c2b75c462c5eb1659024178f1fbbd416a" }
+procwatch = { git = "https://github.com/anomalyco/rune", rev = "f1b079ccad541008073e73d0987b876f4c99c322" }
 url = "2.5.8"
 sha2 = "0.11"
 # `deadbolt update`: both are already in the tree through iroh, with ring.
