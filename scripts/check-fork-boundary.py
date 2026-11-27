@@ -13,7 +13,44 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 APP_ID = "dev.shuv.shuvbolt"
 EXTENSION_ID = "jhocodkhpifjndffenppfmdkmiolngal"
-WORKFLOW_GUARD = "github.repository == 'anomalyco/deadbolt'"
+REPOSITORY_GUARD = ["github.repository", "==", "'anomalyco/deadbolt'"]
+STATUS_FUNCTIONS = {"always", "cancelled", "failure", "success"}
+
+
+def job_field(body, key):
+    match = re.search(rf"^    {key}:[ \t]*([^\n]*(?:\n {{6,}}[^\n]*)*)", body, re.M)
+    return match[1].strip() if match else ""
+
+
+def job_condition(body):
+    condition = job_field(body, "if")
+    condition = re.sub(r"^[>|][-+]?\s+", "", condition)
+    condition = condition.removeprefix("${{").removesuffix("}}").strip()
+    # Keep quoted strings whole: parentheses and || inside them are not operators.
+    return re.findall(r"'(?:[^']|'')*'|==|&&|\|\||[\w.-]+|[^\s]", condition)
+
+
+def repository_guarded(tokens):
+    if tokens[:3] != REPOSITORY_GUARD or (len(tokens) > 3 and tokens[3] != "&&"):
+        return False
+    depth = 0
+    for token in tokens[3:]:
+        if token == "(":
+            depth += 1
+        elif token == ")":
+            depth -= 1
+        if depth < 0 or (depth == 0 and token == "||"):
+            return False
+    return depth == 0
+
+
+def job_needs(body):
+    needs = job_field(body, "needs")
+    if needs.startswith("[") and needs.endswith("]"):
+        return set(re.findall(r"[\w-]+", needs[1:-1]))
+    if needs.startswith("- "):
+        return set(re.findall(r"^- ([\w-]+)$", "\n".join(line.strip() for line in needs.splitlines()), re.M))
+    return {needs} if needs else set()
 
 
 class Check:
@@ -30,6 +67,9 @@ class Check:
             self.require(token in text, path, f"missing {token!r}")
         for token in forbidden:
             self.require(token not in text, path, f"retired identity {token!r}")
+
+    def pattern(self, path, pattern, message):
+        self.require(re.search(pattern, (ROOT / path).read_text()) is not None, path, message)
 
     def binary(self, path, package, expected):
         manifest = tomllib.loads((ROOT / path).read_text())
@@ -55,23 +95,44 @@ class Check:
             self.require(manifest.get("key") == key, path, "must use the checked-in manifest key")
 
     def guarded_jobs(self, path, required):
-        # Job keys are the two-space entries under `jobs:`; job conditions are
-        # four-space fields, including YAML folded conditions on following lines.
-        jobs = (ROOT / path).read_text().split("\njobs:\n", 1)[1]
-        parts = re.split(r"^  ([\w-]+):[^\S\n]*$", jobs, flags=re.M)
-        seen = set()
-        for name, body in zip(parts[1::2], parts[2::2]):
-            match = re.search(r"^    if: (.*(?:\n {6,}[^\n]+)*)", body, re.M)
-            condition = match[1] if match else ""
-            if name in required or re.search(r"\b(?:always|cancelled)\s*\(", condition):
-                seen.add(name)
-                predicate = " ".join(condition.removeprefix(">-").split()).removeprefix("${{ ")
+        # Check the block mapping used by these workflows. Reject unsupported
+        # job declarations rather than silently missing a publishing root.
+        text = (ROOT / path).read_text()
+        jobs = re.split(r"^\w[\w-]*:", text.split("\njobs:\n", 1)[1], maxsplit=1, flags=re.M)[0]
+        parts = re.split(r"^  ([^#\s][^\n]*)$", jobs, flags=re.M)
+        dependencies, safe = {}, set()
+        for header, body in zip(parts[1::2], parts[2::2]):
+            job = re.fullmatch(r"([\w-]+):\s*(?:#.*)?", header)
+            if not job:
+                self.require(False, path, f"unsupported job declaration: {header}")
+                continue
+            name = job[1]
+            self.require(name not in dependencies, path, f"duplicate job {name}")
+            needs = dependencies[name] = job_needs(body)
+            condition = job_condition(body)
+            override = any(
+                name.lower() in STATUS_FUNCTIONS and paren == "("
+                for name, paren in zip(condition, condition[1:])
+            )
+            guarded = repository_guarded(condition)
+            if not needs or name in required or override:
                 self.require(
-                    predicate == WORKFLOW_GUARD or predicate.startswith(WORKFLOW_GUARD + " && "),
+                    guarded,
                     path,
-                    f"{name}: repository guard must come first in the job condition",
+                    f"{name}: job must require the upstream repository without an OR bypass",
                 )
-        self.require(required <= seen, path, f"missing jobs: {', '.join(sorted(required - seen))}")
+            if not needs and guarded:
+                safe.add(name)
+        self.require(required <= dependencies.keys(), path, f"missing jobs: {', '.join(sorted(required - dependencies.keys()))}")
+        # Every dependency must itself reach a guarded root. An unknown job
+        # or a cycle will leave that chain unresolved.
+        while True:
+            connected = {job for job, needs in dependencies.items() if needs and needs <= safe} - safe
+            if not connected:
+                break
+            safe.update(connected)
+        for job in sorted(dependencies.keys() - safe):
+            self.require(False, path, f"{job}: dependency chain does not reach a guarded root")
 
 
 def canonical(c):
@@ -104,10 +165,25 @@ def canonical(c):
 
 
 def compatibility(c):
-    c.tokens(
-        "crates/client/src/paths.rs",
-        '"DEADBOLT_HOME"', '.join("deadbolt")', '"deadbolt{suffix}"', '"daemon.sock"',
+    paths = "crates/client/src/paths.rs"
+    c.tokens(paths, '"deadbolt{suffix}"')
+    c.pattern(
+        paths,
+        r'let data = var\("DEADBOLT_HOME"\)\s*\.unwrap_or_else\(\|\|\s*'
+        r'xdg\("XDG_DATA_HOME", &\["\.local", "share"\]\)\s*\.join\("deadbolt"\)\s*\)',
+        'data must use DEADBOLT_HOME or XDG_DATA_HOME joined with "deadbolt"',
     )
+    for field, directory, filename in (
+        ("socket", "runtime", "daemon.sock"),
+        ("lock", "runtime", "daemon.lock"),
+        ("log", "state", "daemon.log"),
+    ):
+        c.pattern(
+            paths,
+            rf'\b{field}:\s*{directory}\s*\.join\("{re.escape(filename)}"\)',
+            f'{field} must use {directory}.join("{filename}")',
+        )
+    c.tokens("crates/cli/tests/cli/migrate_v1.rs", r'b"deadbolt join consent v2\0"')
     c.tokens("crates/net/src/lib.rs", 'b"deadbolt/sync/1"', 'b"deadbolt/pair/3"')
     c.tokens("crates/send/src/lib.rs", 'b"deadbolt/send/1"')
     c.tokens("crates/proto/src/browser.rs", 'NATIVE_HOST: &str = "anomaly.deadbolt.browser"')
@@ -159,14 +235,26 @@ def release_boundary(c):
         "crates/app/update-requirement.txt", f'identifier "{APP_ID}"', "SHUVBOLT_UNSET_TEAM_ID",
         forbidden=("5NZ4Q7NXJ4", '"anomaly.deadbolt"'),
     )
-    gate = f'if !cfg!(feature = "{feature}") {{'
+    gate = rf'if\s+!cfg!\(\s*feature\s*=\s*"{feature}"\s*\)\s*\{{'
     c.tokens(
         "crates/cli/src/update/install.rs",
-        f"pub async fn run(paths: &Paths, args: UpdateArgs) -> Result<ExitCode> {{\n    {gate}",
-        '"status": "disabled"', '"reason": "no_fork_release_channel"',
+        '"status": "disabled"', '"reason": "no_fork_release_channel"', '"DEADBOLT_FIXTURE_MANAGER"',
     )
-    c.tokens("crates/cli/src/daemon/updates.rs", f"pub async fn run(daemon: Arc<Daemon>) {{\n    {gate}\n        return;")
-    c.tokens("crates/app/src/settings.rs", "if s.daemon.is_live() {\n        return None;")
+    c.pattern(
+        "crates/cli/src/update/install.rs",
+        rf"\bpub async fn run\([^)]*\)\s*->\s*Result<ExitCode>\s*\{{\s*{gate}",
+        "CLI updater must gate on the fixture feature before doing any work",
+    )
+    c.pattern(
+        "crates/cli/src/daemon/updates.rs",
+        rf"\bpub async fn run\([^)]*\)\s*\{{\s*{gate}\s*return;",
+        "daemon updater must return immediately without the fixture feature",
+    )
+    c.pattern(
+        "crates/app/src/settings.rs",
+        r"\bif\s+s\.daemon\.is_live\(\)\s*\{\s*return\s+None;",
+        "Settings must hide notices from a live daemon",
+    )
     c.guarded_jobs(".github/workflows/release.yml", {"plan"})
     c.guarded_jobs(".github/workflows/deploy-site.yml", {"build", "deploy"})
     installer = "site/public/install"

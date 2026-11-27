@@ -190,7 +190,7 @@ fn settings_hides_updates_from_a_live_daemon() {
     use deadbolt_proto::daemon::UpdateInfo;
 
     let mut rt = runtime("settings-touch-id");
-    rt.set_viewport((820.0, 1_000.0));
+    rt.set_viewport((820.0, 1_000.0), 1.0);
     rt.update(|s, _| {
         s.status.as_mut().unwrap().update = Some(UpdateInfo {
             version: "9.9.9".into(),

@@ -145,6 +145,39 @@ mod tests {
     use std::os::unix::fs::PermissionsExt;
 
     #[test]
+    fn store_and_daemon_paths_keep_their_compatibility_names() {
+        let override_dir = "/vault";
+        let suffix = &blake3::hash(b"/vault").to_hex()[..8];
+        let isolated = format!("deadbolt-{suffix}");
+        for (home_override, data, daemon_dir) in [
+            (None, "/xdg/data/deadbolt", "deadbolt"),
+            (Some(override_dir), override_dir, isolated.as_str()),
+        ] {
+            let paths = Paths::from_vars(|name| {
+                let value = match name {
+                    "HOME" => "/home",
+                    "XDG_DATA_HOME" => "/xdg/data",
+                    "XDG_CONFIG_HOME" => "/xdg/config",
+                    "XDG_RUNTIME_DIR" => "/xdg/runtime",
+                    "XDG_STATE_HOME" => "/xdg/state",
+                    "DEADBOLT_HOME" => home_override?,
+                    _ => return None,
+                };
+                Some(value.into())
+            });
+            assert_eq!(paths.data, Path::new(data));
+            assert_eq!(paths.config, Path::new("/xdg/config/deadbolt/config.toml"));
+            let runtime = Path::new("/xdg/runtime").join(daemon_dir);
+            assert_eq!(paths.socket, runtime.join("daemon.sock"));
+            assert_eq!(paths.lock, runtime.join("daemon.lock"));
+            assert_eq!(
+                paths.log,
+                Path::new("/xdg/state").join(daemon_dir).join("daemon.log")
+            );
+        }
+    }
+
+    #[test]
     fn a_runtime_dir_is_ours_and_private() {
         let root = tempfile::tempdir().unwrap();
         let dir = root.path().join("deadbolt");
