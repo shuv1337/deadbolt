@@ -175,10 +175,10 @@ fn keeps_one_rollout_bucket() {
 #[test]
 fn classifies_installs() {
     let none = |_: &Path| false;
-    let app = Path::new("/Applications/Deadbolt.app/Contents/Helpers/deadbolt");
+    let app = Path::new("/Applications/Shuvbolt.app/Contents/Helpers/shuvbolt");
     assert_eq!(
         classify(app, true, none),
-        Install::App("/Applications/Deadbolt.app".into())
+        Install::App("/Applications/Shuvbolt.app".into())
     );
     assert_eq!(
         classify(app, true, |p| p == Path::new(CASKROOMS[0])),
@@ -186,16 +186,16 @@ fn classifies_installs() {
     );
     assert_eq!(
         classify(
-            Path::new("/Volumes/Deadbolt/Deadbolt.app/Contents/Helpers/deadbolt"),
+            Path::new("/Volumes/Deadbolt/Shuvbolt.app/Contents/Helpers/shuvbolt"),
             true,
             none
         ),
-        Install::Unmovable("/Volumes/Deadbolt/Deadbolt.app".into())
+        Install::Unmovable("/Volumes/Deadbolt/Shuvbolt.app".into())
     );
     assert!(matches!(
         classify(
             Path::new(
-                "/private/var/folders/x/AppTranslocation/ABC/d/Deadbolt.app/Contents/Helpers/deadbolt"
+                "/private/var/folders/x/AppTranslocation/ABC/d/Shuvbolt.app/Contents/Helpers/shuvbolt"
             ),
             true,
             none
@@ -224,7 +224,7 @@ fn classifies_installs() {
             Manager::Package,
         ),
         (
-            "/opt/homebrew/lib/node_modules/@deadbolt/cli-darwin-arm64/Deadbolt.app/Contents/Helpers/deadbolt",
+            "/opt/homebrew/lib/node_modules/@deadbolt/cli-darwin-arm64/Shuvbolt.app/Contents/Helpers/shuvbolt",
             Manager::Package,
         ),
         (
@@ -336,10 +336,10 @@ fn knows_its_own_package_by_the_wrappers_link() {
     let wrapper = modules.join("@deadbolt/cli");
     let exe = npm_layout(&modules, "cli-linux-x64", "bin/deadbolt", &wrapper);
     assert_eq!(package_of(&exe), Some(wrapper.clone()));
-    // A Deadbolt.app helper in the darwin package.
+    // A Shuvbolt.app helper in the darwin package.
     let modules = root.join("brew/lib/node_modules");
     let wrapper = modules.join("@deadbolt/cli");
-    let app = "Deadbolt.app/Contents/Helpers/deadbolt";
+    let app = "Shuvbolt.app/Contents/Helpers/shuvbolt";
     let exe = npm_layout(&modules, "cli-darwin-arm64", app, &wrapper);
     assert_eq!(package_of(&exe), Some(wrapper));
     // Nested in the wrapper, where the postinstall installs it itself.
@@ -382,14 +382,8 @@ fn runs_each_managers_own_command_pinned_to_the_version() {
         shown(Manager::Yarn).unwrap(),
         "yarn global add @deadbolt/cli@0.0.0-dev-140"
     );
-    assert_eq!(
-        shown(Manager::Brew).unwrap(),
-        "brew upgrade anomalyco/tap/deadbolt"
-    );
-    assert_eq!(
-        shown(Manager::BrewCask).unwrap(),
-        "brew upgrade --cask anomalyco/tap/deadbolt"
-    );
+    assert_eq!(shown(Manager::Brew), None);
+    assert_eq!(shown(Manager::BrewCask), None);
     for manual in [
         Manager::Nix,
         Manager::Cargo,
@@ -559,7 +553,7 @@ fn tells_of_each_version_at_most_once_a_day() {
     });
     assert_eq!(
         line,
-        "deadbolt 0.0.0-dev-140 is out (installed with bun): run deadbolt update"
+        "shuvbolt 0.0.0-dev-140 is out (installed with bun): run shuvbolt update"
     );
     assert_eq!(installed_with("brew"), "installed with Homebrew");
     assert_eq!(installed_with("curl"), "installed with the install script");
@@ -580,7 +574,7 @@ fn shows_the_end_of_a_failed_managers_output() {
     let error = upgrade_failure("bun", "2", "boom", "bun install --global --trust x").to_string();
     assert!(error.contains("bun couldn't install deadbolt 2"));
     assert!(error.contains("It ran: bun install --global --trust x"));
-    assert!(error.contains("deadbolt update"));
+    assert!(error.contains("shuvbolt update"));
 }
 
 #[test]
@@ -590,7 +584,7 @@ fn homebrew_updates_are_checked_through_its_link() {
         user_link(Manager::Brew, exe, None),
         Path::new("/opt/homebrew/bin/deadbolt")
     );
-    let app = Path::new("/Applications/Deadbolt.app/Contents/Helpers/deadbolt");
+    let app = Path::new("/Applications/Shuvbolt.app/Contents/Helpers/shuvbolt");
     assert_eq!(user_link(Manager::BrewCask, app, None), app);
     let exe = Path::new("/nowhere/node_modules/@deadbolt/cli-linux-x64/bin/deadbolt");
     let wrapper = Path::new("/nowhere/node_modules/@deadbolt/cli");
@@ -602,9 +596,9 @@ fn homebrew_updates_are_checked_through_its_link() {
 
 #[test]
 fn only_trusts_the_service_and_its_files() {
-    assert_eq!(service_base(None).unwrap().as_str(), SERVICE);
-    assert_eq!(service_base(Some("")).unwrap().as_str(), SERVICE);
-    if cfg!(debug_assertions) {
+    assert!(service_base(None).is_err());
+    assert!(service_base(Some("")).is_err());
+    if cfg!(feature = "upstream-update-fixtures") {
         assert_eq!(
             service_base(Some("http://127.0.0.1:8080/r"))
                 .unwrap()
@@ -619,6 +613,8 @@ fn only_trusts_the_service_and_its_files() {
         ] {
             assert!(service_base(Some(bad)).is_err(), "{bad}");
         }
+    } else {
+        assert!(service_base(Some("http://127.0.0.1:8080/r")).is_err());
     }
     let manifest = Url::parse("https://anoma.ly/release/deadbolt/cli/dev.json").unwrap();
     assert_eq!(
@@ -643,16 +639,19 @@ fn only_trusts_the_service_and_its_files() {
 
 #[test]
 fn requirements_follow_the_apps() {
-    assert!(APP_REQUIREMENT.contains("identifier \"anomaly.deadbolt\""));
+    assert!(APP_REQUIREMENT.contains("identifier \"dev.shuv.shuvbolt\""));
     assert!(APP_REQUIREMENT.trim().ends_with(" and notarized"));
-    let cli = requirement("anomaly.deadbolt.cli");
-    assert!(cli.contains("identifier \"anomaly.deadbolt.cli\""), "{cli}");
+    let cli = requirement("dev.shuv.shuvbolt.cli");
     assert!(
-        cli.contains("certificate leaf[subject.OU] = \"5NZ4Q7NXJ4\""),
+        cli.contains("identifier \"dev.shuv.shuvbolt.cli\""),
         "{cli}"
     );
     assert!(
-        !cli.contains("identifier \"anomaly.deadbolt\"") && !cli.contains("notarized"),
+        cli.contains("certificate leaf[subject.OU] = \"SHUVBOLT_UNSET_TEAM_ID\""),
+        "{cli}"
+    );
+    assert!(
+        !cli.contains("identifier \"dev.shuv.shuvbolt\"") && !cli.contains("notarized"),
         "{cli}"
     );
 }
@@ -737,33 +736,33 @@ fn checks_app_zips_for_escaping_links() {
         std::fs::write(&archive, bytes).unwrap();
         check_app_zip(&archive)
     };
-    let framework = "Deadbolt.app/Contents/Frameworks/F.framework";
+    let framework = "Shuvbolt.app/Contents/Frameworks/F.framework";
     check(zip_of(&[
-        ("Deadbolt.app/Contents/Helpers/deadbolt", None, b"bin"),
+        ("Shuvbolt.app/Contents/Helpers/shuvbolt", None, b"bin"),
         (&format!("{framework}/Versions/A/F"), None, b"lib"),
         (&format!("{framework}/Versions/Current"), Some("A"), b""),
         (&format!("{framework}/F"), Some("Versions/Current/F"), b""),
-        ("__MACOSX/Deadbolt.app/._x", None, b"fork"),
+        ("__MACOSX/Shuvbolt.app/._x", None, b"fork"),
     ]))
     .unwrap();
     for bad in [
         zip_of(&[("Other.app/x", None, b"")]),
-        zip_of(&[("Deadbolt.app/etc", Some("/etc"), b"")]),
-        zip_of(&[("Deadbolt.app/up", Some("../../x"), b"")]),
-        zip_of(&[("Deadbolt.app/up", Some("../Other.app"), b"")]),
+        zip_of(&[("Shuvbolt.app/etc", Some("/etc"), b"")]),
+        zip_of(&[("Shuvbolt.app/up", Some("../../x"), b"")]),
+        zip_of(&[("Shuvbolt.app/up", Some("../Other.app"), b"")]),
         zip_of(&[
-            ("Deadbolt.app/d", Some("Contents"), b""),
-            ("Deadbolt.app/d/x", None, b"through the link"),
+            ("Shuvbolt.app/d", Some("Contents"), b""),
+            ("Shuvbolt.app/d/x", None, b"through the link"),
         ]),
     ] {
         assert!(check(bad).is_err());
     }
     assert!(link_inside(
-        Path::new("Deadbolt.app/a/b"),
+        Path::new("Shuvbolt.app/a/b"),
         Path::new("../../c")
     ));
     assert!(!link_inside(
-        Path::new("Deadbolt.app/a"),
+        Path::new("Shuvbolt.app/a"),
         Path::new("../../c")
     ));
 }
@@ -779,7 +778,7 @@ fn signature_checks_are_decided_by_the_build_and_fail_closed() {
     assert!(satisfies("/nonexistent/codesign", &exe, "anchor apple", false).is_err());
     if cfg!(target_os = "macos") {
         // This test binary is signed ad hoc, not by Deadbolt's Developer ID.
-        assert!(!satisfies(CODESIGN, &exe, &requirement("anomaly.deadbolt.cli"), false).unwrap());
+        assert!(!satisfies(CODESIGN, &exe, &requirement("dev.shuv.shuvbolt.cli"), false).unwrap());
     }
 }
 
@@ -925,7 +924,7 @@ fn a_failed_swap_puts_every_old_file_back() {
     let dir = tempfile::tempdir().unwrap();
     let path = |name: &str| dir.path().join(name);
     for (name, body) in [
-        ("deadbolt", "old cli"),
+        ("shuvbolt", "old cli"),
         ("deadbolt-enclave", "old helper"),
         ("new-enclave", "new helper"),
     ] {
@@ -934,11 +933,11 @@ fn a_failed_swap_puts_every_old_file_back() {
     // The helper goes in, then the new deadbolt is missing.
     let files = [
         (path("new-enclave"), path("deadbolt-enclave")),
-        (path("new-deadbolt"), path("deadbolt")),
+        (path("new-shuvbolt"), path("shuvbolt")),
     ];
     assert!(swap(&files, &path("aside")).is_err());
     assert_eq!(
-        std::fs::read_to_string(path("deadbolt")).unwrap(),
+        std::fs::read_to_string(path("shuvbolt")).unwrap(),
         "old cli"
     );
     assert_eq!(
@@ -948,25 +947,25 @@ fn a_failed_swap_puts_every_old_file_back() {
     // A file that wasn't there before isn't left behind either.
     let files = [
         (path("new-enclave"), path("fresh")),
-        (path("new-deadbolt"), path("deadbolt")),
+        (path("new-shuvbolt"), path("shuvbolt")),
     ];
     std::fs::write(path("new-enclave"), "new helper").ok();
     assert!(swap(&files, &path("aside2")).is_err());
     assert!(!path("fresh").exists());
     assert_eq!(
-        std::fs::read_to_string(path("deadbolt")).unwrap(),
+        std::fs::read_to_string(path("shuvbolt")).unwrap(),
         "old cli"
     );
     // And a good swap replaces both.
     std::fs::write(path("new-enclave"), "new helper").unwrap();
-    std::fs::write(path("new-deadbolt"), "new cli").unwrap();
+    std::fs::write(path("new-shuvbolt"), "new cli").unwrap();
     let files = [
         (path("new-enclave"), path("deadbolt-enclave")),
-        (path("new-deadbolt"), path("deadbolt")),
+        (path("new-shuvbolt"), path("shuvbolt")),
     ];
     swap(&files, &path("aside3")).unwrap();
     assert_eq!(
-        std::fs::read_to_string(path("deadbolt")).unwrap(),
+        std::fs::read_to_string(path("shuvbolt")).unwrap(),
         "new cli"
     );
     assert_eq!(
@@ -980,9 +979,9 @@ fn unpacks_only_the_cli_from_its_tarball() {
     let dir = tempfile::tempdir().unwrap();
     let src = dir.path().join("src");
     std::fs::create_dir(&src).unwrap();
-    std::fs::write(src.join("deadbolt"), "cli").unwrap();
+    std::fs::write(src.join("shuvbolt"), "cli").unwrap();
     std::fs::write(src.join("deadbolt-enclave"), "helper").unwrap();
-    std::fs::write(src.join("deadbolt-ui"), "app").unwrap();
+    std::fs::write(src.join("shuvbolt-ui"), "app").unwrap();
     std::fs::write(src.join("README"), "other").unwrap();
     std::os::unix::fs::symlink("/etc/passwd", src.join("link")).unwrap();
     let tar = |name: &str, files: &[&str]| {
@@ -1002,7 +1001,7 @@ fn unpacks_only_the_cli_from_its_tarball() {
     };
     let out = tar(
         "good.tar.gz",
-        &["./deadbolt", "deadbolt-enclave", "deadbolt-ui", "README"],
+        &["./shuvbolt", "deadbolt-enclave", "shuvbolt-ui", "README"],
     )
     .unwrap();
     let mut names: Vec<_> = std::fs::read_dir(&out)
@@ -1010,16 +1009,16 @@ fn unpacks_only_the_cli_from_its_tarball() {
         .map(|e| e.unwrap().file_name().into_string().unwrap())
         .collect();
     names.sort();
-    assert_eq!(names, ["deadbolt", "deadbolt-enclave", "deadbolt-ui"]);
+    assert_eq!(names, ["shuvbolt", "deadbolt-enclave", "shuvbolt-ui"]);
     assert_eq!(
-        std::fs::read_to_string(out.join("deadbolt")).unwrap(),
+        std::fs::read_to_string(out.join("shuvbolt")).unwrap(),
         "cli"
     );
-    let error = tar("link.tar.gz", &["deadbolt", "link"]).unwrap_err();
+    let error = tar("link.tar.gz", &["shuvbolt", "link"]).unwrap_err();
     assert!(format!("{error:#}").contains("link"), "{error:#}");
     let long = "a".repeat(150);
     std::fs::write(src.join(&long), "long").unwrap();
-    tar("long.tar.gz", &[&long, "deadbolt"]).unwrap();
+    tar("long.tar.gz", &[&long, "shuvbolt"]).unwrap();
     assert!(pax_path(b"19 path=deadbolt-x\n").is_some_and(|p| p == "deadbolt-x"));
 }
 

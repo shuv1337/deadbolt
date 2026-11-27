@@ -1,5 +1,5 @@
-//! The unpacked browser extension `deadbolt update` keeps current, for the
-//! directories registered with `deadbolt browser install --extension-dir`.
+//! The unpacked browser extension `shuvbolt update` keeps current, for the
+//! directories registered with `shuvbolt browser install --extension-dir`.
 
 use std::path::Path;
 
@@ -8,14 +8,14 @@ use url::Url;
 
 use super::protocol::{Decision, Running, Target, decide};
 use super::replace::{refuse_foreign_root, stage_beside};
-use super::service::{Manifest, SERVICE, Service};
+use super::service::{Manifest, Service};
 use super::state::{UpdateState, check_sequence};
 use crate::config::ExtensionDir;
 
 /// The release service target of the `extension` artifact.
 const TARGET: &str = "chromium";
 
-/// Written into an extension directory `deadbolt update` installed, listing
+/// Written into an extension directory `shuvbolt update` installed, listing
 /// what it put there, so it only ever replaces its own files.
 pub(super) const EXTENSION_MARKER: &str = ".deadbolt-extension";
 /// The most an extension zip may unpack to, and its most entries.
@@ -32,7 +32,7 @@ pub(super) fn extension_version(dir: &Path) -> Option<String> {
 }
 
 /// Whether `dir` may be replaced by Deadbolt's extension: an absolute path
-/// that doesn't exist yet, is empty, or holds only what `deadbolt update`
+/// that doesn't exist yet, is empty, or holds only what `shuvbolt update`
 /// installed there (its marker's list).
 pub fn extension_dir_ok(dir: &Path) -> bool {
     if !dir.is_absolute() {
@@ -114,7 +114,7 @@ pub(super) fn unpack_extension(archive: &Path, out: &Path) -> Result<()> {
 }
 
 /// Checks, and unless `check` updates, the extension directories `dirs`
-/// (registered with `deadbolt browser install --extension-dir`). True when
+/// (registered with `shuvbolt browser install --extension-dir`). True when
 /// an update is available for any of them. One directory failing doesn't
 /// stop the others.
 #[expect(clippy::too_many_arguments, reason = "two call sites, all distinct")]
@@ -130,14 +130,6 @@ pub(super) async fn extension(
     quiet: bool,
 ) -> Result<bool> {
     if dirs.is_empty() {
-        if !check && !quiet {
-            println!(
-                "Browser extension: {SERVICE}deadbolt/extension/{channel}/{} (or register \
-                 an unpacked copy with `deadbolt browser install --extension-dir <dir>` to \
-                 update it here)",
-                TARGET
-            );
-        }
         return Ok(false);
     }
     let Some(manifest) = service.manifest("extension", channel, None).await? else {
@@ -190,8 +182,8 @@ pub(super) async fn extension_dir(
     let dir = &entry.dir;
     if !extension_dir_ok(dir) {
         bail!(
-            "{} holds files deadbolt didn't install there (or isn't an absolute path); \
-             register an empty directory with `deadbolt browser install --extension-dir <dir>`",
+            "{} holds files shuvbolt didn't install there (or isn't an absolute path); \
+             register an empty directory with `shuvbolt browser install --extension-dir <dir>`",
             dir.display()
         );
     }
@@ -225,7 +217,7 @@ pub(super) async fn extension_dir(
                 if !quiet {
                     println!(
                         "Updated the browser extension in {} to {version}; \
-                         reload Deadbolt in chrome://extensions",
+                         reload Shuvbolt in chrome://extensions",
                         dir.display()
                     );
                 }

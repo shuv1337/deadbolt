@@ -1,6 +1,9 @@
 #[cfg(not(unix))]
 compile_error!("shuvbolt currently supports Unix platforms only");
 
+#[cfg(all(feature = "upstream-update-fixtures", not(debug_assertions)))]
+compile_error!("upstream-update-fixtures is debug-only");
+
 mod app;
 mod broker;
 mod browser;
@@ -309,14 +312,7 @@ enum Commands {
     /// Connect Shuvbolt's browser extension to this computer's Shuvbolt.
     #[command(subcommand)]
     Browser(BrowserCommand),
-    /// Update this Shuvbolt from its release channel: Shuvbolt.app when
-    /// this is its `deadbolt`, else this standalone `deadbolt`, plus an
-    /// unpacked extension registered with `browser install --extension-dir`.
-    ///
-    /// Downloads are checked against the release's size and SHA-256 and, on
-    /// macOS, its code signature before anything is replaced. Installs from
-    /// Homebrew or another package manager get its command instead. The daemon
-    /// restarts on the new build, locked. Works while the vault is locked.
+    /// Self-update is disabled in Shuvbolt; rebuild from the fork source.
     Update(update::UpdateArgs),
     /// Serve AI coding agents over MCP (stdin/stdout): vault and item
     /// metadata, status, a health summary and `shuvbolt run --broker`
@@ -371,8 +367,7 @@ enum BrowserCommand {
     Install {
         #[arg(long, value_enum)]
         browser: Vec<browser::Browser>,
-        /// Also keep an unpacked copy of the extension in DIR current with
-        /// `shuvbolt update` (a new or empty directory; update owns it).
+        /// Register DIR for the debug updater fixture only.
         #[arg(long, value_name = "DIR")]
         extension_dir: Option<PathBuf>,
     },
@@ -380,8 +375,7 @@ enum BrowserCommand {
     Uninstall {
         #[arg(long, value_enum, conflicts_with = "extension_dir")]
         browser: Vec<browser::Browser>,
-        /// Only stop `shuvbolt update` keeping DIR current, leaving its
-        /// files and the browsers' registration alone.
+        /// Remove an old updater registration without deleting files.
         #[arg(long, value_name = "DIR")]
         extension_dir: Option<PathBuf>,
     },
@@ -491,7 +485,10 @@ fn run_main() -> ExitCode {
     let cli = Cli::parse_from(args);
     let daemon = matches!(cli.command, Commands::Daemon | Commands::OldDaemon);
     // The daemon's update notice: only to a person at a terminal.
-    let notice = !json && notices_updates(&cli.command) && prompt::interactive();
+    let notice = cfg!(feature = "upstream-update-fixtures")
+        && !json
+        && notices_updates(&cli.command)
+        && prompt::interactive();
     // Commands die quietly when piped into `head`. The daemon and the browser
     // host keep Rust's ignored SIGPIPE: a client hanging up mid-reply must
     // not kill them before they clean up.

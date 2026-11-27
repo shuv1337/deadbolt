@@ -74,6 +74,7 @@ env:
 
 jobs:
   plan:
+    if: github.repository == 'anomalyco/deadbolt'
     runs-on: ubuntu-24.04
     outputs:
       sha: ${{ steps.plan.outputs.sha }}
@@ -333,7 +334,7 @@ jobs:
   sign-enclave:
     name: Sign Touch ID helper
     needs: [plan, build-enclave]
-    if: ${{ !cancelled() && needs.build-enclave.result == 'success' }}
+    if: ${{ github.repository == 'anomalyco/deadbolt' && !cancelled() && needs.build-enclave.result == 'success' }}
     runs-on: macos-26
     timeout-minutes: 20
     environment: release
@@ -443,7 +444,7 @@ jobs:
   build-macos:
     name: Build macOS
     needs: [plan, build-enclave, sign-enclave]
-    if: ${{ !cancelled() && needs.sign-enclave.result == 'success' }}
+    if: ${{ github.repository == 'anomalyco/deadbolt' && !cancelled() && needs.sign-enclave.result == 'success' }}
     runs-on: blacksmith-6vcpu-macos-26
     timeout-minutes: 120
     env:
@@ -517,7 +518,7 @@ jobs:
   sign-macos:
     name: Sign macOS
     needs: [plan, sign-enclave, build-macos]
-    if: ${{ !cancelled() && needs.build-macos.result == 'success' && needs.sign-enclave.outputs.signed == 'true' }}
+    if: ${{ github.repository == 'anomalyco/deadbolt' && !cancelled() && needs.build-macos.result == 'success' && needs.sign-enclave.outputs.signed == 'true' }}
     runs-on: macos-26
     timeout-minutes: 90
     environment: release
@@ -559,7 +560,7 @@ jobs:
   verify-macos:
     name: Verify macOS
     needs: [plan, sign-macos]
-    if: ${{ !cancelled() && needs.sign-macos.result == 'success' }}
+    if: ${{ github.repository == 'anomalyco/deadbolt' && !cancelled() && needs.sign-macos.result == 'success' }}
     runs-on: blacksmith-6vcpu-macos-26
     timeout-minutes: 30
     env:
@@ -583,7 +584,7 @@ jobs:
     name: Build npm packages
     needs: [plan, build-linux-x64, build-linux-arm64, build-linux-x64-musl, build-linux-arm64-musl, sign-macos, verify-macos]
     if: >-
-      ${{ !cancelled()
+      ${{ github.repository == 'anomalyco/deadbolt' && !cancelled()
       && needs.build-linux-x64.result == 'success' && needs.build-linux-arm64.result == 'success'
       && needs.build-linux-x64-musl.result == 'success' && needs.build-linux-arm64-musl.result == 'success'
       && needs.verify-macos.result == 'success' }}
@@ -646,7 +647,7 @@ jobs:
   publish:
     needs: [plan, build-linux-x64, build-linux-arm64, build-linux-x64-musl, build-linux-arm64-musl, build-extension, build-macos, sign-enclave, sign-macos, verify-macos]
     if: >-
-      ${{ !cancelled() && needs.plan.outputs.channel != 'check'
+      ${{ github.repository == 'anomalyco/deadbolt' && !cancelled() && needs.plan.outputs.channel != 'check'
       && needs.build-linux-x64.result == 'success' && needs.build-linux-arm64.result == 'success'
       && needs.build-linux-x64-musl.result == 'success' && needs.build-linux-arm64-musl.result == 'success'
       && needs.build-extension.result == 'success'
@@ -702,7 +703,7 @@ jobs:
   publish-attestations:
     name: Attest npm packages
     needs: [plan, build-npm]
-    if: ${{ !cancelled() && needs.build-npm.result == 'success' && needs.plan.outputs.channel != 'check' }}
+    if: ${{ github.repository == 'anomalyco/deadbolt' && !cancelled() && needs.build-npm.result == 'success' && needs.plan.outputs.channel != 'check' }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -724,7 +725,7 @@ jobs:
   publish-npm:
     name: Publish to npm
     needs: [plan, build-npm, publish-attestations, publish]
-    if: ${{ !cancelled() && needs.publish-attestations.result == 'success' && needs.publish.result == 'success' }}
+    if: ${{ github.repository == 'anomalyco/deadbolt' && !cancelled() && needs.publish-attestations.result == 'success' && needs.publish.result == 'success' }}
     runs-on: ubuntu-24.04
     # Up to 30 minutes of it waiting for the registry (publish-npm.sh).
     timeout-minutes: 45
@@ -751,7 +752,7 @@ jobs:
   github:
     name: GitHub release
     needs: [plan, build-linux-x64, build-linux-arm64, build-linux-x64-musl, build-linux-arm64-musl, build-extension, build-macos, sign-enclave, sign-macos, publish]
-    if: ${{ !cancelled() && needs.publish.result == 'success' && needs.plan.outputs.release-channel == 'stable' }}
+    if: ${{ github.repository == 'anomalyco/deadbolt' && !cancelled() && needs.publish.result == 'success' && needs.plan.outputs.release-channel == 'stable' }}
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -782,7 +783,7 @@ jobs:
   homebrew-stage:
     name: Homebrew formula and cask
     needs: [plan, publish]
-    if: ${{ !cancelled() && needs.publish.result == 'success' && needs.plan.outputs.release-channel == 'stable' }}
+    if: ${{ github.repository == 'anomalyco/deadbolt' && !cancelled() && needs.publish.result == 'success' && needs.plan.outputs.release-channel == 'stable' }}
     runs-on: blacksmith-6vcpu-macos-26
     timeout-minutes: 30
     env:
@@ -833,7 +834,7 @@ jobs:
   homebrew:
     name: Homebrew
     needs: [plan, homebrew-stage]
-    if: ${{ !cancelled() && needs.homebrew-stage.result == 'success' }}
+    if: ${{ github.repository == 'anomalyco/deadbolt' && !cancelled() && needs.homebrew-stage.result == 'success' }}
     runs-on: ubuntu-24.04
     environment: release
     permissions:
@@ -858,7 +859,7 @@ jobs:
   # Tells Homebrew installs about the version only once the tap serves it.
   record-brew:
     needs: [plan, homebrew]
-    if: ${{ !cancelled() && needs.homebrew.result == 'success' }}
+    if: ${{ github.repository == 'anomalyco/deadbolt' && !cancelled() && needs.homebrew.result == 'success' }}
     runs-on: ubuntu-24.04
     environment: release
     permissions:

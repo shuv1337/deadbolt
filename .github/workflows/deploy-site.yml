@@ -42,7 +42,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.ref == 'refs/heads/dev'
+    if: github.repository == 'anomalyco/deadbolt' && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     outputs:
@@ -78,7 +78,7 @@ jobs:
 
   deploy:
     needs: build
-    if: github.ref == 'refs/heads/dev' && (github.event_name == 'workflow_dispatch' || vars.SITE_DEV_DEPLOY == 'true')
+    if: github.repository == 'anomalyco/deadbolt' && github.ref == 'refs/heads/dev' && (github.event_name == 'workflow_dispatch' || vars.SITE_DEV_DEPLOY == 'true')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     environment: dev

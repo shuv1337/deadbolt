@@ -356,9 +356,12 @@ fn devices(s: &App, k: &Kit) -> El {
     setting(k, "devices", false, device, about(k, &shares), el())
 }
 
-/// A newer Shuvbolt the daemon's background check found, quietly: nothing
-/// installs until `shuvbolt update` runs.
+/// Update copy for offline fixtures only. A running app must not advertise
+/// updates, even if an older daemon still returns an upstream update.
 fn update(s: &App, k: &Kit) -> Option<El> {
+    if s.daemon.is_live() {
+        return None;
+    }
     let update = s.status.as_ref()?.update.as_ref()?;
     let label = format!("Shuvbolt {} is out", update.version);
     let words = "Run shuvbolt update in a terminal to install it";

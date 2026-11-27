@@ -243,6 +243,11 @@ fn pick(chosen: &[Browser], dirs: &Dirs) -> Result<Vec<Browser>> {
 /// current.
 pub fn install(browsers: &[Browser], extension_dir: Option<&Path>, config: &Path) -> Result<()> {
     if let Some(dir) = extension_dir {
+        if !cfg!(feature = "upstream-update-fixtures") {
+            bail!(
+                "Shuvbolt doesn't download browser updates; build from source and load extension/dist unpacked. Run `shuvbolt browser install` without --extension-dir to register the native host."
+            );
+        }
         register_extension_dir(dir, config)?;
     }
     let dirs = Dirs::get()?;
@@ -277,9 +282,7 @@ fn register_extension_dir(dir: &Path, config: &Path) -> Result<()> {
     }
     crate::config::set_extension_dir(config, &dir)?;
     println!(
-        "`shuvbolt update` keeps the extension in {} current: run it now to \
-         fetch it, then load it unpacked from there (chrome://extensions, \
-         Developer mode, Load unpacked)",
+        "Registered {} for the loopback updater fixture.",
         dir.display()
     );
     Ok(())
@@ -312,8 +315,7 @@ pub fn unregister_extension_dir(dir: &Path, config: &Path) -> Result<()> {
         );
     }
     println!(
-        "`shuvbolt update` no longer keeps {} current; remove Shuvbolt loaded from \
-         there in chrome://extensions, then delete the directory, if you're done with it",
+        "Removed the updater registration for {}; no files were changed.",
         dir.display()
     );
     Ok(())

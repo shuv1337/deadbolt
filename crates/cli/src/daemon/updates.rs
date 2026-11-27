@@ -20,11 +20,14 @@ use crate::update::{Checked, Etags};
 pub const OPT_OUT: &str = "DEADBOLT_NO_UPDATE_CHECK";
 /// macOS's administrator or user preference that turns the check off for
 /// this app, as a Mac fleet sets it:
-/// `defaults write anomaly.deadbolt DisableUpdates 1`.
+/// `defaults write dev.shuv.shuvbolt DisableUpdates 1`.
 const DISABLE_UPDATES: &str = "DisableUpdates";
 /// The preference domains read for it: Deadbolt.app's and the CLI's, since
 /// the daemon may run from either.
-const PREFERENCE_DOMAINS: [&str; 2] = [deadbolt_client::peer::APP_ID, "anomaly.deadbolt.cli"];
+const PREFERENCE_DOMAINS: [&str; 2] = [
+    deadbolt_client::peer::APP_ID,
+    deadbolt_client::peer::DAEMON_ID,
+];
 /// Debug builds only: check this channel (a build from source follows
 /// none), at once and every second, for tests.
 const TEST_CHANNEL: &str = "DEADBOLT_UPDATE_CHECK_CHANNEL";
@@ -130,6 +133,9 @@ fn macos_disabled() -> bool {
 
 /// Runs the check for as long as the daemon does.
 pub async fn run(daemon: Arc<Daemon>) {
+    if !cfg!(feature = "upstream-update-fixtures") {
+        return;
+    }
     let env = |name| crate::config::env(name).ok();
     let Some(schedule) = schedule(
         crate::update::build_channel(),

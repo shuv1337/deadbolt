@@ -1,4 +1,4 @@
-//! Running `deadbolt update`: which release this install follows, whether the
+//! Running `shuvbolt update`: which release this install follows, whether the
 //! daemon should announce one, and running the install's own manager to put
 //! it in place.
 
@@ -27,12 +27,12 @@ use super::state::{UpdateState, check_sequence, read_floors};
 use crate::paths::Paths;
 use crate::protocol::UpdateInfo;
 
-/// `deadbolt update --check`'s exit code when an update is available.
+/// `shuvbolt update --check`'s exit code when an update is available.
 const EXIT_AVAILABLE: u8 = 10;
 
 #[derive(Args)]
 pub struct UpdateArgs {
-    /// Only say whether an update is available: exits 10 if one is, 0 if not.
+    /// Check without installing (debug updater fixture only).
     #[arg(long)]
     check: bool,
     /// The release channel to follow (default: the one this build was
@@ -131,15 +131,15 @@ pub(super) fn static_for(ldd: &str) -> bool {
 /// kind for [`decide`].
 fn artifact_of(install: &Install) -> Result<(&'static str, &'static str, &'static str)> {
     Ok(match install {
-        Install::App(_) => ("desktop", "Deadbolt.app", "direct"),
+        Install::App(_) => ("desktop", "Shuvbolt.app", "direct"),
         Install::Unmovable(bundle) => bail!(
             "{} runs from a disk image or under App Translocation; \
-             move Deadbolt to Applications, open it once, then update",
+             move Shuvbolt to Applications, open it once, then update",
             bundle.display()
         ),
-        Install::Standalone(_) => ("cli", "deadbolt", "direct"),
+        Install::Standalone(_) => ("cli", "shuvbolt", "direct"),
         Install::Managed(manager @ Manager::BrewCask) => {
-            ("desktop", "Deadbolt.app", manager.distribution())
+            ("desktop", "Shuvbolt.app", manager.distribution())
         }
         Install::Managed(manager) => ("cli", "deadbolt", manager.distribution()),
     })
@@ -234,7 +234,7 @@ pub enum Checked {
 }
 
 /// The daemon's background check: whether this install has an update on
-/// `channel` that `deadbolt update` would install (the release service's
+/// `channel` that `shuvbolt update` would install (the release service's
 /// rules, npm's version for npm's package, Homebrew's for Homebrew). It
 /// never downloads or installs anything, nor writes the sequence floors
 /// `update` keeps, but it ignores a manifest older than them. `Found(None)`
@@ -317,16 +317,32 @@ pub(super) fn state_dir(paths: &Paths) -> PathBuf {
 }
 
 pub async fn run(paths: &Paths, args: UpdateArgs) -> Result<ExitCode> {
+    if !cfg!(feature = "upstream-update-fixtures") {
+        if args.json {
+            println!(
+                "{}",
+                serde_json::json!({
+                    "status": "disabled",
+                    "reason": "no_fork_release_channel",
+                    "current": VERSION,
+                })
+            );
+            return Ok(ExitCode::FAILURE);
+        }
+        bail!(
+            "Shuvbolt self-update is disabled; rebuild from https://github.com/shuv1337/deadbolt"
+        );
+    }
     let built = build_channel();
     let Some(channel) = args.channel.as_deref().or(built) else {
         bail!(
-            "this deadbolt was built from source and follows no release channel; \
+            "this shuvbolt was built from source and follows no release channel; \
              pass --channel dev or --channel stable"
         );
     };
+    let service = Service::new(built)?;
     let exe = crate::app::this_binary()?;
     let install = method(&exe).await;
-    let service = Service::new(built)?;
     // Held through the install, so two updates never install at once.
     let state = UpdateState::open(&state_dir(paths))?;
     let bucket = rollout_bucket(&state.dir);
@@ -415,7 +431,7 @@ pub async fn run(paths: &Paths, args: UpdateArgs) -> Result<ExitCode> {
             match upgrade_command(manager, version) {
                 Some(upgrade) if args.check => {
                     if !quiet {
-                        println!("deadbolt update runs: {}", upgrade.shown);
+                        println!("shuvbolt update runs: {}", upgrade.shown);
                     }
                 }
                 Some(upgrade) => {
@@ -567,7 +583,7 @@ pub(super) fn upgrade_failure(
     anyhow::anyhow!(
         "{who} couldn't install deadbolt {version}:\n{detail}\n\n\
          It ran: {shown}\n\
-         Fix the problem above, then run `deadbolt update` again, or run that command yourself."
+         Fix the problem above, then run `shuvbolt update` again, or run that command yourself."
     )
 }
 
@@ -746,7 +762,7 @@ pub(super) async fn stop_daemon(paths: &Paths) -> bool {
         Ok(_) => true,
         Err(error) => {
             eprintln!(
-                "warning: couldn't stop the old daemon: {error}; run `deadbolt debug daemon stop`"
+                "warning: couldn't stop the old daemon: {error}; stop it with the CLI that started it"
             );
             false
         }
