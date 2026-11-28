@@ -111,7 +111,9 @@ beforeAll(() => {
   listenFillDoors()
 })
 
-afterAll(() => {
+afterAll(async () => {
+  await settle()
+  window.dispatchEvent(new Event("pagehide"))
   Element.prototype.getBoundingClientRect = rect
   document.elementFromPoint = hit.one
   document.elementsFromPoint = hit.all
