@@ -125,7 +125,7 @@ export const FIELD_CLUES: Record<FieldRole, Clue[]> = {
     ["codigo de verificacion", 6], ["code de verification", 6],
     ["bestatigungscode", 6], ["verifizierungscode", 6], ["確認コード", 6], ["認証コード", 6],
     ["код подтверждения", 6], ["인증번호", 6], ["codigo sms", 6], ["code sms", 6], ["sms kod", 6], ["codice sms", 6],
-    ["codigo de seguranca", 6], ["codigo de acesso", 6], ["codice di verifica", 6], ["verificatiecode", 6],
+    ["codigo de seguranca", 6], ["codigo de acesso", 6], ["codigo de verificacao", 6], ["codice di verifica", 6], ["verificatiecode", 6],
     ["kod weryfikacyjny", 6],
     ["captcha", -6], ["country", -4], ["area code", -6], ["invite", -5], ["tracking", -6],
     ...NOT_A_LOGIN_FIELD,
@@ -166,19 +166,33 @@ export interface FieldFacts {
 
 export const ROLES = Object.keys(FIELD_CLUES) as FieldRole[]
 
+/**
+ * Every field clue, made ready once: what to look for in display text (as
+ * hasPhrase would), and in code text, if it's long enough to match there.
+ * scoreField runs for every field of every scan.
+ */
+const COMPILED = ROLES.flatMap((role) =>
+  FIELD_CLUES[role].map(([phrase, value]) => {
+    const compact = squash(phrase)
+    return {
+      role,
+      value,
+      display: NON_SPACED.test(phrase) ? phrase : ` ${phrase} `,
+      code: compact.length >= 4 || SHORT_CODE_TOKENS.has(compact) ? compact : null,
+    }
+  }),
+)
+
 export function scoreField(f: FieldFacts): Record<FieldRole, number> {
   const score = Object.fromEntries(ROLES.map((r) => [r, 0])) as Record<FieldRole, number>
   // Whether the label itself names a login field: a question that doesn't is a security question.
   let named = false
-  for (const role of ROLES) {
-    for (const [phrase, value] of FIELD_CLUES[role]) {
-      if (hasPhrase(f.display, phrase)) {
-        score[role] += value
-        if (value > 0 && role !== "captcha") named = true
-      }
-      const compact = squash(phrase)
-      if ((compact.length >= 4 || SHORT_CODE_TOKENS.has(compact)) && f.code.includes(compact)) score[role] += value * 0.8
+  for (const clue of COMPILED) {
+    if (f.display.includes(clue.display)) {
+      score[clue.role] += clue.value
+      if (clue.value > 0 && clue.role !== "captcha") named = true
     }
+    if (clue.code !== null && f.code.includes(clue.code)) score[clue.role] += clue.value * 0.8
   }
 
   for (const token of f.autocomplete) {
@@ -228,6 +242,16 @@ export function scoreField(f: FieldFacts): Record<FieldRole, number> {
   return score
 }
 
+/**
+ * Whether a field's own words (label, placeholder, id or name) name one of
+ * the roles: a positive clue of it matches, not just its type. A masked box
+ * labelled "Password", "Hasło" or "Passcode" names one; "Value" or "Social
+ * Security number" doesn't.
+ */
+export function namesRole(f: FieldFacts, roles: readonly FieldRole[]): boolean {
+  return COMPILED.some((c) => c.value > 0 && roles.includes(c.role) && (f.display.includes(c.display) || (c.code !== null && f.code.includes(c.code))))
+}
+
 export const FIELD_THRESHOLD = 3
 
 export function bestRole(score: Record<FieldRole, number>): FieldRole | null {
@@ -242,6 +266,7 @@ export const FORM_CLUES: Record<FormKind, Clue[]> = {
   login: prepare([
     ["sign in", 3], ["signin", 3], ["log in", 3], ["login", 3], ["log on", 2], ["sign on", 2], ["welcome back", 2],
     ["forgot password", 2], ["forgot your password", 2], ["remember me", 2], ["keep me signed in", 2],
+    ["enter your password", 3], ["enter password", 2],
     ["stay signed in", 2], ["don t have an account", 2], ["se connecter", 3], ["connexion", 3], ["anmelden", 3],
     ["einloggen", 3], ["iniciar sesion", 3], ["entrar", 2], ["accedi", 3], ["inloggen", 3], ["ログイン", 3],
     ["サインイン", 3], ["登录", 3], ["登入", 3], ["войти", 3], ["вход", 3], ["로그인", 3],
@@ -274,6 +299,8 @@ export const FORM_CLUES: Record<FormKind, Clue[]> = {
     ["two factor", 3], ["2 step", 3], ["two step", 3], ["verification code", 3], ["enter the code", 3],
     ["enter code", 2], ["sent a code", 3], ["we sent", 2], ["authenticator app", 3], ["verify it s you", 3],
     ["check your phone", 2], ["code de verification", 3], ["bestatigungscode", 3], ["確認コード", 3],
+    ["codigo de verificacao", 3], ["codigo de verificacion", 3], ["verificacao em duas etapas", 3], ["verificacion en dos pasos", 3],
+    ["verification en deux etapes", 3], ["zwei faktor", 3], ["bestatigung in zwei schritten", 3], ["2 段階認証", 3], ["認証コード", 3],
     ["card number", -4], ["checkout", -4], ["pay", -3], ["shipping", -3],
   ]),
   newsletter: prepare([

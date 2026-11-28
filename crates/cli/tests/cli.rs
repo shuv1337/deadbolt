@@ -1895,7 +1895,8 @@ fn browser_host_lists_and_fills_only_for_the_page_site() {
             "learn",
             "learn-files",
             "forms",
-            "save-form"
+            "save-form",
+            "unlock-prompt"
         ])
     );
 
@@ -3001,6 +3002,21 @@ fn send_ls_show_and_revoke_manage_links() {
 }
 
 #[test]
+fn recover_refuses_a_vault_selector() {
+    let a = Device::new();
+    let err = a.fail(&[
+        "--vault",
+        "personal",
+        "recover",
+        "id",
+        "webdav",
+        "--url",
+        "https://example.com/vault/",
+    ]);
+    assert!(err.contains("--vault does not apply"), "{err}");
+}
+
+#[test]
 fn a_waiting_send_reports_the_pickup() {
     let a = Device::new();
     let file = a.path("hello.txt");
@@ -3769,6 +3785,8 @@ mod mcp;
 mod migrate_v1;
 #[path = "cli/recovery.rs"]
 mod recovery;
+#[path = "cli/shared_sites.rs"]
+mod shared_sites;
 #[path = "cli/taint.rs"]
 mod taint;
 #[path = "cli/updates.rs"]

@@ -213,6 +213,8 @@ async fn autofill_extension_is_confined_to_its_narrow_command_set() {
         Command::Lock,
         Command::Stop,
         Command::VaultList,
+        Command::Watch { app: false },
+        Command::Watch { app: true },
         Command::Unlock {
             passphrase: Zeroizing::new("test".into()),
             timeout_secs: Some(0),
@@ -243,6 +245,97 @@ async fn autofill_extension_is_confined_to_its_narrow_command_set() {
             );
         }
     }
+}
+
+#[tokio::test]
+async fn passphrase_unlock_without_pending_kits_returns_done_to_autofill() {
+    let f = unlocked().await;
+    for socket in [SocketKind::Control, SocketKind::AutoFill] {
+        f.daemon.lock().await;
+        let reply = send_on(
+            &f.daemon,
+            socket,
+            Some((CallerClass::AutoFill, "macOS AutoFill")),
+            Command::Unlock {
+                passphrase: Zeroizing::new("test".into()),
+                timeout_secs: None,
+            },
+        )
+        .await;
+        assert!(
+            matches!(reply, Message::Ok { reply: Reply::Done }),
+            "{reply:?}"
+        );
+        assert!(f.daemon.status().unlocked);
+    }
+}
+
+#[tokio::test]
+async fn pending_migration_kits_require_a_caller_that_can_display_them() {
+    let f = unlocked().await;
+    f.daemon
+        .with(|s| {
+            let (id, kit) = s.create_vault_with_kit("migrated")?;
+            let pending = vec![crate::protocol::MigratedVault {
+                vault: s.vault_info(&id),
+                items: 0,
+                recovery_kit: kit.into(),
+            }];
+            super::super::session::set_json(
+                s.store(),
+                super::super::upgrade::PENDING_KITS,
+                &pending,
+            )
+        })
+        .unwrap();
+    f.daemon.lock().await;
+    let changes = f.daemon.watchers.subscribe(false);
+    let unlock = || Command::Unlock {
+        passphrase: Zeroizing::new("test".into()),
+        timeout_secs: None,
+    };
+    let reply = send_on(
+        &f.daemon,
+        SocketKind::Control,
+        Some((CallerClass::AutoFill, "macOS AutoFill")),
+        unlock(),
+    )
+    .await;
+    assert!(
+        matches!(
+            reply,
+            Message::Error {
+                code: ErrorCode::Locked,
+                ..
+            }
+        ),
+        "{reply:?}"
+    );
+    assert!(!f.daemon.status().unlocked);
+    assert!(
+        tokio::time::timeout(std::time::Duration::from_millis(100), changes.next())
+            .await
+            .is_err()
+    );
+    let loaded = Loaded::open(&f.daemon.paths.data, b"test").unwrap();
+    assert_eq!(super::super::upgrade::pending(&loaded).unwrap().len(), 1);
+    drop(loaded);
+    let reply = send_on(
+        &f.daemon,
+        SocketKind::Control,
+        Some((CallerClass::Caller, "CLI")),
+        unlock(),
+    )
+    .await;
+    assert!(
+        matches!(reply, Message::Ok { reply: Reply::Unlocked { migrated } } if migrated.len() == 1)
+    );
+    assert!(
+        f.daemon
+            .with(|s| super::super::upgrade::pending(s))
+            .unwrap()
+            .is_empty()
+    );
 }
 
 #[tokio::test]
@@ -925,4 +1018,19 @@ async fn activity_records_fills_and_passkeys_without_values_and_skips_lookups() 
     assert_eq!(entries[0].outcome, Outcome::Allowed);
     let raw = serde_json::to_string(&entries).unwrap();
     assert!(!raw.contains(pw), "{raw}");
+}
+
+/// A Touch ID prompt left unanswered until it timed out is a cancel, as the
+/// user pressing Cancel is: `unlock-biometric` answers `cancelled`, and the
+/// browser host brings nothing forward (see browser/host/unlock.rs).
+#[test]
+fn an_unanswered_touch_id_prompt_counts_as_cancelled() {
+    let timed_out = anyhow::anyhow!("{}", biometric::prompt_timed_out());
+    assert!(is_biometric_cancelled(&timed_out));
+    assert!(is_biometric_cancelled(&anyhow::anyhow!(
+        "{}",
+        biometric::UnlockError::Cancelled
+    )));
+    let unavailable = biometric::UnlockError::Unavailable("no finger enrolled".into());
+    assert!(!is_biometric_cancelled(&anyhow::anyhow!("{unavailable}")));
 }

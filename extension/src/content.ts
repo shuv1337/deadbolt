@@ -9,16 +9,18 @@ import { SIGNIN_SETTING, signInOn } from "./auth-state"
 import { authReport, SIGN_OUT, signInSignal, takeSignInAction } from "./content/auth-state"
 import { initFrameChecks } from "./content/embed"
 import { scanForms, type FormField } from "./content/forms"
+import { scanGraph } from "./content/graph"
 import { readSubmitted } from "./content/formfill"
+import { manualFields, withManual } from "./content/manual"
 import { ownValue, rendered, trackUserInput } from "./content/fill"
 import { generatedId } from "./content/generate"
 import { initMenu, markSubmitted, menuHost, noteSubmitGesture, refreshMenu, send, stepped } from "./content/inline"
 import { initLearn, learnScanned } from "./content/learn"
-import { formFailed, pageFacts } from "./content/outcome"
+import { formFailed, noteSubmitShell, pageFacts } from "./content/outcome"
 import { initPasskeyChannel } from "./content/passkeys"
 import { chainActive, initProviderChain } from "./content/provider-chain"
 import { deepActiveElement, eventTarget, openRoots } from "./content/shadow"
-import { SETTLE_MS, submitPlan, type SubmitPlan } from "./content/signin-submit"
+import { noteStop, settledPlan, submitPlan, type SubmitPlan } from "./content/signin-submit"
 import { IDENTIFIER_ROLES, type SurfaceKind, type ToContent } from "./messages"
 import { paymentProvider } from "./payments"
 
@@ -39,6 +41,8 @@ const FAILED_AFTER_MS = 5000
 
 /** Live fields of the current login form. Never sent anywhere. */
 let fields: Field[] = []
+/** Fields the user asked to fill where the scan found no login (see content/manual.ts), until they go or the page moves on. */
+let manual: Field[] = []
 let submitControl: Element | undefined
 let kind: SurfaceKind | null = null
 /** The page shows a sign-in-provider button. */
@@ -86,16 +90,23 @@ function refresh() {
   const roots = openRoots(document, undefined, true)
   scannedRoots = roots
   watchShadowRoots(roots)
-  const result = scanPage(roots)
+  // One read of every control's box, style and label, shared by both scans below.
+  const graph = scanGraph(roots)
+  const result = scanPage(graph)
   kind = result.kind
   provider = result.provider
-  // A reset form's email box isn't something to fill.
-  const next = kind && kind !== "reset" ? result.fields : []
+  // A reset form's email box isn't something to fill. Fields the user asked
+  // to fill by hand stand in for it until they go back to it (see withManual);
+  // they're no kind of form the background may sign in with.
+  const taken = withManual(kind && kind !== "reset" ? result.fields : [], manual, deepActiveElement())
+  manual = taken.manual
+  const next = taken.fields
+  if (manual.length) kind = null
   if (!sameFields(fields, next)) formId++
   fields = next
   submitControl = kind ? result.submit : undefined
   // A field a login form claims (its email box) is the login's.
-  const forms = scanForms(roots).filter((f) => !fields.some((l) => l.el === f.el))
+  const forms = scanForms(graph).filter((f) => !fields.some((l) => l.el === f.el))
   const same = forms.length === formFields.length && forms.every((f, i) => f.el === formFields[i].el && f.role === formFields[i].role && f.section === formFields[i].section && f.form === formFields[i].form && f.parent === formFields[i].parent)
   if (!same) formsId++
   formFields = forms
@@ -142,6 +153,7 @@ function scan() {
   if (location.href !== lastUrl) {
     lastUrl = location.href
     lastSignature = ""
+    manual = []
   }
   refresh()
   void report(false)
@@ -242,7 +254,7 @@ chrome.runtime.onMessage.addListener((message: ToContent, _sender, respond) => {
     if (!isTop) return void respond(null)
     try {
       refresh()
-      respond(pageFacts(kind, fields, typeof message.username === "string" ? message.username : undefined, provider))
+      respond(pageFacts(kind, fields, typeof message.username === "string" ? message.username : undefined, provider, message.shell === true))
     } catch {
       respond(null)
     }
@@ -273,7 +285,7 @@ const OBSERVE: MutationObserverInit = {
   childList: true,
   subtree: true,
   attributes: true,
-  attributeFilter: ["type", "class", "hidden", "autocomplete", "aria-hidden", "style"],
+  attributeFilter: ["type", "class", "hidden", "autocomplete", "aria-hidden", "inert", "style"],
 }
 let observer: MutationObserver | null = null
 
@@ -478,6 +490,7 @@ let submitGestureAt = -Infinity
 
 /** What was submitted goes to the background, to offer to save it if the sign-in works. */
 function captured() {
+  noteSubmitShell()
   scheduleScan()
   void submitted()
   settleAfterSubmit()
@@ -513,9 +526,9 @@ async function sessionSubmit(message: Extract<ToContent, { type: "db:signin-subm
     stepSubmitted()
     return true
   }
-  await new Promise((resolve) => setTimeout(resolve, SETTLE_MS))
-  const after = plan()
-  if (!after || after.button !== before.button) return false
+  // Esc during the settle, or the step changing, stops it (see settledPlan).
+  const after = await settledPlan(before, plan)
+  if (!after) return false
   sessionSubmitted = formId
   captured()
   stepSubmitted()
@@ -571,6 +584,7 @@ function onSubmit(event: Event) {
 }
 
 function onKeydown(event: KeyboardEvent) {
+  if (event.isTrusted && event.key === "Escape") noteStop()
   if (event.isTrusted && event.key === "Escape" && isTop && offerSignIn) void send({ type: "db:signin-stop" })
   if (!event.isTrusted || event.key !== "Enter") return
   const target = realTarget(event)
@@ -584,7 +598,16 @@ function onKeydown(event: KeyboardEvent) {
 
 // First, while it's still document_start: the hook is waiting for its port.
 initPasskeyChannel(send)
-const state = { targets: () => fields, form: () => formId, kind: () => kind, rescan: refresh, formFields: () => formFields, formsForm: () => formsId }
+/** The user asked to fill `el` (see content/manual.ts): whether it's a login field now. */
+function adopt(el: HTMLInputElement): boolean {
+  refresh()
+  if (fields.some((f) => f.el === el)) return true
+  manual = manualFields(el)
+  refresh()
+  return fields.some((f) => f.el === el)
+}
+
+const state = { targets: () => fields, form: () => formId, kind: () => kind, rescan: refresh, formFields: () => formFields, formsForm: () => formsId, manual: adopt }
 initMenu(state)
 initFrameChecks(state)
 // A provider sign-in chain's submit: what db:signin-submit does after its checks.
