@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test"
-import { fillable, fillFields, hiddenByStyle, ownValue, renderedParent, setInputValue, trackUserInput, visibleBox } from "../src/content/fill"
+import { fillable, filledByDeadbolt, fillFields, hiddenByStyle, ownValue, renderedParent, setInputValue, trackUserInput, visibleBox } from "../src/content/fill"
 import { ownerOf, type Field } from "../src/content/detect"
+import { tag as digest } from "../src/content/tag"
 import { scanForms } from "../src/content/forms"
 import { fillForm, readSubmitted } from "../src/content/formfill"
 import { countryCode, readBirthday, readCardNumber, readExpiry, splitNumber, valueFor } from "../src/content/transform"
@@ -40,6 +41,53 @@ describe("ownValue", () => {
     el.dispatchEvent(event)
     expect(event.isTrusted).toBeFalsy()
     expect(await ownValue(el, el.value)).toBeUndefined()
+  })
+
+  test("a trusted keystroke's value is the user's, and only that value", async () => {
+    const el = input()
+    el.addEventListener("input", trackUserInput)
+    for (const value of ["c", "co", "correct horse"]) {
+      el.value = value
+      const event = new Event("input", { bubbles: true, composed: true })
+      Object.defineProperty(event, "isTrusted", { value: true })
+      el.dispatchEvent(event)
+    }
+    expect(await ownValue(el, "correct horse")).toBe("correct horse")
+    expect(await ownValue(el, "correct hors")).toBeUndefined()
+    expect(await ownValue(el, "co")).toBeUndefined()
+  })
+})
+
+describe("the keyed input tag", () => {
+  const key = (...k: number[]) => Uint32Array.from(k)
+
+  test("tells values apart, holds none of them, and depends on the key", () => {
+    const k = key(1, 2, 3, 4)
+    const values = ["", "a", "b", "ab", "ba", "aa", "correct horse", "correct horsf", "pässwörd", "\u0000", "\u0000\u0000", "x".repeat(500)]
+    const tags = values.map((v) => digest(v, k))
+    expect(new Set(tags).size).toBe(values.length)
+    for (const t of tags) expect(t).toMatch(/^[0-9a-f]{16}$/)
+    expect(digest("correct horse", k)).toBe(digest("correct horse", key(1, 2, 3, 4)))
+    expect(digest("correct horse", k)).not.toBe(digest("correct horse", key(1, 2, 3, 5)))
+    expect(digest("correct horse", k)).not.toBe(digest("correct horse", key(9, 2, 3, 4)))
+  })
+
+  test("no collisions across a hundred thousand similar values", () => {
+    const k = crypto.getRandomValues(new Uint32Array(4))
+    const seen = new Set<string>()
+    for (let i = 0; i < 100_000; i++) seen.add(digest(`hunter${i}`, k))
+    expect(seen.size).toBe(100_000)
+  })
+
+  test("is cheap enough for every keystroke", () => {
+    const k = crypto.getRandomValues(new Uint32Array(4))
+    const value = "correct horse battery staple"
+    const n = 20_000
+    const start = performance.now()
+    for (let i = 0; i < n; i++) digest(value.slice(0, (i % value.length) + 1), k)
+    const each = ((performance.now() - start) * 1000) / n
+    // The HMAC it replaces cost about 10 µs, and a promise, per keystroke.
+    expect(each).toBeLessThan(5)
   })
 })
 
@@ -329,6 +377,53 @@ describe("fillFields", () => {
     expect((await fillFields(fields, { totp: "492039" }, () => true)).filled).toEqual([])
     expect(fields.map((f) => f.el.value).join("")).toBe("49")
   })
+  /** Six boxes whose component turns a written digit down (as one that ignores synthetic input does) and takes the code only from a paste on the first box. */
+  function pasteOnly(takesPaste = true) {
+    document.body.innerHTML = `<form>${"<input maxlength=1 inputmode=numeric>".repeat(6)}</form>`
+    const boxes = Array.from(document.querySelectorAll("input"))
+    const state = ["", "", "", "", "", ""]
+    let pastes = 0
+    boxes.forEach((b, i) => b.addEventListener("input", (e) => void (!e.isTrusted && (b.value = state[i]))))
+    boxes[0].addEventListener("paste", (e) => {
+      pastes++
+      if (!takesPaste) return
+      e.preventDefault()
+      const code = (e.clipboardData?.getData("text") ?? "").replace(/\D/g, "")
+      code.split("").slice(0, 6).forEach((c, j) => void ((state[j] = c), (boxes[j].value = c)))
+    })
+    return { fields: boxes.map((el) => field(el, "otp", 6)), pastes: () => pastes }
+  }
+
+  test("code boxes that take a code only as a paste get it pasted into the first box", async () => {
+    const { fields, pastes } = pasteOnly()
+    const done = await fillFields(fields, { totp: "492039" }, () => true)
+    expect(done.filled).toEqual(["otp"])
+    // The step's pill goes on the last box, not over the boxes after the first.
+    expect(done.last).toBe(fields[5].el)
+    expect(done.written.filter((el) => el === fields[0].el)).toHaveLength(1)
+    expect(fields.map((f) => f.el.value).join("")).toBe("492039")
+    expect(pastes()).toBe(1)
+  })
+
+  test("boxes that take neither a write nor a paste aren't said to be filled", async () => {
+    const { fields, pastes } = pasteOnly(false)
+    expect((await fillFields(fields, { totp: "492039" }, () => true)).filled).toEqual([])
+    expect(pastes()).toBe(1)
+  })
+
+  test("no paste when the digits went in, nor when a box fails its check", async () => {
+    document.body.innerHTML = `<form>${"<input maxlength=1>".repeat(6)}</form>`
+    const fields = Array.from(document.querySelectorAll("input")).map((el) => field(el, "otp", 6))
+    let pasted = 0
+    fields[0].el.addEventListener("paste", () => pasted++)
+    expect((await fillFields(fields, { totp: "492039" }, () => true)).filled).toEqual(["otp"])
+    expect(pasted).toBe(0)
+    const p = pasteOnly()
+    let checks = 0
+    // Every box passes while the digits go in; the first fails its check after.
+    expect((await fillFields(p.fields, { totp: "492039" }, (el) => el !== p.fields[0].el || ++checks <= 2)).filled).toEqual([])
+    expect(p.pastes()).toBe(0)
+  })
 })
 
 describe("form values", () => {
@@ -434,6 +529,60 @@ describe("form values", () => {
     const { filled } = await fillForm(scanForms(), alex, (el) => !el.disabled)
     expect(filled).toEqual(["country", "address-level1"])
     expect(state.value).toBe("NY")
+  })
+
+  /** A strict mask, as Cleave.js or a checkout's own script keeps one: it takes a character at a time and formats, and turns a whole value written at once down. */
+  function strictMask(el: HTMLInputElement, format: (digits: string) => string) {
+    let kept = ""
+    el.addEventListener("input", (e) => {
+      const data = (e as InputEvent).data ?? ""
+      if ((e as InputEvent).inputType === "insertReplacementText" || data.length > 1) return void (el.value = kept)
+      el.value = kept = format(el.value.replace(/\D/g, ""))
+    })
+  }
+
+  test("a strictly masked card number and expiry are typed a character at a time", async () => {
+    document.body.innerHTML = `<form><label for="n">Card number</label><input id="n" autocomplete="cc-number"><label for="e">Expiry</label><input id="e" autocomplete="cc-exp" placeholder="MM / YY"><label for="h">Name on card</label><input id="h" autocomplete="cc-name"></form>`
+    const [n, e] = ["n", "e"].map((id) => document.getElementById(id) as HTMLInputElement)
+    strictMask(n, (d) => d.slice(0, 16).replace(/(\d{4})(?=\d)/g, "$1 "))
+    strictMask(e, (d) => (d.length > 2 ? `${d.slice(0, 2)} / ${d.slice(2, 4)}` : d))
+    const { filled } = await fillForm(scanForms(), card, () => true)
+    expect(filled).toEqual(["cc-number", "cc-exp", "cc-name"])
+    expect([n.value, e.value]).toEqual(["4242 4242 4242 4242", "08 / 28"])
+    // What it holds now, formatted, is what Deadbolt filled.
+    expect(await filledByDeadbolt(n, n.value)).toBe(true)
+  })
+
+  test("a masked field that takes the whole value isn't typed into again", async () => {
+    document.body.innerHTML = `<form><label for="n">Card number</label><input id="n" autocomplete="cc-number"></form>`
+    const n = document.getElementById("n") as HTMLInputElement
+    let inputs = 0
+    n.addEventListener("input", () => {
+      inputs++
+      n.value = n.value.replace(/\D/g, "").replace(/(\d{4})(?=\d)/g, "$1 ")
+    })
+    await fillForm(scanForms(), card, () => true)
+    expect([n.value, inputs]).toEqual(["4242 4242 4242 4242", 1])
+  })
+
+  test("a masked field that fails its check partway through typing stops there, and isn't said to be filled", async () => {
+    document.body.innerHTML = `<form><label for="n">Card number</label><input id="n" autocomplete="cc-number"></form>`
+    const n = document.getElementById("n") as HTMLInputElement
+    strictMask(n, (d) => d)
+    let checks = 0
+    const { filled } = await fillForm(scanForms(), card, () => ++checks < 8)
+    expect(n.value.length).toBeLessThan(16)
+    expect(filled).not.toContain("cc-number")
+  })
+
+  test("a mask that formats a whole value written at once: what it shows is what Deadbolt filled", async () => {
+    document.body.innerHTML = `<form><label for="n">Card number</label><input id="n" autocomplete="cc-number"></form>`
+    const n = document.getElementById("n") as HTMLInputElement
+    n.addEventListener("input", () => void (n.value = n.value.replace(/\D/g, "").replace(/(\d{4})(?=\d)/g, "$1 ")))
+    await fillForm(scanForms(), { ...card }, () => true)
+    expect(n.value).toBe("4242 4242 4242 4242")
+    expect(await filledByDeadbolt(n, n.value)).toBe(true)
+    expect(await ownValue(n, n.value)).toBe(n.value)
   })
 
   test("split card boxes fill only as a whole", async () => {

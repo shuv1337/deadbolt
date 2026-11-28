@@ -9,6 +9,7 @@
 
 import type { BrowserContext, Frame, Page, Worker } from "playwright-core"
 import { BACKUP_CODES, EMAIL_CODE, PAGES, SMS_CODE, type Account } from "./site"
+import { CONCEALED, DECOYS, SPA_PASSWORD, SPA_USER } from "./traps"
 
 export interface GauntletRun {
   context: BrowserContext
@@ -69,6 +70,8 @@ export function gauntletScenarios<R extends GauntletRun>(h: Harness<R>): { scena
     page: Page
     /** One check of this page. */
     ok(cond: boolean, what: string): boolean
+    /** A check that fails on dev until `until` lands: reported, never counted (see PENDING, for a whole page). */
+    pend(cond: boolean, what: string, until: string): boolean
     /** How many vault requests the run had made when this page started. */
     before: number
   }
@@ -576,20 +579,136 @@ export function gauntletScenarios<R extends GauntletRun>(h: Harness<R>): { scena
       c.ok(await pickForm(c, "#cc-number", "Visa"), "the card menu fills")
       const card = await Promise.all(["#cc-number", "#cc-month", "#cc-year", "#cc-csc", "#cc-name"].map((s) => value(c.page, s)))
       c.ok(card[0].replace(/\D/g, "") === "4242424242424242" && card[1] === "08" && card[2] === "2028" && card[3] === "123" && card[4] === "Alex Mercer", `number, expiry selects, code and name (${card.join(" | ")})`)
+      // One pick fills the whole address: fields of the form below the fold are scrolled to as they're written (docs/autofill.md).
       c.ok(await pickForm(c, "#bill-line1", "Home"), "the billing address fills from an identity")
-      // An address goes only into fields on screen at the pick (docs/autofill.md): the rest, below the fold, take a second pick there.
-      const below = await c.page.evaluate(() => document.getElementById("bill-country")!.getBoundingClientRect().top > innerHeight)
-      if (below) {
-        c.ok((await value(c.page, "#bill-country")) === "", "a field below the fold gets nothing")
-        await c.page.locator("#bill-country").scrollIntoViewIfNeeded()
-        c.ok(await pickForm(c, "#bill-city", "Home"), "a pick there fills the rest")
-      }
       const bill = await Promise.all(["#bill-line1", "#bill-line2", "#bill-city", "#bill-state", "#bill-zip", "#bill-country"].map((s) => value(c.page, s)))
       c.ok(JSON.stringify(bill) === JSON.stringify(["123 Main St", "Apt 4", "Brooklyn", "NY", "11201", "US"]), `the whole billing address (${bill.join(" | ")})`)
       await c.page.click("#submit")
       c.ok(!!(await wait("saved", async () => (await c.page.locator("#result[data-ok]").count()) > 0)), "and the form submits")
     },
+
+    // ---- Traps (traps.ts) ----
+    "google-hidden-password": async (c) => {
+      await c.page.goto(g("google-hidden-password"))
+      await reported(c.run, "/gauntlet/google-hidden-password")
+      c.ok(await pick(c, "#username"), "the email step fills from the menu")
+      c.ok((await value(c.page, "#username")) === ALEX, "with the username")
+      c.ok((await value(c.page, "#hidden-password")) === "", "and the hidden password box (tabindex=-1, aria-hidden, 1 px) gets 0 bytes")
+      await c.page.click("#continue")
+      await c.page.waitForURL("**/google-hidden-password/password")
+      c.ok((await c.page.locator("#trapped").count()) === 0, "the server found nothing in hiddenPassword")
+      c.ok(await filledWith(c.page, "#password", KIT_PASSWORD, 4000), "a hidden password box on step 1 doesn't end the sign-in session: the next step fills from the same pick")
+      await wait("the pill goes", () => !menuFrame(c.page), 8000)
+      await c.page.click("#submit")
+      c.ok((await signedInAs(c.page)) === ALEX, "and the site signs in")
+    },
+    "react-onsubmit-form": async (c) => {
+      const urls: string[] = []
+      c.page.on("framenavigated", (f) => void (f === c.page.mainFrame() && urls.push(f.url())))
+      await c.page.goto(g("react-onsubmit-form"))
+      await reported(c.run, "/gauntlet/react-onsubmit-form")
+      c.ok(await pick(c, "#username"), "the email step of a form with no action fills")
+      await c.page.click("#next")
+      await c.page.waitForSelector("#password")
+      c.ok(await filledWith(c.page, "#password", KIT_PASSWORD, 4000), "a step re-rendered in place is the next step: it fills from the same pick")
+      await wait("the pill goes", () => !menuFrame(c.page), 8000)
+      await c.page.click("#submit")
+      c.ok((await signedInAs(c.page)) === ALEX, "and the site signs in")
+      c.ok(urls.every((u) => !new URL(u).search), `the form is never submitted natively, so no field lands in the URL (${urls.map((u) => new URL(u).search).filter(Boolean).length} queries)`)
+    },
+    "dual-otp-boxes": async (c) => {
+      await passwordStep(c, "dual-otp-boxes")
+      await c.page.waitForSelector("#a1")
+      await sleep(2500)
+      const group = async (p: string) => (await Promise.all([1, 2, 3, 4, 5, 6].map((i) => value(c.page, `#${p}${i}`)))).join("")
+      c.ok((await group("s")) === "", "the texted code's six boxes get 0 bytes")
+      c.ok(h.isCode(await group("a")), "the authenticator's six boxes fill with the code")
+      c.ok((await codesAsked(c)) <= 1, "the vault is asked for at most one code")
+      for (const [i, d] of [...SMS_CODE].entries()) await c.page.fill(`#s${i + 1}`, d)
+      await c.page.click("#verify-sms")
+      c.ok((await signedInAs(c.page)) === ALEX, "and the texted code typed by hand signs in")
+    },
+    "concealed-traps": async (c) => {
+      await c.page.goto(g("concealed-traps"))
+      await reported(c.run, "/gauntlet/concealed-traps")
+      c.ok(await pick(c, "#username"), "the real login fills")
+      c.ok((await value(c.page, "#username")) === ALEX && (await value(c.page, "#password")) === KIT_PASSWORD, "both real boxes")
+      const traps = await Promise.all(CONCEALED.map((id) => value(c.page, `#${id}`)))
+      c.ok(traps.every((v) => v === ""), `0 bytes in every concealed input (${CONCEALED.map((id, i) => `${id} ${traps[i].length}`).join(", ")})`)
+      await c.page.click("#submit")
+      c.ok((await signedInAs(c.page)) === ALEX, "and the site signs in, finding nothing in the traps")
+    },
+    "decoy-zoo": async (c) => {
+      await c.page.goto(g("decoy-zoo"))
+      await sleep(1500)
+      for (const sel of DECOYS) {
+        const rows = await quietOn(c, sel)
+        c.ok(rows.length === 0, `${sel} opens no menu (${rows.join(", ") || "none"})`)
+      }
+      const got = await Promise.all(DECOYS.map((s) => value(c.page, s)))
+      c.ok(got.every((v) => !v), `and nothing is filled (${got.join(" | ")})`)
+      c.ok((await fills(c)).length === 0, "nor asked of the vault")
+    },
+    "below-fold-checkout": async (c) => {
+      await c.page.goto(g("below-fold-checkout"))
+      c.ok(await c.page.evaluate(() => document.getElementById("ship-line1")!.getBoundingClientRect().top > innerHeight), "the shipping address starts below the fold")
+      // Only the name shows, at the bottom of the window: the rest of the address and the card are below the fold.
+      await c.page.evaluate(() => scrollTo(0, document.getElementById("ship-name")!.getBoundingClientRect().bottom + scrollY - innerHeight + 4))
+      const below = await c.page.evaluate(() => ["ship-city", "ship-zip", "ship-country"].every((id) => document.getElementById(id)!.getBoundingClientRect().top > innerHeight))
+      c.ok(below, "the rest of the address is below the fold")
+      const scrolled = await c.page.evaluate(() => scrollY)
+      c.ok(await pickForm(c, "#ship-name", "Home"), "one pick on the name fills")
+      const SHIP = ["#ship-name", "#ship-line1", "#ship-line2", "#ship-city", "#ship-state", "#ship-zip", "#ship-country"]
+      const ship = await Promise.all(SHIP.map((s) => value(c.page, s)))
+      c.ok(Math.abs((await c.page.evaluate(() => scrollY)) - scrolled) <= 2, "and the page is scrolled back where the user had it")
+      c.ok(JSON.stringify(ship) === JSON.stringify(["Alex Mercer", "123 Main St", "Apt 4", "Brooklyn", "NY", "11201", "US"]), `the whole shipping address (${ship.join(" | ")})`)
+      c.ok(await pickForm(c, "#cc-number", "Visa"), "the card menu fills")
+      const card = await Promise.all(["#cc-number", "#cc-month", "#cc-year", "#cc-csc", "#cc-name"].map((s) => value(c.page, s)))
+      c.ok(card[0].replace(/\D/g, "") === "4242424242424242" && card[1] === "08" && card[2] === "2028" && card[3] === "123" && card[4] === "Alex Mercer", `number, expiry, code and name (${card.slice(1).join(" | ")})`)
+      await c.page.click("#submit")
+      c.ok(!!(await wait("saved", async () => (await c.page.locator("#result[data-ok]").count()) > 0)), "and the form submits")
+    },
+    "paste-otp-boxes": async (c) => {
+      await passwordStep(c, "paste-otp-boxes")
+      await c.page.waitForSelector("#p1")
+      const digits = async () => (await Promise.all([1, 2, 3, 4, 5, 6].map((i) => value(c.page, `#p${i}`)))).join("")
+      c.ok(!!(await wait("the six boxes fill", async () => h.isCode(await digits()))), `boxes that turn a written digit down take the code as a paste (${(await digits()).length} digits)`)
+      c.ok((await codesAsked(c)) === 1, "with one code asked of the vault")
+      await c.page.click("#verify")
+      c.ok((await signedInAs(c.page)) === ALEX, "and the site signs in")
+    },
+    "masked-card": async (c) => {
+      await c.page.goto(g("masked-card"))
+      c.ok(await pickForm(c, "#cc-number", "Visa"), "the card menu fills")
+      const card = await Promise.all(["#cc-name", "#cc-number", "#cc-exp", "#cc-csc"].map((s) => value(c.page, s)))
+      c.ok(card[1] === "4242 4242 4242 4242" && card[2] === "08 / 28", `the masked number and expiry are typed in a character at a time (${card[1]} | ${card[2]})`)
+      c.ok(card[0] === "Alex Mercer" && card[3] === "123", `the name and code too (${card[0]})`)
+      await c.page.click("#submit")
+      c.ok(!!(await wait("saved", async () => (await c.page.locator("#result[data-ok]").count()) > 0)), "and the form submits")
+    },
+    "spa-shell-save": async (c) => {
+      await c.page.goto(g("spa-shell-save"))
+      await reported(c.run, "/gauntlet/spa-shell-save")
+      await typeInto(c, "#username", SPA_USER)
+      await typeInto(c, "#password", "not it")
+      await c.page.click("#submit")
+      await c.page.waitForSelector("#error")
+      c.ok((await offerTitle(c, 5000)) === null, "a wrong password, its alert showing and the form still there, offers nothing")
+      await typeInto(c, "#password", SPA_PASSWORD)
+      await c.page.click("#submit")
+      await c.page.waitForURL("**/spa-shell-save/dashboard")
+      c.ok((await c.page.locator("#password").count()) === 0 && (await c.page.getByText(/sign ?out|log ?out/i).count()) === 0, "the form is gone, with no Sign out anywhere")
+      const title = await offerTitle(c)
+      c.ok(title === "Save login?", `the avatar menu confirms the sign-in: Deadbolt offers to save it (${title ?? "no offer"})`)
+    },
   }
+
+  /** The save offer's title, once one shows in the page (null if none within `timeout`). */
+  const offerTitle = (c: Ctx, timeout = 15_000) =>
+    wait("the save offer shows", async () => {
+      const f = menuFrame(c.page)
+      return f && (await f.locator(".offer-title").count().catch(() => 0)) > 0 ? ((await f.locator(".offer-title").textContent().catch(() => "")) ?? "") : null
+    }, timeout)
 
   /** A code sent by text or email: never filled from the authenticator, Resend included. */
   async function sentCode(c: Ctx, slug: string, code: string) {
@@ -644,6 +763,10 @@ export function gauntletScenarios<R extends GauntletRun>(h: Harness<R>): { scena
             if (!cond) fails++
             return cond
           },
+          pend: (cond, what, until) => {
+            console.log(cond ? `PASS gauntlet ${slug}: ${what} (now passes: make it a check, ${until})` : `PEND gauntlet ${slug}: ${what} (until ${until})`)
+            return cond
+          },
         }
         const start = Date.now()
         try {
@@ -676,11 +799,12 @@ export function gauntletScenarios<R extends GauntletRun>(h: Harness<R>): { scena
     gauntletDom: dom.slice(0, half),
     gauntletDom2: dom.slice(half),
     gauntletFlows: byGroup("Other flows"),
+    gauntletTraps: byGroup("Traps"),
   }
   const missing = PAGES.filter((p) => !tests[p.slug]).map((p) => p.slug)
   if (missing.length) throw new Error(`gauntlet pages without a scenario: ${missing.join(", ")}`)
   return {
     scenarios: Object.fromEntries(Object.entries(units).map(([name, slugs]) => [name, () => runPages(slugs)])),
-    cost: { gauntletSignIn: 38, gauntletCodes: 80, gauntletIdentity: 19, gauntletDom: 52, gauntletDom2: 50, gauntletFlows: 55 },
+    cost: { gauntletSignIn: 38, gauntletCodes: 80, gauntletIdentity: 19, gauntletDom: 52, gauntletDom2: 50, gauntletFlows: 55, gauntletTraps: 95 },
   }
 }

@@ -729,7 +729,9 @@ export class Saver {
 
   /** What the top page shows now, from the document that settled. */
   private async probe(target: FrameTarget, c: Capture): Promise<PageFacts | null> {
-    return cleanFacts(await sendToFrame(target, { type: "db:probe", ...(c.username ? { username: c.username } : {}) }))
+    // An app shell counts only in the document that submitted, for a sign-in no page has said failed (see pageFacts).
+    const shell = !c.failed && c.document === target.documentId
+    return cleanFacts(await sendToFrame(target, { type: "db:probe", ...(c.username ? { username: c.username } : {}), ...(shell ? { shell: true as const } : {}) }))
   }
 
   /** How the sign-in went, from what the page shows: looked at again when it shows nothing either way. */
@@ -967,10 +969,13 @@ export class Saver {
       else return this.offerFor(c, c.username, next, fresh)
     } else {
       // No username on the form: the one login here whose password is the
-      // current one, else the only login here.
+      // current one, else the only login saved for this site itself. One of
+      // a site sharing its credentials is listed here, but never updated
+      // (the host never names one as a match either).
       const check = await this.host.send({ type: "check", origin: c.origin, password: current })
       const saved = (await this.host.send({ type: "list", origin: c.origin })).accounts.filter((a) => a.hasPassword)
-      const match = check.status === "same" && check.matches.length === 1 ? saved.find((a) => a.ref === check.matches[0]) : saved.length === 1 ? saved[0] : undefined
+      const own = saved.filter((a) => a.urls.some((u) => siteOfUrl(u.includes("://") ? u : `https://${u}`) === c.site))
+      const match = check.status === "same" && check.matches.length === 1 ? saved.find((a) => a.ref === check.matches[0]) : own.length === 1 ? own[0] : undefined
       if (match) target = { ref: match.ref, username: match.username ?? "" }
     }
     if (!target) return undefined

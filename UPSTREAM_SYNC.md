@@ -5,6 +5,9 @@ security fixes). Keep `dev` an exact mirror of `upstream/dev`; never develop on
 it. The fork base was `anomalyco/deadbolt` at `9e76cf2`; preserve `74b0257` in
 fork ancestry even if upstream later takes an equivalent fix.
 
+Latest synced upstream `dev`: `3e0c68e8b93e92763a67c6d21183f0614ef0fab9`
+(#315–#323).
+
 Start clean with ordinary Git. `upstream` points to `anomalyco/deadbolt`,
 `origin` to `shuv1337/shuvbolt`:
 
